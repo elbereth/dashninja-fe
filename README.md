@@ -1,6 +1,7 @@
 # Dash Ninja Front-End (dashninja-fe)
-By Alexandre (aka elbereth[zone]) Devilliers
-https://github.com/elbereth/dashninja-fe
+By Alexandre (aka elbereth) Devilliers
+
+Check the running live website at https://dashninja.pl
 
 This is part of what makes the Dash Ninja monitoring application.
 It contains:
@@ -20,9 +21,10 @@ For the REST API:
 
 ## Install:
 * Go to the root of your website for Dash monitoring (ex: cd /home/dashninja2/www/)
-* Get Dash Value from github:
-
-  git clone https://github.com/elbereth/dashninja-fe.git
+* Get latest code from github:
+```shell
+git clone https://github.com/elbereth/dashninja-fe.git
+```
 
 * Configure php to answer only to calls to api/index.php rewriting to end-point api/
 
