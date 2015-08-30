@@ -1,4 +1,21 @@
 <!DOCTYPE html>
+<!--
+This file is part of Dash Ninja.
+https://github.com/elbereth/dashninja-fe
+
+Dash Ninja is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+Dash Ninja is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with Foobar.  If not, see <http://www.gnu.org/licenses/>.
+-->
 <html>
   <head>
     <meta charset="utf-8">
@@ -69,7 +86,7 @@
         <div class="col-sm-9 col-sm-offset-3 col-md-10 col-md-offset-2 main">
         <div class="page-header">
           <h1>DASH Ninja - Budget Monitoring</h1>
-        <p>Page is dynamically refreshed (JavaScript required). All times are in GMT/UTC. Last refresh: <span id="blockstableLR" style="font-decoration: italic;">Never</span><br>
+        <p>Page is dynamically refreshed (JavaScript required). All dates/times are using your system locale. Last refresh: <span id="budgetstableLR" style="font-decoration: italic;">Never</span><br>
 Versions: <i>HTML v1.0.0 / JS v<span id="dashninjajsversion">?.?.?</span></i> (hint: might need to Ctrl+F5 to update JS)</p>
       </div>
     <div id="testnetalert" class="alert alert-danger" style="display: none">
@@ -81,7 +98,7 @@ Brought to you by <a href="https://dashtalk.org/members/elbereth.175/">elberethz
     </div>
         <h2>Global Statistics</h2>
         <p>There are <span id="globalvalidbudget" style="font-weight: bold;">???</span> budgets proposal of which <span id="globalestablishedbudget" style="font-weight: bold;">???</span> are established.</p>
-        <p>Next superblock budget coins amount is estimated at <span id="globalnextsuperblockamount" style="font-weight: bold;">????.???????? DASH</span>.</p>
+        <p>Next superblock will be <span id="globalnextsuperblockid" style="font-weight: bold;">???</span> on <span id="globalnextsuperblockdate" style="font-weight: bold;">??/??/????</span> (<span id="globalnextsuperblockremaining" style="font-weight: bold;">???</span>) and will provide <span id="globalnextsuperblockamount" style="font-weight: bold;">????.???????? DASH</span> for budgets.</p>
 
 <h2 id="budgetsdetail">Budgets Detail</h2>
 <div class="table-responsive">
@@ -90,15 +107,16 @@ Brought to you by <a href="https://dashtalk.org/members/elbereth.175/">elberethz
   <tr>
     <th>Date&nbsp;Added</th>
     <th>ID</th>
+    <th>Hash</th>
     <th>Fee Hash</th>
     <th>Block Start</th>
     <th>Est. Start</th>
     <th>Block End</th>
     <th>Est. End</th>
     <th>Total Payments</th>
-    <th>Total Amount</th>
     <th>Remaining Payments</th>
-    <th>Remaining Amount</th>
+    <th>Total Amount</th>
+    <th>Monthly Amount</th>
     <th>Payment Address</th>
     <th>Votes Yea</th>
     <th>Votes Nay</th>
@@ -111,7 +129,7 @@ Brought to you by <a href="https://dashtalk.org/members/elbereth.175/">elberethz
  </thead>
  <tbody>
   <tr>
-    <td colspan="19">Please wait while loading... (JavaScript neeeded)</td>
+    <td colspan="20">Please wait while loading... (JavaScript neeeded)</td>
   </tr>
  </tbody>
 </table>

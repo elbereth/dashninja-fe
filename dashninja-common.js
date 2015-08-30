@@ -21,7 +21,7 @@ function diffHR(diff) {
   if (s > 0) {
     rtxt += s+'s';
   }
-  return rtxt;
+  return rtxt.trim();
 }
 
 function diffHRlong(diff) {
@@ -67,7 +67,7 @@ function diffHRlong(diff) {
     }
     rtxt += ' ';
   }
-  return rtxt;
+  return rtxt.trim();
 }
 
 function deltaTimeStampHR(ts1,ts2) {
