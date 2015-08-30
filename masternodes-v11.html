@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>DASH Ninja - Masternodes Monitoring (Legacy v0.11)</title>
+
+    <link rel="icon" href="/static/dashninja-favicon.ico" />
+    <link rel="icon" type="image/png" href="/static/dashninja-favicon.png" />
+    <link href="//maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap.min.css" rel="stylesheet">
+    <link href="/static/dashninja-template.css" rel="stylesheet">
+    <link href="//cdn.datatables.net/1.10.2/css/jquery.dataTables.min.css" rel="stylesheet">
+
+    <!-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries -->
+    <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
+    <!--[if lt IE 9]>
+      <script src="https://oss.maxcdn.com/html5shiv/3.7.2/html5shiv.min.js"></script>
+      <script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
+    <![endif]-->
+
+  </head>
+  <body>
+    <div class="navbar navbar-default navbar-fixed-top" role="navigation">
+      <div class="container">
+        <div class="navbar-header">
+            <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
+              <span class="sr-only">Toggle navigation</span>
+              <span class="icon-bar"></span>
+              <span class="icon-bar"></span>
+              <span class="icon-bar"></span>
+            </button>
+          <a class="navbar-brand" href="/"><img style="margin-top: -13px;" src="/static/dashninja-logo48x48.png" width="48" height="48" border="0"></a>
+        </div>
+        <div class="collapse navbar-collapse">
+          <ul class="nav navbar-nav">
+            <li><a href="/blocks.html">Blocks Masternodes Payee</a></li>
+            <li class="dropdown active">
+             <a href="#" class="dropdown-toggle" data-toggle="dropdown">Masternodes <span class="caret"></span></a>
+               <ul class="dropdown-menu" role="menu">
+                 <li class="active"><a href="/masternodes.html">Masternodes Monitoring</a></li>
+                 <li><a href="/mndonations.html">Masternodes Donations</a></li>
+                 <li><a href="/mnvotes.html">Masternodes Votes</a></li>
+              </ul>
+            </li>
+           <li class="dropdown">
+             <a href="#" class="dropdown-toggle" data-toggle="dropdown">Other Tools <span class="caret"></span></a>               <ul class="dropdown-menu" role="menu">
+                 <li class="dropdown-header">Official Pages</li>
+                 <li><a href="http://www.dashpay.io/">Dash Homepage</a></li>
+                 <li><a href="https://github.com/darkcoinproject/darkcoin">Dash Github Sources</a></li>
+                 <li><a href="https://github.com/darkcoinproject/darkcoin-binaries/">Dash Github Binaries</a></li>
+                 <li class="divider"></li>
+                 <li class="dropdown-header">Forums / Wiki</li>
+                 <li><a href="http://en.wiki.dashninja.pl/">Dash Ninja Wiki</a></li>
+                 <li><a href="https://dashtalk.org/">DashTalk (DCT)</a></li>
+                 <li><a href="https://bitcointalk.org/index.php?topic=421615">BitcoinTalk (BTC) - Dash ANN</a></li>
+              </ul>
+            </li>
+          </ul>
+        </div><!--/.nav-collapse -->
+      </div>
+    </div>
+    <div class="container-fluid">
+
+      <div class="row">
+        <div class="col-sm-3 col-md-2 sidebar">
+          <ul class="nav nav-sidebar">
+            <li><a href="#">Daemon Monitoring</a></li>
+          </ul>
+          <ul class="nav nav-sidebar">
+            <li><a href="#payeeconsensus">Masternode voting consensus</a></li>
+          </ul>
+          <ul class="nav nav-sidebar">
+            <li><a href="#mnlistdetail">Masternodes List</a></li>
+            <li><a href="#mnversions">Masternodes Versions Chart</a></li>
+          </ul>
+        </div>
+      <div class="col-sm-9 col-sm-offset-3 col-md-10 col-md-offset-2 main">
+      <div class="page-header">
+        <h1>DASH Ninja - Masternodes Monitoring (Legacy v0.11)</h1>
+        <p>Page is dynamically refreshed (JavaScript required). All times are in GMT/UTC.<br/>
+Versions: <i>HTML v2.1.5 / JS v<span id="dashninjajsversion">?.?.?</span></i> (hint: might need to Ctrl+F5 to update JS)</p>
+      </div>
+    <div id="testnetalert" class="alert alert-danger" style="display: none">
+      <h2>THIS IS TESTNET!</h2>
+    </div>
+    <div id="msgalert" class="alert alert-warning" style="display: none">
+      <h2>Masternode operators <u>MUST</u> be <a href="http://dashpay.io/downloads/">running</a> <span id="currentdashversion" style="font-weight: bold">?.?.?.?</span> or greater!</h2>
+    </div>
+    <div class="alert alert-info">
+<p>If this page is useful to you, spare some coin: <a href="http://chainz.cryptoid.info/dash/address.dws?Xbon36F261wXDL4p1CEZAX28t8U4ayR9uu.htm">Xbon36F261wXDL4p1CEZAX28t8U4ayR9uu</a><br>
+Brought to you by <a href="https://dashtalk.org/members/elbereth.175/">elberethzone</a>.</p>
+    </div>
+<h2>Daemon monitoring:</h2>
+<table id="localnodes" class="table table-striped table-condensed table-responsive">
+  <thead>
+    <tr>
+      <th>ID</th>
+      <th>Status</th>
+      <th>Version</th>
+      <th>Protocol</th>
+      <th>Blocks</th>
+      <th>Last block hash</th>
+      <th>Connections</th>
+    </tr>
+  </thead>
+  <tbody>
+  <tr>
+    <td colspan="7">Please wait while loading... (JavaScript neeeded)</td>
+  </tr>
+  </tbody>
+</table>
+<p>Last refresh: <span id="localnodesLR">Never</span></p>
+<h2 id="payeeconsensus">Payee Block Template history (Masternode voting consensus):</h2>
+<table id="blockconsensus" class="table table-striped table-condensed table-responsive">
+  <thead>
+    <tr>
+      <th>Height</th>
+      <th>Consensus</th>
+      <th>Majority</th>
+      <th>Not in consensus</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td colspan="4">Please wait while loading... (JavaScript neeeded)</td>
+    </tr>
+  </tbody>
+</table>
+<p>Last refresh: <span id="blockconsensusLR">Never</span></p>
+<h2>Masternodes List:</h2>
+<p><u>Port Checking:</u></p>
+<ul><li><b>Unknown</b>: New entry that will be checked as soon as possible (usually less than 15min)</li>
+<li><b>Open</b>: Port was open during last check (time to next check in parenthesis, re-check after 1h)</li>
+<li><b>Closed</b>: Port was closed during last check (time to next check in parenthesis, re-check after 1h) [Your node can be shown as closed but be working fine, the port scanner can be banned by your node for 24h]</li>
+</ul>
+<p><u>Pubkey Links:</u></p>
+<div id="pubkeyurllist"></div>
+<p><u>Status:</u></p>
+<table class="display" border="1">
+ <thead>
+  <tr>
+    <th>Status</th>
+    <th>Meaning</th>
+  </tr>
+ </thead>
+ <tbody>
+  <tr>
+    <td style="background-color:#8FFF8F; text-align:center;">Active<br>(100%)</td>
+    <td>Masternode is listed and has status "1" (masternode list).<br>This is what you want for your masternode.</td>
+  </tr>
+  <tr>
+    <td style="background-color:#FF8F8F; text-align:center;">Inactive<br>(0%)</td>
+    <td>Masternode is listed but has status "0" (masternode list)<br/>Possible reasons:<br/><ul><li>Masternode is not responding (port 9999 must be open on your firewall, if you see Closed below, there is your problem)<li>The 1000 DASH were removed from the masternode start wallet<li>The masternode is getting banned (active on some but inactive on others):<br/>Try masternode start with a fresh/new local wallet (don't forget to send your 1000 DASH to that new wallet!!)<br/>This will force a new masternode pubkey (I fixed my dmn01 with that trick)<li>Make sure you have the <a href="http://dashpay.io/downloads/">latest daemon version</a></ul></td>
+  </tr>
+  <tr>
+    <td style="background-color:#FFFF8F; text-align:center;">Partially Inactive/Unlisted<br>(&gt;=50%)</td>
+    <td>Masternode is not fully active (some, but not all, nodes see it as inactive [with "0" in masternode list] or unlisted [not in masternode list]).<br>The Percentage indicates how many nodes see it as active (the nearer to 100% the better).</td>
+  </tr>
+  <tr>
+    <td style="background-color:#ffcb8f; text-align:center;">Partially Inactive/Unlisted<br>(&lt;50%)</td>
+    <td>Masternode is not fully active (some, but not all, nodes see it as inactive [with "0" in masternode list] or unlisted [not in masternode list]).<br>The Percentage indicates how many nodes see it as active (the nearer to 100% the better).</td>
+  </tr>
+ </tbody>
+</table>
+<p><u>Balance:</u><br/>
+This is the balance of the pubkey, if more than 1000 DASH then it has a green background (there can be up to 15min delay with true balance)</p>
+<p><u>Proof-of-Service:</u></p>
+<table class="display" border="1">
+ <thead>
+  <tr>
+    <th colspan="5">Score</th>
+    <th>Meaning</th>
+  </tr>
+ </thead>
+ <tbody>
+  <tr>
+    <td colspan="5" style="background-color:#8FFF8F; text-align:center;">0</td>
+    <td>Everything is fine.</td>
+  </tr>
+  <tr>
+    <td style="background-color:#FFFF8F; text-align:center;">1</td>
+    <td style="background-color:#FFF28F; text-align:center;">2</td>
+    <td style="background-color:#FFE58F; text-align:center;">3</td>
+    <td style="background-color:#FFD88F; text-align:center;">4</td>
+    <td style="background-color:#FFCB8F; text-align:center;">5</td>
+    <td>Something is wrong with your setup:
+<ul><li>Daemon (dashd) of the Masternode is not responding (port closed, daemon is hung, etc.)
+<li>Using an obsolete version of dashd on the Masternode
+</ul>
+You check the explanation in the <a href="https://raw.githubusercontent.com/darkcoin/darkcoin/master/src/masternode-pos.cpp">header of the source code</a>.
+      </td>
+  </tr>
+  <tr>
+    <td colspan="5" style="background-color:#FF8F8F; text-align:center;">6</td>
+    <td>Error, your masternode will be unlisted.<br/>Fix it to get back on the list.</td>
+  </tr>
+ </tbody>
+</table>
+
+<p><u>JSON API:</u><br/>
+An API is available (some documentation can be found <a href="https://dashtalk.org/threads/dashninja-pl-dash-masternode-ninja-free-masternode-monitoring.2722/">there</a>) to retrieve the information below.</p>
+<p id="mnlistdetail" style="font-weight: bold; text-align: right">Regexp search: <input type="text" class="global_filter" id="mnregexp"></p>
+<table id="mnlist" class="table table-striped table-condensed table-responsive text-nowrap">
+  <thead>
+    <tr>
+      <th>Masternode IP:Port</th>
+      <th>Port Check (Next check)</th>
+      <th>Version</th>
+      <th>Masternode Pubkey</th>
+      <th>Balance</th>
+      <th>Last Paid</th>
+      <th>Active Duration</th>
+      <th>Last Seen</th>
+      <th>Country</th>
+      <th>Status<br>(Active Score)</th>
+      <th>Proof-of-Service<br>(Score)</th>
+    </tr>
+  </thead>
+  <tbody>
+  <tr>
+    <td colspan=11>Please wait while loading... (JavaScript neeeded)</td>
+  </tr>
+  </tbody>
+</table>
+<p>Total Masternodes: <span id="mntotal">???</span> = <span id="mnactive" style="font-weight: bold;">???</span> actives + <span id="mninactive">??</span> inactives [<span id="uniquemnips">???</span> unique IPs] (Last refresh: <span id="mnlistLR">Never</span>)<br>
+Estimated daily payout for an active node (blocks with MN payments last 24h: <span id="mnpaymentsratio" style="font-style: italic;">??.??%</span>): <span id="mnpayments" style="font-weight: bold;">???</span> DASH/day (Last Refreshed: <span id="mnpaymentsLR">Never</span>)</p>
+<div id="mnversions" style="min-width: 310px; height: 400px; max-width: 600px; margin: 0 auto"></div>
+<hr/>
+</div>
+</div>
+</div>
+<div id="footer">
+  <div class="container">
+<p style="font-size:small;" align=right>Brought to you by <a href="https://darkcointalk.org/members/elbereth.175/">elberethzone</a>. If this page is useful to you, spare some coin: <a href="http://chainz.cryptoid.info/dash/address.dws?Xbon36F261wXDL4p1CEZAX28t8U4ayR9uu.htm">Xbon36F261wXDL4p1CEZAX28t8U4ayR9uu</a></p>
+  </div>
+</div>
+    <script src="//code.jquery.com/jquery-1.11.1.min.js"></script>
+    <script src="//code.jquery.com/jquery-migrate-1.2.1.min.js"></script>
+    <script src="//maxcdn.bootstrapcdn.com/bootstrap/3.2.0/js/bootstrap.min.js"></script>
+    <script src="//code.highcharts.com/highcharts.js"></script>
+    <script src="//code.highcharts.com/highcharts-more.js"></script>
+    <script src="//cdn.datatables.net/1.10.2/js/jquery.dataTables.min.js"></script>
+    <script src="dashninja-config.js"></script>
+    <script src="dashninja-common.js"></script>
+    <script src="dashninja-masternodes-v11.js"></script>
+  </body>
+</html>
+</body>
+</html>
+
