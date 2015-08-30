@@ -20,7 +20,7 @@
 // Dash Ninja Front-End (dashninja-fe) - Budgets
 // By elberethzone / https://dashtalk.org/members/elbereth.175/
 
-var dashninjaversion = '1.0.0';
+var dashninjaversion = '1.0.1';
 var tableBudgets = null;
 var latestblock = null;
 var superblock = null;
@@ -75,16 +75,27 @@ $(document).ready(function(){
     }
 
     $('#budgetsdatailtable').on('xhr.dt', function ( e, settings, json ) {
+        // Calculate the established project total amounts
+        var totalamount = 0.0;
+        for (var bix in json.data.budgets){
+            if ((json.data.budgets[bix].IsEstablished) && (json.data.budgets[bix].RemainingPaymentCount >0)) {
+                totalamount+=json.data.budgets[bix].MonthlyPayment;
+            }
+        }
+
         // Show global stats
         $('#globalvalidbudget').text(json.data.stats.budgetvalid);
         $('#globalestablishedbudget').text(json.data.stats.budgetvalid);
+        $('#globalestablishedbudgetamount').text(addCommas(totalamount)+' '+dashninjacoin[dashninjatestnet]);
         var nextsuperblockdatetimestamp = json.data.stats.latestblock.BlockTime+(((json.data.stats.nextsuperblock.blockheight-json.data.stats.latestblock.BlockId)/553)*86400);
         var datesuperblock = new Date(nextsuperblockdatetimestamp*1000);
         $('#globalnextsuperblockdate').text(datesuperblock.toLocaleDateString()+' '+datesuperblock.toLocaleTimeString());
         $('#globalnextsuperblockremaining').text(deltaTimeStampHRlong(nextsuperblockdatetimestamp,currenttimestamp()));
         $('#globalnextsuperblockid').text(json.data.stats.nextsuperblock.blockheight);
-        $('#globalnextsuperblockamount').text(addCommas(json.data.stats.nextsuperblock.estimatedbudgetamount)+' '+dashninjacoin[dashninjatestnet]);
+        $('#globalnextsuperblockamount').text(addCommas(Math.round(json.data.stats.nextsuperblock.estimatedbudgetamount*100)/100)+' '+dashninjacoin[dashninjatestnet]);
+        $('#globalnextsuperblockunallocated').text(addCommas(Math.round((json.data.stats.nextsuperblock.estimatedbudgetamount-totalamount)*100)/100)+' '+dashninjacoin[dashninjatestnet]);
 
+        // Store information for future use
         latestblock = json.data.stats.latestblock;
         superblock = json.data.stats.nextsuperblock;
         totalmns = json.data.stats.totalmns;
