@@ -1,7 +1,26 @@
-// DASH Masternode Ninja - Front-End - Masternode Detail (v2)
+/*
+ This file is part of Dash Ninja.
+ https://github.com/elbereth/dashninja-fe
+
+ Dash Ninja is free software: you can redistribute it and/or modify
+ it under the terms of the GNU General Public License as published by
+ the Free Software Foundation, either version 3 of the License, or
+ (at your option) any later version.
+
+ Dash Ninja is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ GNU General Public License for more details.
+
+ You should have received a copy of the GNU General Public License
+ along with Foobar.  If not, see <http://www.gnu.org/licenses/>.
+
+ */
+
+// Dash Ninja Front-End (dashninja-fe) - Masternode Detail
 // By elberethzone / https://dashtalk.org/members/elbereth.175/
 
-var dashninjaversion = '2.2.2';
+var dashninjaversion = '2.2.3';
 var tablePayments = null;
 var dataProtocolDesc = [];
 var maxProtocol = -1;
@@ -42,19 +61,23 @@ function tablePaymentsRefresh(){
 };
 
 function mndetailsRefresh(useVin){
+  console.log("DEBUG: mndetailsRefresh starting");
   $('#mninfosLR').html( '<i class="fa fa-spinner fa-pulse"></i> Refreshing <i class="fa fa-spinner fa-pulse"></i>' );
-  var query = '/api/masternodes?balance=1&portcheck=1&lastpaid=1&testnet='+dashninjatestnet;
+  var query = 'https://dashninja.pl/api/masternodes?balance=1&portcheck=1&lastpaid=1&testnet='+dashninjatestnet;
   if (useVin) {
     query += '&vins=["'+mnvin+'"]';
   }
   else {
     query += '&pubkeys=["'+mnpubkey+'"]';
   }
+    console.log("DEBUG: REST query="+query);
   $.getJSON( query, function( data ) {
    var date = new Date();
    var n = date.toDateString();
    var time = date.toLocaleTimeString();
    var result = "";
+
+   console.log("DEBUG: REST api query responded!");
 
    if ((!data.hasOwnProperty("data")) || (data.data.length < 1)) {
     result = 'Unknown masternode';
@@ -245,29 +268,9 @@ function mndetailsRefresh(useVin){
           else {
             $('td',row).eq(6).css({"background-color": "#FF8F8F"});
           }
-            
-//          if (data.BlockMNPayed == 0) {
-//            $('td',row).eq(5).css({"background-color": "#FF8F8F"});
-//            $('td',row).eq(6).css({"background-color": "#FF8F8F"});
-//            $('td',row).eq(7).css({"background-color": "#FF8F8F"});
-//            $('td',row).eq(8).css({"background-color": "#FF8F8F"});
-//          }
-//          else {
-//            if (data.BlockMNValueRatio == data.BlockMNValueRatioExpected) {
-//              $('td',row).eq(5).css({"background-color": "#8FFF8F"});
-//              $('td',row).eq(6).css({"background-color": "#8FFF8F"});
-//            }
-//            else if ((data.BlockMNValueRatio == 0.1) || (data.BlockMNValueRatio == 0.2)) {
-//              $('td',row).eq(5).css({"background-color": "#FFFF8F"});
-//              $('td',row).eq(6).css({"background-color": "#FFFF8F"});
-//            }
-//            else {
-//              $('td',row).eq(5).css({"background-color": "#ffcb8f"});
-//              $('td',row).eq(6).css({"background-color": "#ffcb8f"});
-//            }
-//          }
         }
    } );
+   console.log("DEBUG: auto-refresh starting");
    setTimeout(mndetailsRefresh, 300000);
   });
 };
@@ -276,26 +279,41 @@ $(document).ready(function(){
 
   $('#dashninjajsversion').text( dashninjaversion );
 
-  mnpubkey = getParameter("mnpubkey");
-  if (((dashninjatestnet == 0) && (!dashmainkeyregexp.test(mnpubkey)))
-   || ((dashninjatestnet == 1) && (!dashtestkeyregexp.test(mnpubkey)))) {
-    mnpubkey = 'Invalid';
-    $('#mnpubkey').text( mnpubkey );
-  }
-  else {
-    mndetailsRefresh(false);
-  }
-  mnvin = getParameter("mnoutput");
-  if (!dashoutputregexp.test(mnvin)) {
-    mnvin = 'Invalid';
-    $('#mnoutput').text( mnvin );
-  }
-  else {
-    mndetailsRefresh(true);
-  }
-
   if (dashninjatestnet == 1) {
     $('#testnetalert').show();
+  }
+
+  mnpubkey = getParameter("mnpubkey");
+  console.log("DEBUG: mnpubkey="+mnpubkey);
+  mnvin = getParameter("mnoutput");
+  console.log("DEBUG: mnvin="+mnvin);
+
+  if ((mnpubkey == "") && (mnvin == "")) {
+    mnpubkey = 'Need "mnpubkey" parameter';
+    $('#mnpubkey').text(mnpubkey);
+    mnvin = 'Need "mnoutput" parameter';
+    $('#mnvin').text(mnvin);
+  }
+  else {
+    if ((mnpubkey != "") && (mnvin == "")) {
+      if (((dashninjatestnet == 0) && (!dashmainkeyregexp.test(mnpubkey)))
+        || ((dashninjatestnet == 1) && (!dashtestkeyregexp.test(mnpubkey)))) {
+        mnpubkey = 'Invalid';
+        $('#mnpubkey').text(mnpubkey);
+      }
+      else {
+        mndetailsRefresh(false);
+      }
+    }
+    else {
+      if (!dashoutputregexp.test(mnvin)) {
+        mnvin = 'Invalid';
+        $('#mnoutput').text( mnvin );
+      }
+      else {
+        mndetailsRefresh(true);
+      }
+    }
   }
 
   $('#paymentstable').on('xhr.dt', function ( e, settings, json ) {
