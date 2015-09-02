@@ -716,8 +716,6 @@ $app->get('/api/nodes', function() use ($app,&$mysqli) {
 // Function to retrieve the masternode list
 function drkmn_masternodes_get($mysqli, $testnet = 0, $protocol = 0, $mnpubkeys = array(), $mnips = array(), $withlastpaid = false) {
 
-///  $sqlprotocol = sprintf(" AND cns.NodeProtocol = %d",$protocol);
-//  $sqltestnet = sprintf("MNTestNet = %d",$testnet);
   $sqlprotocol = sprintf("%d",$protocol);
   $sqltestnet = sprintf("%d",$testnet);
   if ($withlastpaid) {
@@ -826,57 +824,6 @@ WHERE
  ORDER BY MasternodeIP, MasternodePort;
 EOT;
 
-  // Retrieve the number of time each masternode is seen as active or current
-/*  $sqlactive = "(SELECT MasternodeIP, MasternodePort, MNTestNet, COUNT(1) ActiveCount FROM cmd_info_masternode_list ciml, cmd_nodes_status cns"
-              ." WHERE ciml.NodeID = cns.NodeID"
-              ." AND $sqltestnet"
-              ." AND (MasternodeStatus = 'active' OR MasternodeStatus = 'current')"
-              .$sqlprotocol
-              ." GROUP BY MasternodeIP, MasternodePort, MNTestNet) mnactive";
-
-  // Retrieve the number of time each masternode is seen as inactive
-  $sqlinactive = "(SELECT MasternodeIP, MasternodePort, MNTestNet, COUNT(1) InactiveCount FROM cmd_info_masternode_list ciml, cmd_nodes_status cns"
-              ." WHERE ciml.NodeID = cns.NodeID"
-              ." AND $sqltestnet"
-              ." AND MasternodeStatus = 'inactive'"
-              .$sqlprotocol
-              ." GROUP BY MasternodeIP, MasternodePort, MNTestNet) mninactive";
-
-  // Retrieve the number of time each masternode is not seen (unlisted)
-  $sqlunlisted = "(SELECT MasternodeIP, MasternodePort, MNTestNet, COUNT(1) UnlistedCount FROM cmd_info_masternode_list ciml, cmd_nodes_status cns"
-              ." WHERE ciml.NodeID = cns.NodeID"
-              ." AND $sqltestnet"
-              ." AND MasternodeStatus = 'unlisted'"
-              .$sqlprotocol
-              ." GROUP BY MasternodeIP, MasternodePort, MNTestNet) mnunlisted";
-
-  // Retrieve the number of time each masternode is seen as inactive
-  $sqlpose = "(SELECT MasternodeIP, MasternodePort, MNTestNet, MAX(MasternodeStatusPoS) MasternodeStatusPoS FROM cmd_info_masternode_list ciml, cmd_nodes_status cns"
-            ." WHERE ciml.NodeID = cns.NodeID"
-            ." AND $sqltestnet"
-            .$sqlprotocol
-            ." GROUP BY MasternodeIP, MasternodePort, MNTestNet) mnpose";
-
-  if ($withlastpaid) {
-    $sqllastpaid1 = " LEFT JOIN cmd_info_masternode_lastpaid cimlp ON (cimlp.MNTestNet = cimpk.MNTestNet AND cimlp.MNPubKey = cimpk.MNPubKey)"
-                   ." LEFT JOIN cmd_info_blocks cib ON (cib.BlockTestNet = cimlp.MNTestNet AND cib.BlockId = cimlp.MNLastPaidBlock)";
-    $sqllastpaid2 = ", cimlp.MNLastPaidBlock MNLastPaidBlock, cib.BlockTime MNLastPaidTime, cib.BlockMNValue MNLastPaidAmount";
-  }
-  else {
-    $sqllastpaid1 = "";
-    $sqllastpaid2 = "";
-  }
-
-  // Retrieve only the masternodes which are active or inactive (no need for fully unlisted)
-  $sql = "SELECT inet_ntoa(cim.MasternodeIP) MasternodeIP, cim.MasternodePort MasternodePort, cimpk.MNPubKey MNPubKey, MNActiveSeconds, MNLastSeen, MNCountry, MNCountryCode, UNIX_TIMESTAMP(cim.MNLastReported) MNLastReported, UNIX_TIMESTAMP(cimpk.MNLastReported) MNLastReportedPubkey, ActiveCount, InactiveCount, UnlistedCount, MasternodeStatusPoS$sqllastpaid2 FROM cmd_info_masternode cim, cmd_info_masternode_pubkeys cimpk"
-        ." LEFT JOIN $sqlactive USING (MasternodeIP, MasternodePort, MNTestNet)"
-        ." LEFT JOIN $sqlinactive USING (MasternodeIP, MasternodePort, MNTestNet)"
-        ." LEFT JOIN $sqlunlisted USING (MasternodeIP, MasternodePort, MNTestNet)"
-        ." LEFT JOIN $sqlpose USING (MasternodeIP, MasternodePort, MNTestNet)"
-        .$sqllastpaid1
-        ." WHERE cim.MasternodeIP = cimpk.MasternodeIP AND cim.MasternodePort = cimpk.MasternodePort AND cim.MNTestNet = cimpk.MNTestNet AND cim.$sqltestnet AND ((ActiveCount > 0) OR (InactiveCount > 0)) AND cimpk.MNLastReported = 1";
-*/
-
     // Execute the query
     $numnodes = 0;
     if ($mysqli->multi_query($sql)) {
@@ -927,7 +874,9 @@ EOT;
     else {
       $nodes = false;
     }
-    file_put_contents($cachefnam,serialize($nodes),LOCK_EX);
+    if ($nodes !== false) {
+      file_put_contents($cachefnam, serialize($nodes), LOCK_EX);
+    }
   }
 
   return $nodes;
@@ -936,8 +885,6 @@ EOT;
 // Function to retrieve the masternode list
 function drkmn_masternodes2_get($mysqli, $testnet = 0, $protocol = 0, $mnpubkeys = array(), $mnips = array(), $mnvins = array()) {
 
-///  $sqlprotocol = sprintf(" AND cns.NodeProtocol = %d",$protocol);
-//  $sqltestnet = sprintf("MNTestNet = %d",$testnet);
   $sqlprotocol = sprintf("%d",$protocol);
   $sqltestnet = sprintf("%d",$testnet);
 
@@ -949,6 +896,7 @@ function drkmn_masternodes2_get($mysqli, $testnet = 0, $protocol = 0, $mnpubkeys
     $nodes = unserialize(file_get_contents($cachefnam));
   }
   else {
+    // Semaphore that we are currently updating
     touch($cachefnamupdate);
 
     // Add selection by pubkey
@@ -1084,9 +1032,13 @@ EOT;
     else {
       $nodes = false;
     }
-    file_put_contents($cachefnam.".new",serialize($nodes),LOCK_EX);
-    rename($cachefnam.".new",$cachefnam);
-    unlink($cachefnamupdate);
+    if ($nodes !== false) {
+      file_put_contents($cachefnam . ".new", serialize($nodes), LOCK_EX);
+      rename($cachefnam . ".new", $cachefnam);
+    }
+    if (file_exists($cachefnamupdate)) {
+      unlink($cachefnamupdate);
+    }
   }
 
   return $nodes;
@@ -1230,7 +1182,7 @@ function drkmn_masternodes_portcheck_get($mysqli, $mnkeys, $testnet = 0) {
     }
     file_put_contents($cachefnam.".new",serialize($portcheck),LOCK_EX);
     rename($cachefnam.".new",$cachefnam);
-    if (fileexists($cachefnamupdate)) {
+    if (file_exists($cachefnamupdate)) {
       unlink($cachefnamupdate);
     }
   }
