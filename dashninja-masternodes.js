@@ -1,7 +1,7 @@
 // DASH Masternode Ninja - Front-End - Masternode List (v2)
 // By elberethzone / https://dashtalk.org/members/elbereth.175/
 
-var dashninjaversion = '2.2.5';
+var dashninjaversion = '2.2.6';
 var tableLocalNodes = null;
 var tableBlockConsensus = null;
 var tableMNList = null;
@@ -671,6 +671,6 @@ $(document).ready(function(){
     } );
    setTimeout(tableMNListRefresh, 300000);
 
-  mnpaymentsRefresh();
+  //mnpaymentsRefresh();
 
 });
