@@ -652,6 +652,147 @@ $app->get('/api/budgets', function() use ($app,&$mysqli) {
 
 });
 
+// Get budgets projection (next super-block)
+// Parameters:
+//   testnet=0|1
+$app->get('/api/budgetsprojection', function() use ($app,&$mysqli) {
+
+  //Create a response
+  $response = new Phalcon\Http\Response();
+  $response->setHeader('Access-Control-Allow-Origin', '*');
+  $response->setHeader("Content-Type", "application/json");
+
+  $request = $app->request;
+
+  $errmsg = array();
+
+  if (!array_key_exists('CONTENT_LENGTH',$_SERVER) || (intval($_SERVER['CONTENT_LENGTH']) != 0)) {
+    $errmsg[] = "No CONTENT expected";
+  }
+
+  // Retrieve the 'testnet' parameter
+  if ($request->hasQuery('testnet')) {
+    $testnet = intval($request->getQuery('testnet'));
+    if (($testnet != 0) && ($testnet != 1)) {
+      $testnet = 0;
+    }
+  }
+  else {
+    $testnet = 0;
+  }
+
+  if (count($errmsg) > 0) {
+    //Change the HTTP status
+    $response->setStatusCode(400, "Bad Request");
+
+    //Send errors to the client
+    $response->setJsonContent(array('status' => 'ERROR', 'messages' => $errmsg));
+  }
+  else {
+    $cachefnam = CACHEFOLDER.sprintf("dashninja_budgetsprojection_%d",$testnet);
+    $cachefnamupdate = $cachefnam.".update";
+    $cachevalid = (is_readable($cachefnam) && (((filemtime($cachefnam)+120)>=time()) || file_exists($cachefnamupdate)));
+    if ($cachevalid) {
+      $data = unserialize(file_get_contents($cachefnam));
+      $response->setStatusCode(200, "OK");
+      $response->setJsonContent(array('status' => 'OK', 'data' => $data));
+    }
+    else {
+      touch($cachefnamupdate);
+
+      // Get budgets
+      $sql = sprintf("SELECT * FROM cmd_budget_projection WHERE BudgetTestnet = %d",$testnet);
+      if ($onlyvalid) {
+        $sql .= " AND IsValid = 1";
+      }
+      $sqlblockids = array();
+      if ($result = $mysqli->query($sql)) {
+        $budgetvalid = 0;
+        while($row = $result->fetch_assoc()){
+          $budgets[] = array(
+              "ID" => stripslashes($row["BudgetId"]),
+              "Hash" => stripslashes($row["BudgetHash"]),
+              "FeeHash" => stripslashes($row["FeeHash"]),
+              "URL" => stripslashes($row["BudgetURL"]),
+              "BlockStart" => intval($row["BlockStart"]),
+              "BlockEnd" => intval($row["BlockEnd"]),
+              "TotalPaymentCount" => intval($row["TotalPaymentCount"]),
+              "RemainingPaymentCount" => intval($row["RemainingPaymentCount"]),
+              "PaymentAddress" => stripslashes($row["PaymentAddress"]),
+              "Ratio" => floatval($row["Ratio"]),
+              "Yeas" => intval($row["Yeas"]),
+              "Nays" => intval($row["Nays"]),
+              "Abstains" => intval($row["Abstains"]),
+              "TotalPayment" => floatval($row["TotalPayment"]),
+              "MonthlyPayment" => floatval($row["MonthlyPayment"]),
+              "Alloted" => floatval($row["Alloted"]),
+              "TotalBudgetAlloted" => floatval($row["TotalBudgetAlloted"]),
+              "IsValid" => ($row["IsValid"] == 1),
+              "IsValidReason" => stripslashes($row["IsValidReason"]),
+              "FirstReported" => strtotime($row["FirstReported"]),
+              "LastReported" => strtotime($row["LastReported"])
+          );
+          $budgetvalid+=intval($row["IsValid"]);
+        }
+
+        $totalmninfo = 0;
+        $uniquemnips = 0;
+        $mninfo = drkmn_masternodes_count($mysqli,$testnet, $totalmninfo, $uniquemnips);
+        if ($mninfo === false) {
+          $response->setStatusCode(503, "Service Unavailable");
+          $response->setJsonContent(array('status' => 'ERROR', 'messages' => array($mysqli->errno.': '.$mysqli->error,$totalmninfo)));
+          return $response;
+        }
+
+        $sql = sprintf("SELECT `BlockId`, `BlockTime`, `BlockDifficulty` FROM `cmd_info_blocks` WHERE BlockTestNet = %d ORDER BY BlockId DESC LIMIT 1",$testnet);
+        if ($result = $mysqli->query($sql)) {
+          $currentblock = $result->fetch_assoc();
+          $currentblock["BlockId"] = intval($currentblock["BlockId"]);
+          $currentblock["BlockTime"] = intval($currentblock["BlockTime"]);
+          $currentblock["BlockDifficulty"] = floatval($currentblock["BlockDifficulty"]);
+        }
+        else {
+          $response->setStatusCode(503, "Service Unavailable");
+          $response->setJsonContent(array('status' => 'ERROR', 'messages' => array($mysqli->errno.': '.$mysqli->error)));
+          return $response;
+        }
+
+        $nextsuperblock = $currentblock["BlockId"] - ($currentblock["BlockId"] % 16616) + 16616;
+        $nSubsidy = 5;
+        if ($testnet == 0){
+          for($i = 46200; $i <= $nextsuperblock; $i += 210240) $nSubsidy -= $nSubsidy/14;
+        } else {
+          for($i = 210240; $i <= $nextsuperblock; $i += 210240) $nSubsidy -= $nSubsidy/14;
+        }
+
+        $data = array('budgetsprojection' => $budgets,
+            'stats' => array(
+                'budgetalloted' => $budgetvalid,
+                'totalmns' => intval($totalmninfo),
+                'nextsuperblock' => array(
+                    "blockheight" => $nextsuperblock,
+                    "estimatedbudgetamount" => (($nSubsidy/100)*10)*576*30
+                ),
+                'latestblock' => $currentblock
+            )
+        );
+
+        //Change the HTTP status
+        $response->setStatusCode(200, "OK");
+        $response->setJsonContent(array('status' => 'OK', 'data' => $data));
+//        file_put_contents($cachefnam,serialize($data),LOCK_EX);
+        unlink($cachefnamupdate);
+      }
+      else {
+        $response->setStatusCode(503, "Service Unavailable");
+        $response->setJsonContent(array('status' => 'ERROR', 'messages' => $mysqli->errno.': '.$mysqli->error));
+      }
+    }
+  }
+  return $response;
+
+});
+
 // Get currently running nodes
 // Parameters:
 //   testnet=0|1

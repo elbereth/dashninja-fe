@@ -80,14 +80,16 @@ along with Foobar.  If not, see <http://www.gnu.org/licenses/>.
             <li><a href="#">Global Statistics</a></li>
           </ul>
           <ul class="nav nav-sidebar">
-            <li><a href="#budgetsdetail">Budgets Detail</a></li>
+              <li><a href="#budgetinfo">Budget Info</a></li>
+              <li><a href="#budgetsdetail">Budgets Proposals Detail</a></li>
+              <li><a href="#budgetsprojectiondetail">Budgets Projection Detail</a></li>
           </ul>
         </div>
         <div class="col-sm-9 col-sm-offset-3 col-md-10 col-md-offset-2 main">
         <div class="page-header">
           <h1>DASH Ninja - Budget Monitoring</h1>
-        <p>Page is dynamically refreshed (JavaScript required). All dates/times are using your system locale. Last refresh: <span id="budgetstableLR" style="font-decoration: italic;">Never</span><br>
-Versions: <i>HTML v1.0.1 / JS v<span id="dashninjajsversion">?.?.?</span></i> (hint: might need to Ctrl+F5 to update JS)</p>
+        <p>Page is dynamically refreshed (JavaScript required). All dates/times are using your system locale.
+Versions: <i>HTML v1.1.1 / JS v<span id="dashninjajsversion">?.?.?</span></i> (hint: might need to Ctrl+F5 to update JS)</p>
       </div>
     <div id="testnetalert" class="alert alert-danger" style="display: none">
       <h2>THIS IS TESTNET!</h2>
@@ -97,13 +99,17 @@ Versions: <i>HTML v1.0.1 / JS v<span id="dashninjajsversion">?.?.?</span></i> (h
 Brought to you by <a href="https://dashtalk.org/members/elbereth.175/">elberethzone</a>.</p>
     </div>
         <h2>Global Statistics</h2>
-        <p>There are <span id="globalvalidbudget" style="font-weight: bold;">???</span> budgets proposal of which <span id="globalestablishedbudget" style="font-weight: bold;">???</span> are established (total remaining payment: <span id="globalestablishedbudgetamount" style="font-weight: bold;">????.???????? DASH</span>).</p>
+        <p>There are <span id="globalvalidbudget" style="font-weight: bold;">???</span> budgets proposal of which <span id="globalestablishedbudget" style="font-weight: bold;">???</span> are established (total established payment: <span id="globalestablishedbudgetamount" style="font-weight: bold;">????.???????? DASH</span>) and <span id="globalallotedbudget" style="font-weight: bold;">???</span> are alloted (total alloted payment: <span id="globalallotedbudgetamount" style="font-weight: bold;">????.???????? DASH</span>).</p>
         <p>Next super-block will be <span id="globalnextsuperblockid" style="font-weight: bold;">???</span> on <span id="globalnextsuperblockdate" style="font-weight: bold;">??/??/????</span> (<span id="globalnextsuperblockremaining" style="font-weight: bold;">???</span>) and will provide <span id="globalnextsuperblockamount" style="font-weight: bold;">????.???????? DASH</span> for budgets.</p>
         <p><span id="globalnextsuperblockunallocated" style="font-weight: bold;">????.???????? DASH</span> unallocated in next super-block.</p>
 
-<h2 id="budgetsdetail">Budgets Detail</h2>
+            <h2 id="budgetinfo">Budget Info</h2>
+            <p>A budget proposal is <strong>valid</strong> if the fee was payed and it was submitted to peers successfully.</p>
+            <p>A budget proposal is <strong>established</strong> when it is older than 1 day.</p>
+            <p>A budget proposal is <strong>alloted</strong> (will get paid on next super-block) when Yea votes minus Nay votes is more than 10% of total masternodes.</p>
+            <h2 id="budgetsdetail">Budgets Proposals Detail</h2>
 <div class="table-responsive">
-<table id="budgetsdatailtable" class="table table-striped table-condensed table-responsive text-nowrap">
+<table id="budgetsdetailtable" class="table table-striped table-condensed table-responsive text-nowrap">
  <thead>
   <tr>
     <th>Date&nbsp;Added</th>
@@ -134,7 +140,43 @@ Brought to you by <a href="https://dashtalk.org/members/elbereth.175/">elberethz
   </tr>
  </tbody>
 </table>
+    Last refresh: <span id="budgetstableLR" style="font-decoration: italic;">Never</span><br>
 </div>
+            <h2 id="budgetsprojectiondetail">Budgets Projection Detail</h2>
+            <div class="table-responsive">
+                <table id="budgetsprojectiondetailtable" class="table table-striped table-condensed table-responsive text-nowrap">
+                    <thead>
+                    <tr>
+                        <th>Date&nbsp;Added</th>
+                        <th>ID</th>
+                        <th>Hash</th>
+                        <th>Block Start</th>
+                        <th>Est. Start</th>
+                        <th>Block End</th>
+                        <th>Est. End</th>
+                        <th>Total Payments</th>
+                        <th>Remaining Payments</th>
+                        <th>Total Amount</th>
+                        <th>Monthly Amount</th>
+                        <th>Alloted Amount</th>
+                        <th>Total Budget Alloted</th>
+                        <th>Payment Address</th>
+                        <th>Votes Yea</th>
+                        <th>Votes Nay</th>
+                        <th>Votes Ratio</th>
+                        <th>Total Ratio</th>
+                        <th>Valid</th>
+                        <th>Last Seen</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr>
+                        <td colspan="20">Please wait while loading... (JavaScript neeeded)</td>
+                    </tr>
+                    </tbody>
+                </table>
+                Last refresh: <span id="budgetsprojectiontableLR" style="font-decoration: italic;">Never</span><br>
+            </div>
 <hr/>
 </div>
 </div>
