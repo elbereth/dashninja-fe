@@ -22,6 +22,13 @@
 // Load configuration and connect to DB
 require_once('libs/db.inc.php');
 
+function getipport($addr) {
+  $portpos = strrpos($addr,":");
+  $ip = substr($addr,0,$portpos);
+  $port = substr($addr,$portpos+1,strlen($addr)-$portpos-1);
+  return array($ip,$port);
+}
+
 // Create and bind the DI to the application
 $app = new \Phalcon\Mvc\Micro();
 $router = $app->getRouter();
@@ -1112,7 +1119,7 @@ CREATE TEMPORARY TABLE IF NOT EXISTS
 SELECT
     cim.MasternodeOutputHash MasternodeOutputHash,
     cim.MasternodeOutputIndex MasternodeOutputIndex,
-    inet_ntoa(cim.MasternodeIP) AS MasternodeIP,
+    inet6_ntoa(cim.MasternodeIPv6) AS MasternodeIP,
     cim.MasternodePort MasternodePort,
     cim.MasternodePubkey MasternodePubkey,
     MasternodeProtocol,
@@ -1288,20 +1295,20 @@ function drkmn_masternodes_portcheck_get($mysqli, $mnkeys, $testnet = 0) {
   else {
     touch($cachefnamupdate);
     // Retrieve the portcheck info for the specific ip:ports
-    $sql = sprintf("SELECT inet_ntoa(NodeIP) NodeIP, NodePort, NodePortCheck, NodeSubVer, UNIX_TIMESTAMP(NextCheck) NextCheck, ErrorMessage, NodeCountry, NodeCountryCode FROM cmd_portcheck WHERE NodeTestNet = %d",$testnet);
+    $sql = sprintf("SELECT inet6_ntoa(NodeIP) NodeIP, NodePort, NodePortCheck, NodeSubVer, UNIX_TIMESTAMP(NextCheck) NextCheck, ErrorMessage, NodeCountry, NodeCountryCode FROM cmd_portcheck WHERE NodeTestNet = %d",$testnet);
     // Add the filtering to ip:ports (in $mnkeys parameter)
-    if (count($mnkeys) > 0) {
+/*    if (count($mnkeys) > 0) {
       $sql .= " AND (";
       $sqls = '';
       foreach($mnkeys as $mnipstr) {
-        $mnip = explode(':',$mnipstr);
+        $mnip = explode('-',$mnipstr);
         if (strlen($sqls)>0) {
           $sqls .= ' OR ';
         }
-        $sqls .= sprintf("(NodeIP = %d AND NodePort = %d)",$mnip[0],$mnip[1]);
+        $sqls .= sprintf("(NodeIP = INET6_ATON('%s') AND NodePort = %d)",$mnip[0],$mnip[1]);
       }
       $sql .= $sqls.")";
-    }
+    }*/
     $sql .= " ORDER BY NodeIP, NodePort";
 
     // Run the query
@@ -1310,7 +1317,7 @@ function drkmn_masternodes_portcheck_get($mysqli, $mnkeys, $testnet = 0) {
       $portcheck = array();
       // Group the result by masternode ip:port (status is per protocolversion and nodename)
       while($row = $result->fetch_assoc()){
-        $portcheck[$row['NodeIP'].':'.$row['NodePort']] = array("Result" => $row['NodePortCheck'],
+        $portcheck[$row['NodeIP'].'-'.$row['NodePort']] = array("Result" => $row['NodePortCheck'],
                                                                 "SubVer" => $row['NodeSubVer'],
                                                                 "NextCheck" => $row['NextCheck'],
                                                                 "ErrorMessage" => $row['ErrorMessage'],
@@ -1667,20 +1674,19 @@ $app->get('/api/masternodes', function() use ($app,&$mysqli) {
     }
     else {
       foreach ($mnipsa as $mnipa) {
-        $mnipx = explode(":",$mnipa);
+        $mnipx = getipport($mnipa);
         if (count($mnipx) != 2) {
           $errmsg[] = "Parameter ips: Entry $mnipa: Incorrect format (should be IP:Port).";
         }
         else {
-          $mnip = ip2long($mnipx[0]);
-          if ($mnip == false) {
+          if (filter_var($mnipx[0], FILTER_VALIDATE_IP)) {
             $errmsg[] = "Parameter ips: Entry $mnipa: Incorrect IPv4 format.";
           }
           $mnport = intval($mnipx[1]);
           if (($mnport < 0) || ($mnport > 65535)) {
             $errmsg[] = "Parameter ips: Entry $mnipa: Incorrect port value.";
           }
-          $mnips[] = array($mnip,$mnport);
+          $mnips[] = $mnipx;
         }
       }
     }
@@ -1806,7 +1812,7 @@ $app->get('/api/masternodes', function() use ($app,&$mysqli) {
       $mnipstrue = array();
       $mnpubkeystrue = array();
       foreach($nodes as $node) {
-        $tmpip = ip2long($node['MasternodeIP']).":".$node['MasternodePort'];
+        $tmpip = $node['MasternodeIP']."-".$node['MasternodePort'];
         if (!in_array($tmpip,$mnipstrue)) {
           $mnipstrue[] = $tmpip;
         }
@@ -1822,8 +1828,8 @@ $app->get('/api/masternodes', function() use ($app,&$mysqli) {
         }
         else {
           foreach($nodes as $key => $node) {
-            if (array_key_exists($node['MasternodeIP'].":".$node['MasternodePort'],$portcheck)) {
-              $nodes[$key]['Portcheck'] = $portcheck[$node['MasternodeIP'].":".$node['MasternodePort']];
+            if (array_key_exists($node['MasternodeIP']."-".$node['MasternodePort'],$portcheck)) {
+              $nodes[$key]['Portcheck'] = $portcheck[$node['MasternodeIP']."-".$node['MasternodePort']];
             }
             else {
               $nodes[$key]['Portcheck'] = false;
@@ -1850,26 +1856,6 @@ $app->get('/api/masternodes', function() use ($app,&$mysqli) {
           }
         }
       }
-
-      // If we need the donation info, let's retrieve it
-/*      if ($withdonation) {
-        $donation = drkmn_masternodes_donation_get($mysqli, $mnipstrue, $testnet);
-        if ($donation === false) {
-          $response->setStatusCode(503, "Service Unavailable");
-          $response->setJsonContent(array('status' => 'ERROR', 'messages' => array($mysqli->errno.': '.$mysqli->error)));
-        }
-        else {
-          foreach($nodes as $key => $node) {
-            if (array_key_exists($node['MasternodeIP'].":".$node['MasternodePort'],$donation)) {
-              $nodes[$key]['Donation'] = $donation[$node['MasternodeIP'].":".$node['MasternodePort']];
-            }
-            else {
-              $nodes[$key]['Donation'] = false;
-            }
-          }
-        }
-      }
-*/
 
       //Change the HTTP status
       $response->setStatusCode(200, "OK");
