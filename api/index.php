@@ -168,7 +168,7 @@ $app->get('/api/blocks', function() use ($app,&$mysqli) {
         $sqlpk .= $sqls.")";
       }
 
-      $sql = sprintf("SELECT BlockId, BlockHash, cib.BlockMNPayee BlockMNPayee, BlockMNPayeeDonation, BlockMNValue, BlockSupplyValue, BlockMNPayed, BlockPoolPubKey, PoolDescription, BlockMNProtocol, BlockTime, BlockDifficulty, BlockMNPayeeExpected, BlockMNValueRatioExpected FROM cmd_info_blocks cib LEFT JOIN cmd_pools_pubkey cpp ON cib.BlockPoolPubKey = cpp.PoolPubKey AND cib.BlockTestNet = cpp.PoolTestNet WHERE cib.BlockTestNet = %d AND cib.BlockTime >= %d ORDER BY BlockId DESC",$testnet,$datefrom);
+      $sql = sprintf("SELECT BlockId, BlockHash, cib.BlockMNPayee BlockMNPayee, BlockMNPayeeDonation, BlockMNValue, BlockSupplyValue, BlockMNPayed, BlockPoolPubKey, PoolDescription, BlockMNProtocol, BlockTime, BlockDifficulty, BlockMNPayeeExpected, BlockMNValueRatioExpected, IsSuperblock, SuperBlockBudgetName FROM cmd_info_blocks cib LEFT JOIN cmd_pools_pubkey cpp ON cib.BlockPoolPubKey = cpp.PoolPubKey AND cib.BlockTestNet = cpp.PoolTestNet WHERE cib.BlockTestNet = %d AND cib.BlockTime >= %d ORDER BY BlockId DESC",$testnet,$datefrom);
       $numblocks = 0;
       $curblock = -1;
       $blocks = array();
@@ -202,22 +202,25 @@ $app->get('/api/blocks', function() use ($app,&$mysqli) {
              "BlockTime" => intval($row["BlockTime"]),
              "BlockDifficulty" => floatval($row["BlockDifficulty"]),
              "BlockMNPayeeExpected" => $row["BlockMNPayeeExpected"],
-             "BlockMNValueRatioExpected" => floatval($row["BlockMNValueRatioExpected"]),
+              "BlockMNValueRatioExpected" => floatval($row["BlockMNValueRatioExpected"]),
+              "IsSuperBlock" => $row["IsSuperblock"] == 1,
+              "SuperBlockBudgetName" => $row["SuperBlockBudgetName"],
           );
           $sqlblockids[] = sprintf($sqlwheretemplate,$row['BlockId']);
         }
 
         $curmnpaymentratio = 0.5;
         foreach($blocks as $blockid => $block) {
-          $blocks[$blockid]['BlockMNValueRatio'] = round($block['BlockMNValue'] / $block['BlockSupplyValue'],3);
-          if ((count($mnpubkeys)>0) &&
-              !in_array($blocks[$blockid]['BlockMNPayee'],$mnpubkeys) &&
-              !in_array($blocks[$blockid]['BlockMNPayeeExpected'],$mnpubkeys)) {
-  	  unset($blocks[$blockid]);
-          }
-          elseif ($blocks[$blockid]['BlockMNValueRatioExpected'] > $curmnpaymentratio) {
-            $curmnpaymentratio = $blocks[$blockid]['BlockMNValueRatioExpected'];
-          }
+            $blocks[$blockid]['BlockMNValueRatio'] = round($block['BlockMNValue'] / $block['BlockSupplyValue'], 3);
+            if ((count($mnpubkeys) > 0) &&
+                !in_array($blocks[$blockid]['BlockMNPayee'], $mnpubkeys) &&
+                !in_array($blocks[$blockid]['BlockMNPayeeExpected'], $mnpubkeys)
+            ) {
+              unset($blocks[$blockid]);
+            }
+            if ((!$blocks[$blockid]['IsSuperBlock']) && ($blocks[$blockid]['BlockMNValueRatioExpected'] > $curmnpaymentratio)) {
+              $curmnpaymentratio = $blocks[$blockid]['BlockMNValueRatioExpected'];
+            }
         }
   
         $blocksnew = array();
@@ -249,9 +252,12 @@ $app->get('/api/blocks', function() use ($app,&$mysqli) {
             $perminer[$minerkey] = array('PoolPubKeys' => array($block['BlockPoolPubKey']),
                                          'PoolName' => $block['PoolDescription'],
                                          'Blocks' => 0,
-                                         'BlocksPayed' => 0,
+                'BlocksPayed' => 0,
+                'BlocksBudgetPayed' => 0,
                                          'TotalAmount' => 0.0,
-                                         'MasternodeAmount' => 0.0,
+                'MasternodeAmount' => 0.0,
+                'SuperBlockPoolAmount' => 0.0,
+                'BudgetAmount' => 0.0,
                                          'BlocksPayedToCurrentProtocol' => 0,
                                          'BlocksPayedToOldProtocol' => 0,
                                          'BlocksPayedCorrectly' => 0,
@@ -265,8 +271,15 @@ $app->get('/api/blocks', function() use ($app,&$mysqli) {
           }
           $perminer[$minerkey]['Blocks']++;
           $perminer[$minerkey]['TotalAmount'] += $block['BlockSupplyValue'];
-          $perminer[$minerkey]['MasternodeAmount'] += $block['BlockMNValue'];
-          $perminer[$minerkey]['BlocksPayed'] += $block['BlockMNPayed'];
+          if ($block['IsSuperBlock']) {
+            $perminer[$minerkey]['SuperBlockPoolAmount'] += $block['BlockSupplyValue']-$block['BlockMNValue'];
+            $perminer[$minerkey]['BudgetAmount'] += $block['BlockMNValue'];
+            $perminer[$minerkey]['BlocksBudgetPayed'] += $block['BlockMNPayed'];
+          }
+          else {
+            $perminer[$minerkey]['MasternodeAmount'] += $block['BlockMNValue'];
+            $perminer[$minerkey]['BlocksPayed'] += $block['BlockMNPayed'];
+          }
           if (!array_key_exists($block['BlockMNProtocol'],$perversion)) {
             if (array_key_exists($block['BlockMNProtocol'],$mninfo)) {
               $mncount = $mninfo[$block['BlockMNProtocol']]['ActiveMasternodesCount'];
@@ -337,9 +350,9 @@ $app->get('/api/blocks', function() use ($app,&$mysqli) {
                              'SupplyAmount' => 0.0,
                              'MNPaymentsAmount' => 0.0);
         foreach($perminer as $miner => $info) {
-          $perminer[$miner]['RatioMNPayments'] = round($perminer[$miner]['MasternodeAmount'] / $perminer[$miner]['TotalAmount'],3);
+          $perminer[$miner]['RatioMNPayments'] = round($perminer[$miner]['MasternodeAmount'] / ($perminer[$miner]['TotalAmount']-$perminer[$miner]['BudgetAmount']-$perminer[$miner]['SuperBlockPoolAmount']),3);
           $perminer[$miner]['RatioBlocksFound'] = $perminer[$miner]['Blocks'] / count($blocks);
-          $perminer[$miner]['RatioBlocksPayed'] = $perminer[$miner]['BlocksPayed'] / $perminer[$miner]['Blocks'];
+          $perminer[$miner]['RatioBlocksPayed'] = ($perminer[$miner]['BlocksPayed']+$perminer[$miner]['BlocksBudgetPayed']) / $perminer[$miner]['Blocks'];
           $perminer[$miner]['RatioBlocksPayedToCurrentProtocol'] = $perminer[$miner]['BlocksPayedToCurrentProtocol'] / $perminer[$miner]['Blocks'];
           $perminer[$miner]['RatioBlocksPayedToOldProtocol'] = $perminer[$miner]['BlocksPayedToOldProtocol'] / $perminer[$miner]['Blocks'];
           $perminer[$miner]['RatioBlocksPayedCorrectly'] = $perminer[$miner]['BlocksPayedCorrectly'] / $perminer[$miner]['Blocks'];

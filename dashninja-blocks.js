@@ -1,7 +1,7 @@
 // DASH Masternode Ninja - Front-End - Blocks (v2)
 // By elberethzone / https://dashtalk.org/members/elbereth.175/
 
-var dashninjaversion = '2.2.0';
+var dashninjaversion = '2.2.1';
 var tableBlocks = null;
 var tablePerVersion = null;
 var tablePerMiner = null;
@@ -347,7 +347,12 @@ $(document).ready(function(){
             { data: "BlockSupplyValue" },
             { data: "BlockMNValue" },
             { data: null, render: function ( data, type, row ) {
-               return (Math.round(data.BlockMNValueRatioExpected*1000)/10).toFixed(1)+"%/"+(Math.round(data.BlockMNValueRatio*1000)/10).toFixed(1)+"%";
+                if (data.IsSuperBlock) {
+                    return "Super-Block";
+                }
+                else {
+                    return (Math.round(data.BlockMNValueRatioExpected * 1000) / 10).toFixed(1) + "%/" + (Math.round(data.BlockMNValueRatio * 1000) / 10).toFixed(1) + "%";
+                }
             } },
             { data: null, render: function ( data, type, row ) {
                 if (type == "sort") {
@@ -355,18 +360,35 @@ $(document).ready(function(){
                 } else {
                     if (data.BlockMNPayee == "") {
                         return "<i>Unpaid block</i>";
-                    } else
-                        return '<a href="' + dashninjamasternodemonitoring[dashninjatestnet].replace('%%p%%', data.BlockMNPayee) + '">' + data.BlockMNPayee + '</a>';
-
+                    } else {
+                        if (data.IsSuperBlock) {
+                            return '<a href="' + dashninjaaddressexplorer[dashninjatestnet][0][0].replace('%%a%%', data.BlockMNPayee) + '">' + data.SuperBlockBudgetName + '</a>';
+                        }
+                        else {
+                            return '<a href="' + dashninjamasternodemonitoring[dashninjatestnet].replace('%%p%%', data.BlockMNPayee) + '">' + data.BlockMNPayee + '</a>';
+                        }
+                    }
                 }
             }
             },
             { data: null, render: function ( data, type, row ) {
-               return dataProtocolDesc[data.BlockMNProtocol];
+                if (data.IsSuperBlock) {
+                    return "Unknown (v0.12.0.44+)";
+                }
+                else {
+                    return dataProtocolDesc[data.BlockMNProtocol];
+                }
             } }
         ],
         createdRow: function ( row, data, index ) {
-          if (data.BlockMNPayed == 0) {
+          if (data.IsSuperBlock) {
+              $('td',row).eq(5).css({"background-color": "#FFCB8F"});
+              $('td',row).eq(6).css({"background-color": "#FFCB8F"});
+              $('td',row).eq(7).css({"background-color": "#FFCB8F"});
+              $('td',row).eq(8).css({"background-color": "#FFCB8F"});
+          }
+            else {
+            if (data.BlockMNPayed == 0) {
             $('td',row).eq(5).css({"background-color": "#FF8F8F"});
             $('td',row).eq(6).css({"background-color": "#FF8F8F"});
             $('td',row).eq(7).css({"background-color": "#FF8F8F"});
@@ -394,6 +416,8 @@ $(document).ready(function(){
             else {
               $('td',row).eq(8).css({"background-color": "#FFFF8F"});
             }
+          }
+
           }
         }
     } );
