@@ -42,6 +42,8 @@ $router->setUriSource(\Phalcon\Mvc\Router::URI_SOURCE_SERVER_REQUEST_URI);
 // Parameters:
 //   testnet=0|1
 //   interval=interval (optional, default is P1D for 1 day)
+//   pubkeys=filter to those pubkeys
+//   onlysuperblocks=0|1 (default to 0)
 $app->get('/api/blocks', function() use ($app,&$mysqli) {
 
   //Create a response
@@ -96,6 +98,9 @@ $app->get('/api/blocks', function() use ($app,&$mysqli) {
     $cacheinterval = "P1D";
     $cachetime = 150;
   }
+  if ($onlysuperblocks == 1) {
+    $cacheinterval = "NONE";
+  }
   $interval->invert = 1;
   $datefrom = new DateTime();
   $datefrom->add( $interval );
@@ -121,6 +126,17 @@ $app->get('/api/blocks', function() use ($app,&$mysqli) {
     $mnpubkeys = array();
   }
 
+  // Retrieve the 'onlysuperblocks' parameter
+  if ($request->hasQuery('onlysuperblocks')) {
+    $onlysuperblocks = intval($request->getQuery('onlysuperblocks'));
+    if (($onlysuperblocks != 0) && ($onlysuperblocks != 1)) {
+      $onlysuperblocks = 0;
+    }
+  }
+  else {
+    $onlysuperblocks = 0;
+  }
+
   if (count($errmsg) > 0) {
     //Change the HTTP status
     $response->setStatusCode(400, "Bad Request");
@@ -130,7 +146,7 @@ $app->get('/api/blocks', function() use ($app,&$mysqli) {
   }
   else {
     $cacheserial = sha1(serialize($mnpubkeys));
-    $cachefnam = CACHEFOLDER.sprintf("dashninja_blocks_%d_%d_%s_%d_%s",$testnet,$cachenodetail,$cacheinterval,count($mnpubkeys),$cacheserial);
+    $cachefnam = CACHEFOLDER.sprintf("dashninja_blocks_%d_%d_%s_%d_%d_%s",$testnet,$cachenodetail,$cacheinterval,count($mnpubkeys),$onlysuperblocks,$cacheserial);
     $cachefnamupdate = $cachefnam.".update";
     $cachevalid = (is_readable($cachefnam) && (((filemtime($cachefnam)+$cachetime)>=time()) || file_exists($cachefnamupdate)));
     if ($cachevalid) {
@@ -168,7 +184,14 @@ $app->get('/api/blocks', function() use ($app,&$mysqli) {
         $sqlpk .= $sqls.")";
       }
 
-      $sql = sprintf("SELECT BlockId, BlockHash, cib.BlockMNPayee BlockMNPayee, BlockMNPayeeDonation, BlockMNValue, BlockSupplyValue, BlockMNPayed, BlockPoolPubKey, PoolDescription, BlockMNProtocol, BlockTime, BlockDifficulty, BlockMNPayeeExpected, BlockMNValueRatioExpected, IsSuperblock, SuperBlockBudgetName FROM cmd_info_blocks cib LEFT JOIN cmd_pools_pubkey cpp ON cib.BlockPoolPubKey = cpp.PoolPubKey AND cib.BlockTestNet = cpp.PoolTestNet WHERE cib.BlockTestNet = %d AND cib.BlockTime >= %d ORDER BY BlockId DESC",$testnet,$datefrom);
+      if ($onlysuperblocks == 1) {
+        $extrasql = " AND cib.IsSuperBlock = 1";
+      }
+      else {
+        $extrasql = sprintf(" AND cib.BlockTime >= %d", $datefrom);
+      }
+
+      $sql = sprintf("SELECT BlockId, BlockHash, cib.BlockMNPayee BlockMNPayee, BlockMNPayeeDonation, BlockMNValue, BlockSupplyValue, BlockMNPayed, BlockPoolPubKey, PoolDescription, BlockMNProtocol, BlockTime, BlockDifficulty, BlockMNPayeeExpected, BlockMNValueRatioExpected, IsSuperblock, SuperBlockBudgetName FROM cmd_info_blocks cib LEFT JOIN cmd_pools_pubkey cpp ON cib.BlockPoolPubKey = cpp.PoolPubKey AND cib.BlockTestNet = cpp.PoolTestNet WHERE cib.BlockTestNet = %d%s ORDER BY BlockId DESC",$testnet,$extrasql);
       $numblocks = 0;
       $curblock = -1;
       $blocks = array();
@@ -381,7 +404,7 @@ $app->get('/api/blocks', function() use ($app,&$mysqli) {
         $data = array('blocks' => $blocks,
                                                                           'stats' => array('perversion' => $perversion,
                                                                                            'perminer' => $perminer,
-                                                                                           'global' => $globalstats,
+                                                                                           'global' => $globalstats
                                                                                           )
                                                                          );
         //Change the HTTP status
@@ -1077,12 +1100,11 @@ function drkmn_masternodes2_get($mysqli, $testnet = 0, $protocol = 0, $mnpubkeys
     $sqlips = "";
     if (count($mnips) > 0) {
       $sqls = '';
-      foreach($mnips as $mnipstr) {
-        $mnip = explode(':',$mnipstr);
+      foreach($mnips as $mnip) {
         if (strlen($sqls)>0) {
           $sqls .= ' OR ';
         }
-        $sqls .= sprintf("(cim.MasternodeIP = %d AND cim.MasternodePort = %d)",$mnip[0],$mnip[1]);
+        $sqls .= sprintf("(cim.MasternodeIPv6 = INET6_ATON('%s') AND cim.MasternodePort = %d)",$mysqli->real_escape_string($mnip[0]),$mnip[1]);
       }
       $sqlips = " AND (".$sqls.")";
     }
@@ -1692,8 +1714,8 @@ $app->get('/api/masternodes', function() use ($app,&$mysqli) {
           $errmsg[] = "Parameter ips: Entry $mnipa: Incorrect format (should be IP:Port).";
         }
         else {
-          if (filter_var($mnipx[0], FILTER_VALIDATE_IP)) {
-            $errmsg[] = "Parameter ips: Entry $mnipa: Incorrect IPv4 format.";
+          if (!filter_var($mnipx[0], FILTER_VALIDATE_IP)) {
+            $errmsg[] = "Parameter ips: Entry ".$mnipx[0].": Incorrect IP format.";
           }
           $mnport = intval($mnipx[1]);
           if (($mnport < 0) || ($mnport > 65535)) {
