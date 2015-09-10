@@ -80,6 +80,17 @@ $app->get('/api/blocks', function() use ($app,&$mysqli) {
     $cachenodetail = 0;
   }
 
+  // Retrieve the 'onlysuperblocks' parameter
+  if ($request->hasQuery('onlysuperblocks')) {
+    $onlysuperblocks = intval($request->getQuery('onlysuperblocks'));
+    if (($onlysuperblocks != 0) && ($onlysuperblocks != 1)) {
+      $onlysuperblocks = 0;
+    }
+  }
+  else {
+    $onlysuperblocks = 0;
+  }
+
   // Retrieve the 'interval' parameter
   if ($request->hasQuery('interval')) {
     try {
@@ -126,17 +137,6 @@ $app->get('/api/blocks', function() use ($app,&$mysqli) {
     $mnpubkeys = array();
   }
 
-  // Retrieve the 'onlysuperblocks' parameter
-  if ($request->hasQuery('onlysuperblocks')) {
-    $onlysuperblocks = intval($request->getQuery('onlysuperblocks'));
-    if (($onlysuperblocks != 0) && ($onlysuperblocks != 1)) {
-      $onlysuperblocks = 0;
-    }
-  }
-  else {
-    $onlysuperblocks = 0;
-  }
-
   if (count($errmsg) > 0) {
     //Change the HTTP status
     $response->setStatusCode(400, "Bad Request");
@@ -179,7 +179,7 @@ $app->get('/api/blocks', function() use ($app,&$mysqli) {
             $sqls .= ' OR ';
           }
           $mnpubkeyesc = $mysqli->real_escape_string($mnpubkey);
-          $sqls .= sprintf("cib.BlockMNPayee = '%s' OR cibh.BlockMNPayee = '%s'",$mnpubkeyesc,$mnpubkeyesc);
+          $sqls .= sprintf("cib.BlockMNPayee = '%s' OR cib.BlockMNPayeeExpected = '%s'",$mnpubkeyesc,$mnpubkeyesc);
         }
         $sqlpk .= $sqls.")";
       }
@@ -189,11 +189,10 @@ $app->get('/api/blocks', function() use ($app,&$mysqli) {
       }
       else {
         $extrasql = sprintf(" AND cib.BlockTime >= %d", $datefrom);
+        $extrasql.=$sqlpk;
       }
 
       $sql = sprintf("SELECT BlockId, BlockHash, cib.BlockMNPayee BlockMNPayee, BlockMNPayeeDonation, BlockMNValue, BlockSupplyValue, BlockMNPayed, BlockPoolPubKey, PoolDescription, BlockMNProtocol, BlockTime, BlockDifficulty, BlockMNPayeeExpected, BlockMNValueRatioExpected, IsSuperblock, SuperBlockBudgetName FROM cmd_info_blocks cib LEFT JOIN cmd_pools_pubkey cpp ON cib.BlockPoolPubKey = cpp.PoolPubKey AND cib.BlockTestNet = cpp.PoolTestNet WHERE cib.BlockTestNet = %d%s ORDER BY BlockId DESC",$testnet,$extrasql);
-      $numblocks = 0;
-      $curblock = -1;
       $blocks = array();
       $maxprotocol = 0;
       $blockidlow = 9999999999;
@@ -225,9 +224,9 @@ $app->get('/api/blocks', function() use ($app,&$mysqli) {
              "BlockTime" => intval($row["BlockTime"]),
              "BlockDifficulty" => floatval($row["BlockDifficulty"]),
              "BlockMNPayeeExpected" => $row["BlockMNPayeeExpected"],
-              "BlockMNValueRatioExpected" => floatval($row["BlockMNValueRatioExpected"]),
-              "IsSuperBlock" => $row["IsSuperblock"] == 1,
-              "SuperBlockBudgetName" => $row["SuperBlockBudgetName"],
+             "BlockMNValueRatioExpected" => floatval($row["BlockMNValueRatioExpected"]),
+             "IsSuperBlock" => $row["IsSuperblock"] == 1,
+             "SuperBlockBudgetName" => $row["SuperBlockBudgetName"],
           );
           $sqlblockids[] = sprintf($sqlwheretemplate,$row['BlockId']);
         }
@@ -374,7 +373,12 @@ $app->get('/api/blocks', function() use ($app,&$mysqli) {
                              'MNPaymentsAmount' => 0.0);
         foreach($perminer as $miner => $info) {
           $perminer[$miner]['RatioMNPayments'] = round($perminer[$miner]['MasternodeAmount'] / ($perminer[$miner]['TotalAmount']-$perminer[$miner]['BudgetAmount']-$perminer[$miner]['SuperBlockPoolAmount']),3);
-          $perminer[$miner]['RatioBlocksFound'] = $perminer[$miner]['Blocks'] / count($blocks);
+          if (count($blocks) == 0) {
+            $perminer[$miner]['RatioBlocksFound'] = 0;
+          }
+          else {
+            $perminer[$miner]['RatioBlocksFound'] = $perminer[$miner]['Blocks'] / count($blocks);
+          }
           $perminer[$miner]['RatioBlocksPayed'] = ($perminer[$miner]['BlocksPayed']+$perminer[$miner]['BlocksBudgetPayed']) / $perminer[$miner]['Blocks'];
           $perminer[$miner]['RatioBlocksPayedToCurrentProtocol'] = $perminer[$miner]['BlocksPayedToCurrentProtocol'] / $perminer[$miner]['Blocks'];
           $perminer[$miner]['RatioBlocksPayedToOldProtocol'] = $perminer[$miner]['BlocksPayedToOldProtocol'] / $perminer[$miner]['Blocks'];
