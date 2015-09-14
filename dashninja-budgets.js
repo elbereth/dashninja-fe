@@ -20,9 +20,10 @@
 // Dash Ninja Front-End (dashninja-fe) - Budgets
 // By elberethzone / https://dashtalk.org/members/elbereth.175/
 
-var dashninjaversion = '1.1.2';
+var dashninjaversion = '1.3.0';
 var tableBudgets = null;
 var tableBudgetsProjection = null;
+var tableSuperBlocks = null;
 var latestblock = null;
 var superblock = null;
 var totalmns = 0;
@@ -75,6 +76,13 @@ function tableBudgetsProjectionRefresh(){
     // Set it to refresh in 60sec
     setTimeout(tableBudgetsProjectionRefresh, 150000);
 };
+
+function tableSuperBlocksRefresh(){
+    tableSuperBlocks.api().ajax.reload();
+    // Set it to refresh in 60sec
+    setTimeout(tableSuperBlocksRefresh, 150000);
+};
+
 
 $(document).ready(function(){
 
@@ -582,5 +590,67 @@ $(document).ready(function(){
         }
     } );
     setTimeout(tableBudgetsProjectionRefresh, 150000);
+
+    $('#superblockstable').on('xhr.dt', function ( e, settings, json ) {
+        // Change the last refresh date
+        var date = new Date();
+        var n = date.toDateString();
+        var time = date.toLocaleTimeString();
+        $('#superblockstableLR').text( n + ' ' + time );
+    } );
+    tableSuperBlocks = $('#superblockstable').dataTable( {
+        ajax: { url: "/api/blocks?testnet="+dashninjatestnet+"&onlysuperblocks=1",
+            dataSrc: 'data.blocks' },
+        paging: false,
+        order: [[ 0, "desc" ]],
+        columns: [
+            { data: null, render: function ( data, type, row ) {
+                if (type == 'sort') {
+                    return data.BlockTime;
+                }
+                else {
+//                return deltaTimeStampHR(currenttimestamp(),data.BlockTime);
+                    return timeSince((currenttimestamp() - data.BlockTime));
+                }
+
+            } },
+            { data: null, render: function ( data, type, row ) {
+                var outtxt = data.BlockId;
+                if (type != 'sort') {
+                    if (dashninjablockexplorer[dashninjatestnet].length > 0) {
+                        outtxt = '<a href="'+dashninjablockexplorer[dashninjatestnet][0][0].replace('%%b%%',data.BlockHash)+'">'+data.BlockId+'</a>';
+                    }
+                }
+                return outtxt;
+            } },
+            { data: null, render: function ( data, type, row ) {
+                var outtxt = data.BlockPoolPubKey;
+                if (data.PoolDescription) {
+                    outtxt = data.PoolDescription;
+                }
+                return outtxt;
+            } },
+            { data: "BlockDifficulty" },
+            { data: null, render: function ( data, type, row ) {
+                if (type == "sort") {
+                    return data.SuperBlockBudgetName;
+                } else {
+                    return '<a href="' + dashninjaaddressexplorer[dashninjatestnet][0][0].replace('%%a%%', data.BlockMNPayee) + '">' + data.SuperBlockBudgetName + '</a>';
+                }
+              }
+            },
+            { data: null, render: function ( data, type, row ) {
+                if (type == "sort") {
+                    return data.BlockMNValue;
+                } else {
+                    return data.BlockMNValue+" "+dashninjacoin[dashninjatestnet];
+                }
+            }
+            }
+        ],
+        createdRow: function ( row, data, index ) {
+        }
+    } );
+    setTimeout(tableSuperBlocksRefresh, 150000);
 
 });
