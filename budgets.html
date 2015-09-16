@@ -94,7 +94,7 @@ along with Dash Ninja.  If not, see <http://www.gnu.org/licenses/>.
         <div class="page-header">
           <h1>DASH Ninja - Budget Monitoring</h1>
         <p>Page is dynamically refreshed (JavaScript required). All dates/times are using your system locale.<br/>
-Versions: <i>HTML v1.3.0 / JS v<span id="dashninjajsversion">?.?.?</span></i> (hint: might need to Ctrl+F5 to update JS)</p>
+Versions: <i>HTML v1.3.1 / JS v<span id="dashninjajsversion">?.?.?</span></i> (hint: might need to Ctrl+F5 to update JS)</p>
       </div>
     <div id="testnetalert" class="alert alert-danger" style="display: none">
       <h2>THIS IS TESTNET!</h2>
@@ -104,7 +104,7 @@ Versions: <i>HTML v1.3.0 / JS v<span id="dashninjajsversion">?.?.?</span></i> (h
 Brought to you by <a href="https://dashtalk.org/members/elbereth.175/">elberethzone</a>.</p>
     </div>
         <h2>Global Statistics</h2>
-        <p>There are <span id="globalvalidbudget" style="font-weight: bold;">???</span> budgets proposal of which <span id="globalestablishedbudget" style="font-weight: bold;">???</span> are established (total established payment: <span id="globalestablishedbudgetamount" style="font-weight: bold;">????.???????? DASH</span>) and <span id="globalallotedbudget" style="font-weight: bold;">???</span> are alloted (total alloted payment: <span id="globalallotedbudgetamount" style="font-weight: bold;">????.???????? DASH</span>).</p>
+        <p>There are <span id="globalvalidbudget" style="font-weight: bold;">???</span> valid budgets proposal of which <span id="globalestablishedbudget" style="font-weight: bold;">???</span> are established (total established payment: <span id="globalestablishedbudgetamount" style="font-weight: bold;">????.???????? DASH</span>) and <span id="globalallotedbudget" style="font-weight: bold;">???</span> are alloted (total alloted payment: <span id="globalallotedbudgetamount" style="font-weight: bold;">????.???????? DASH</span>).</p>
         <p>Next super-block will be <span id="globalnextsuperblockid" style="font-weight: bold;">???</span> on <span id="globalnextsuperblockdate" style="font-weight: bold;">??/??/????</span> (<span id="globalnextsuperblockremaining" style="font-weight: bold;">???</span>) and will provide <span id="globalnextsuperblockamount" style="font-weight: bold;">????.???????? DASH</span> for budgets.</p>
         <p><span id="globalnextsuperblockunallocated" style="font-weight: bold;">????.???????? DASH</span> unallocated in next super-block.</p>
 
@@ -201,6 +201,7 @@ Brought to you by <a href="https://dashtalk.org/members/elbereth.175/">elberethz
                     </tr>
                     </tbody>
                 </table>
+                Last refresh: <span id="superblockstableLR" style="font-decoration: italic;">Never</span><br>
             </div>
             <hr/>
 </div>

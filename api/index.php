@@ -779,7 +779,9 @@ $app->get('/api/budgetsprojection', function() use ($app,&$mysqli) {
               "FirstReported" => strtotime($row["FirstReported"]),
               "LastReported" => strtotime($row["LastReported"])
           );
-          $budgetvalid+=intval($row["IsValid"]);
+          if ((time()-strtotime($row["LastReported"])) <= 3600) {
+            $budgetvalid += intval($row["IsValid"]);
+          }
         }
 
         $totalmninfo = 0;

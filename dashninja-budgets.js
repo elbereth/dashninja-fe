@@ -20,7 +20,7 @@
 // Dash Ninja Front-End (dashninja-fe) - Budgets
 // By elberethzone / https://dashtalk.org/members/elbereth.175/
 
-var dashninjaversion = '1.3.0';
+var dashninjaversion = '1.3.1';
 var tableBudgets = null;
 var tableBudgetsProjection = null;
 var tableSuperBlocks = null;
@@ -304,19 +304,24 @@ $(document).ready(function(){
                 isalloted = true;
             }
             $('td',row).eq(16).css({"background-color":color,"text-align": "right"});
-            if (isalloted) {
-                color = '#8FFF8F';
+            if ((currenttimestamp() - data.LastReported) > 3600) {
+                color = '#8F8F8F';
             }
             else {
-                if (data.IsEstablished) {
-                    color = '#FFFF8F';
+                if (isalloted) {
+                    color = '#8FFF8F';
                 }
                 else {
-                    if (data.IsValid) {
-                        color = '#FF8F8F';
+                    if (data.IsEstablished) {
+                        color = '#FFFF8F';
                     }
                     else {
-                        color = '#ffcb8f';
+                        if (data.IsValid) {
+                            color = '#FF8F8F';
+                        }
+                        else {
+                            color = '#ffcb8f';
+                        }
                     }
                 }
             }
@@ -373,7 +378,7 @@ $(document).ready(function(){
         // Calculate the alloted project total amounts
         var totalamount = 0.0;
         for (var bix in json.data.budgetsprojection){
-            if ((json.data.budgetsprojection[bix].IsValid) && (json.data.budgetsprojection[bix].RemainingPaymentCount >0)) {
+            if ((json.data.budgetsprojection[bix].IsValid) && (json.data.budgetsprojection[bix].RemainingPaymentCount >0) && ((currenttimestamp() - json.data.budgetsprojection[bix].LastReported) > 3600)) {
                 totalamount+=json.data.budgetsprojection[bix].Alloted;
             }
         }
@@ -543,6 +548,18 @@ $(document).ready(function(){
             } else if (data.BlockStart > superblock2.blockheight) {
                 color = '#8FFF8F';
             }
+            if ((currenttimestamp() - data.LastReported) > 3600) {
+                color = '#FF8F8F';
+            }
+            else {
+                if (data.IsValid) {
+                    color = '#8FFF8F';
+                }
+                else {
+                    color = '#ffff8f';
+                }
+            }
+            $('td',row).eq(1).css({"background-color":color});
             $('td',row).eq(3).css({"background-color":color,"text-align": "right"});
             $('td',row).eq(4).css({"text-align": "center"});
             $('td',row).eq(5).css({"text-align": "right"});
@@ -594,7 +611,7 @@ $(document).ready(function(){
     $('#superblockstable').on('xhr.dt', function ( e, settings, json ) {
         // Change the last refresh date
         var date = new Date();
-        var n = date.toDateString();
+        var n = date.toLocaleDateString();
         var time = date.toLocaleTimeString();
         $('#superblockstableLR').text( n + ' ' + time );
     } );
