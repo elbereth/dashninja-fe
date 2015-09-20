@@ -1169,10 +1169,19 @@ SELECT
     MasternodeLastPaid,
     ActiveCount,
     InactiveCount,
-    UnlistedCount
+    UnlistedCount,
+    cimlp.MNLastPaidBlock MasternodeLastPaidBlockHeight,
+    cib.BlockTime MasternodeLastPaidBlockTime,
+    cib.BlockMNValue MasternodeLastPaidBlockAmount
 FROM
     (cmd_info_masternode2 cim,
     _node_status)
+    LEFT JOIN
+        cmd_info_masternode_lastpaid cimlp
+            ON (cimlp.MNTestNet = cim.MasternodeTestNet AND cimlp.MNPubKey = cim.MasternodePubkey)
+    LEFT JOIN
+        cmd_info_blocks cib
+            ON (cib.BlockTestNet = cimlp.MNTestNet AND cib.BlockId = cimlp.MNLastPaidBlock)
 WHERE
     cim.MasternodeOutputHash = _node_status.MasternodeOutputHash AND
     cim.MasternodeOutputIndex = _node_status.MasternodeOutputIndex AND
@@ -1194,15 +1203,33 @@ EOT;
               if (is_null($row['ActiveCount'])) {
                 $row['ActiveCount'] = 0;
               }
+              else {
+                $row['ActiveCount'] = intval($row['ActiveCount']);
+              }
               if (is_null($row['InactiveCount'])) {
                 $row['InactiveCount'] = 0;
+              }
+              else {
+                $row['InactiveCount'] = intval($row['InactiveCount']);
               }
               if (is_null($row['UnlistedCount'])) {
                 $row['UnlistedCount'] = 0;
               }
+              else {
+                $row['UnlistedCount'] = intval($row['UnlistedCount']);
+              }
               if (strlen($row['MasternodeLastSeen']) == 16) {
                 $row['MasternodeLastSeen'] = substr($row['MasternodeLastSeen'],0,-6);
               }
+              if (!is_null($row['MasternodeLastPaidBlockHeight'])) {
+                $row['LastPaidFromBlocks'] = array("MNLastPaidBlock" => $row['MasternodeLastPaidBlockHeight'],
+                    "MNLastPaidTime" => $row['MasternodeLastPaidBlockTime'],
+                    "MNLastPaidAmount" => $row['MasternodeLastPaidBlockAmount']);
+              }
+              else {
+                $row['LastPaidFromBlocks'] = false;
+              }
+              unset($row['MasternodeLastPaidBlockHeight'],$row['MasternodeLastPaidBlockTime'],$row['MasternodeLastPaidBlockAmount']);
               $nodes[] = $row;
             }
           }
