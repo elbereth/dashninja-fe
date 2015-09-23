@@ -671,6 +671,7 @@ $app->get('/api/budgets', function() use ($app,&$mysqli) {
     $cachevalid = (is_readable($cachefnam) && (((filemtime($cachefnam)+120)>=time()) || file_exists($cachefnamupdate)));
     if ($cachevalid) {
       $data = unserialize(file_get_contents($cachefnam));
+      $data["cache"]["fromcache"] = true;
       $response->setStatusCode(200, "OK");
       $response->setJsonContent(array('status' => 'OK', 'data' => $data));
     }
@@ -762,12 +763,15 @@ $app->get('/api/budgets', function() use ($app,&$mysqli) {
           return $response;
         }
 
-        $nextsuperblock = $currentblock["BlockId"] - ($currentblock["BlockId"] % 16616) + 16616;
         $nSubsidy = 5;
         if ($testnet == 0){
-          for($i = 46200; $i <= $nextsuperblock; $i += 210240) $nSubsidy -= $nSubsidy/14;
-        } else {
+          $nextsuperblock = $currentblock["BlockId"] - ($currentblock["BlockId"] % 16616) + 16616;
           for($i = 210240; $i <= $nextsuperblock; $i += 210240) $nSubsidy -= $nSubsidy/14;
+          $estimatedbudgetamount = (($nSubsidy/100)*10)*576*30;
+        } else {
+          $nextsuperblock = $currentblock["BlockId"] - ($currentblock["BlockId"] % 50) + 50 ;
+          for($i = 46200; $i <= $nextsuperblock; $i += 210240) $nSubsidy -= $nSubsidy/14;
+          $estimatedbudgetamount = (($nSubsidy/100)*10)*50;
         }
 
         $data = array('budgets' => $budgets,
@@ -777,10 +781,14 @@ $app->get('/api/budgets', function() use ($app,&$mysqli) {
                                    'totalmns' => intval($totalmninfo),
                                    'nextsuperblock' => array(
                                                              "blockheight" => $nextsuperblock,
-                                                             "estimatedbudgetamount" => (($nSubsidy/100)*10)*576*30
+                                                             "estimatedbudgetamount" => $estimatedbudgetamount
                                                             ),
                                    'latestblock' => $currentblock
-                                      )
+                                      ),
+            'cache' => array(
+                'time' => time(),
+                'fromcache' => false
+            )
                      );
 
         //Change the HTTP status
@@ -986,6 +994,7 @@ $app->get('/api/budgetsprojection', function() use ($app,&$mysqli) {
     $cachevalid = (is_readable($cachefnam) && (((filemtime($cachefnam)+120)>=time()) || file_exists($cachefnamupdate)));
     if ($cachevalid) {
       $data = unserialize(file_get_contents($cachefnam));
+      $data["cache"]["fromcache"] = true;
       $response->setStatusCode(200, "OK");
       $response->setJsonContent(array('status' => 'OK', 'data' => $data));
     }
@@ -1051,12 +1060,15 @@ $app->get('/api/budgetsprojection', function() use ($app,&$mysqli) {
           return $response;
         }
 
-        $nextsuperblock = $currentblock["BlockId"] - ($currentblock["BlockId"] % 16616) + 16616;
         $nSubsidy = 5;
         if ($testnet == 0){
-          for($i = 46200; $i <= $nextsuperblock; $i += 210240) $nSubsidy -= $nSubsidy/14;
-        } else {
+          $nextsuperblock = $currentblock["BlockId"] - ($currentblock["BlockId"] % 16616) + 16616;
           for($i = 210240; $i <= $nextsuperblock; $i += 210240) $nSubsidy -= $nSubsidy/14;
+          $estimatedbudgetamount = (($nSubsidy/100)*10)*576*30;
+        } else {
+          $nextsuperblock = $currentblock["BlockId"] - ($currentblock["BlockId"] % 50) + 50 ;
+          for($i = 46200; $i <= $nextsuperblock; $i += 210240) $nSubsidy -= $nSubsidy/14;
+          $estimatedbudgetamount = (($nSubsidy/100)*10)*50;
         }
 
         $data = array('budgetsprojection' => $budgets,
@@ -1065,11 +1077,17 @@ $app->get('/api/budgetsprojection', function() use ($app,&$mysqli) {
                 'totalmns' => intval($totalmninfo),
                 'nextsuperblock' => array(
                     "blockheight" => $nextsuperblock,
-                    "estimatedbudgetamount" => (($nSubsidy/100)*10)*576*30
+                    "estimatedbudgetamount" => $estimatedbudgetamount
                 ),
                 'latestblock' => $currentblock
-            )
+            ),
+            'cache' => array(
+                'time' => time(),
+                'fromcache' => false
+            ),
         );
+
+        $data["debug"] = array("nSubsidy" => $nSubsidy);
 
         //Change the HTTP status
         $response->setStatusCode(200, "OK");
