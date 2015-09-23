@@ -22,6 +22,8 @@
 // Load configuration and connect to DB
 require_once('libs/db.inc.php');
 
+define("DASHNINJA_BEV","2.0");
+
 function getipport($addr) {
   $portpos = strrpos($addr,":");
   $ip = substr($addr,0,$portpos);
@@ -46,6 +48,9 @@ $router->setUriSource(\Phalcon\Mvc\Router::URI_SOURCE_SERVER_REQUEST_URI);
 //   onlysuperblocks=0|1 (default to 0)
 //   budgetids=filter to chose budget names
 $app->get('/api/blocks', function() use ($app,&$mysqli) {
+
+  $apiversion = 1;
+  $apiversioncompat = 1;
 
   //Create a response
   $response = new Phalcon\Http\Response();
@@ -445,6 +450,11 @@ $app->get('/api/blocks', function() use ($app,&$mysqli) {
             'cache' => array(
                 'time' => time(),
                 'fromcache' => false
+            ),
+            'api' => array(
+                'version' => $apiversion,
+                'compat' => $apiversioncompat,
+                'bev' => 'bk='.DASHNINJA_BEV.".".$apiversion
             )
                                                                          );
         //Change the HTTP status
@@ -590,6 +600,9 @@ $app->get('/api/blocks/consensus', function() use ($app,&$mysqli) {
 //   budgethashes=[json array of hashes]
 //   budgetids=[json array of hashes]
 $app->get('/api/budgets', function() use ($app,&$mysqli) {
+
+  $apiversion = 1;
+  $apiversioncompat = 1;
 
   //Create a response
   $response = new Phalcon\Http\Response();
@@ -788,6 +801,11 @@ $app->get('/api/budgets', function() use ($app,&$mysqli) {
             'cache' => array(
                 'time' => time(),
                 'fromcache' => false
+            ),
+            'api' => array(
+                'version' => $apiversion,
+                'compat' => $apiversioncompat,
+                'bev' => 'bu='.DASHNINJA_BEV.".".$apiversion
             )
                      );
 
@@ -813,6 +831,9 @@ $app->get('/api/budgets', function() use ($app,&$mysqli) {
 //   onlyvalid=0|1
 //   budgetid=name of the budget
 $app->get('/api/budgets/votes', function() use ($app,&$mysqli) {
+
+  $apiversion = 1;
+  $apiversioncompat = 1;
 
   //Create a response
   $response = new Phalcon\Http\Response();
@@ -929,6 +950,11 @@ $app->get('/api/budgets/votes', function() use ($app,&$mysqli) {
             'cache' => array(
                 'time' => time(),
                 'fromcache' => false
+            ),
+            'api' => array(
+                'version' => $apiversion,
+                'compat' => $apiversioncompat,
+                'bev' => 'bv='.DASHNINJA_BEV.".".$apiversion
             )
         );
 
@@ -956,6 +982,9 @@ $app->get('/api/budgets/votes', function() use ($app,&$mysqli) {
 // Parameters:
 //   testnet=0|1
 $app->get('/api/budgetsprojection', function() use ($app,&$mysqli) {
+
+  $apiversion = 1;
+  $apiversioncompat = 1;
 
   //Create a response
   $response = new Phalcon\Http\Response();
@@ -1085,6 +1114,11 @@ $app->get('/api/budgetsprojection', function() use ($app,&$mysqli) {
                 'time' => time(),
                 'fromcache' => false
             ),
+            'api' => array(
+                'version' => $apiversion,
+                'compat' => $apiversioncompat,
+                'bev' => 'bp='.DASHNINJA_BEV.".".$apiversion
+            )
         );
 
         $data["debug"] = array("nSubsidy" => $nSubsidy);
@@ -2508,6 +2542,9 @@ $app->get('/api/masternodes/stats', function() use ($app,&$mysqli) {
 //   none
 $app->get('/api/tablevars', function() use ($app,&$mysqli) {
 
+  $apiversion = 1;
+  $apiversioncompat = 1;
+
   //Create a response
   $response = new Phalcon\Http\Response();
   $response->setHeader('Access-Control-Allow-Origin', '*');
@@ -2529,22 +2566,48 @@ $app->get('/api/tablevars', function() use ($app,&$mysqli) {
     $response->setJsonContent(array('status' => 'ERROR', 'messages' => array('Payload (or CONTENT_LENGTH) is missing')));
   }
   else {
-    // Retrieve all known nodes for current hub
-    $sql = "SELECT * FROM cmd_stats_values";
-    $numnodes = 0;
-    $stats = array();
-    if ($result = $mysqli->query($sql)) {
-      while($row = $result->fetch_assoc()){
-        $stats[$row["StatKey"]] = $row;
-      }
-
-      //Change the HTTP status
+    $cachefnam = CACHEFOLDER."dashninja_tablevars";
+    $cachefnamupdate = $cachefnam.".update";
+    $cachevalid = (is_readable($cachefnam) && (((filemtime($cachefnam)+60)>=time()) || file_exists($cachefnamupdate)));
+    if ($cachevalid) {
+      $data = unserialize(file_get_contents($cachefnam));
+      $data["cache"]["fromcache"] = true;
       $response->setStatusCode(200, "OK");
-      $response->setJsonContent(array('status' => 'OK', 'data' => array("tablevars" => $stats)));
+      $response->setJsonContent(array('status' => 'OK', 'data' => $data));
     }
     else {
-      $response->setStatusCode(503, "Service Unavailable");
-      $response->setJsonContent(array('status' => 'ERROR', 'messages' => $mysqli->errno.': '.$mysqli->error));
+      touch($cachefnamupdate);
+
+      // Retrieve all known nodes for current hub
+      $sql = "SELECT * FROM cmd_stats_values";
+
+      $stats = array();
+      if ($result = $mysqli->query($sql)) {
+        while ($row = $result->fetch_assoc()) {
+          $stats[$row["StatKey"]] = $row;
+        }
+
+        $data = array("tablevars" => $stats,
+            'cache' => array(
+                'time' => time(),
+                'fromcache' => false
+            ),
+            'api' => array(
+                'version' => $apiversion,
+                'compat' => $apiversioncompat,
+                'bev' => 'tv='.DASHNINJA_BEV.".".$apiversion
+            )
+        );
+
+        //Change the HTTP status
+        $response->setStatusCode(200, "OK");
+        $response->setJsonContent(array('status' => 'OK', 'data' => $data));
+        file_put_contents($cachefnam,serialize($data),LOCK_EX);
+        unlink($cachefnamupdate);
+      } else {
+        $response->setStatusCode(503, "Service Unavailable");
+        $response->setJsonContent(array('status' => 'ERROR', 'messages' => $mysqli->errno . ': ' . $mysqli->error));
+      }
     }
   }
   return $response;
