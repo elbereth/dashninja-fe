@@ -20,7 +20,7 @@
 // Dash Ninja Front-End (dashninja-fe) - Budgets
 // By elberethzone / https://dashtalk.org/members/elbereth.175/
 
-var dashninjaversion = '1.3.1';
+var dashninjaversion = '1.3.2';
 var tableBudgets = null;
 var tableBudgetsProjection = null;
 var tableSuperBlocks = null;
@@ -139,17 +139,11 @@ $(document).ready(function(){
                 }
             } },
             { data: null, render: function ( data, type, row ) {
-                if (type == 'sort') {
-                    return data.ID;
+                var outtxt = data.ID;
+                if (type != 'sort') {
+                    outtxt = '<a href="'+dashninjabudgetdetail[dashninjatestnet].replace('%%b%%',data.ID)+'">'+data.ID+'</a>';
                 }
-                else {
-                    var url = data.URL;
-                    if (url.indexOf("://") == -1) {
-                        url = "http://"+url;
-                    }
-                    return '<a href="'+url+'">'+data.ID+'</a>';
-                }
-
+                return outtxt;
             } },
             { data: null, render: function ( data, type, row ) {
                 if (type == 'sort') {

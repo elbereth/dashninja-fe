@@ -42,8 +42,9 @@ $router->setUriSource(\Phalcon\Mvc\Router::URI_SOURCE_SERVER_REQUEST_URI);
 // Parameters:
 //   testnet=0|1
 //   interval=interval (optional, default is P1D for 1 day)
-//   pubkeys=filter to those pubkeys
+//   pubkeys=filter to chose pubkeys
 //   onlysuperblocks=0|1 (default to 0)
+//   budgetids=filter to chose budget names
 $app->get('/api/blocks', function() use ($app,&$mysqli) {
 
   //Create a response
@@ -137,6 +138,22 @@ $app->get('/api/blocks', function() use ($app,&$mysqli) {
     $mnpubkeys = array();
   }
 
+  // Retrieve the 'budgetids' parameter
+  if ($request->hasQuery('budgetids')) {
+    $budgetids = json_decode($request->getQuery('budgetids'));
+    if (($budgetids === false) || !is_array($budgetids)) {
+      $errmsg[] = "Parameter budgetids: Not a JSON encoded list of budget names";
+    }
+    else {
+      foreach ($budgetids as $x => $budgetid) {
+        $budgetids[$x] = $mysqli->real_escape_string($budgetid);
+      }
+    }
+  }
+  else {
+    $budgetids = array();
+  }
+
   if (count($errmsg) > 0) {
     //Change the HTTP status
     $response->setStatusCode(400, "Bad Request");
@@ -145,12 +162,13 @@ $app->get('/api/blocks', function() use ($app,&$mysqli) {
     $response->setJsonContent(array('status' => 'ERROR', 'messages' => $errmsg));
   }
   else {
-    $cacheserial = sha1(serialize($mnpubkeys));
-    $cachefnam = CACHEFOLDER.sprintf("dashninja_blocks_%d_%d_%s_%d_%d_%s",$testnet,$cachenodetail,$cacheinterval,count($mnpubkeys),$onlysuperblocks,$cacheserial);
+    $cacheserial = sha1(serialize($mnpubkeys).serialize($budgetids));
+    $cachefnam = CACHEFOLDER.sprintf("dashninja_blocks_%d_%d_%s_%d_%d_%d_%s",$testnet,$cachenodetail,$cacheinterval,count($mnpubkeys),$onlysuperblocks,count($budgetids),$cacheserial);
     $cachefnamupdate = $cachefnam.".update";
     $cachevalid = (is_readable($cachefnam) && (((filemtime($cachefnam)+$cachetime)>=time()) || file_exists($cachefnamupdate)));
     if ($cachevalid) {
       $data = unserialize(file_get_contents($cachefnam));
+      $data["cache"]["fromcache"] = true;
       $response->setStatusCode(200, "OK");
       $response->setJsonContent(array('status' => 'OK', 'data' => $data));
     }
@@ -184,8 +202,22 @@ $app->get('/api/blocks', function() use ($app,&$mysqli) {
         $sqlpk .= $sqls.")";
       }
 
+      $sqlsb = "";
+      // Add selection by budgetname
+      if (count($budgetids) > 0) {
+        $sqldb = " AND (";
+        $sqls = '';
+        foreach($budgetids as $budgetid) {
+          if (strlen($sqls)>0) {
+            $sqls .= ' OR ';
+          }
+          $sqls .= sprintf("cib.SuperBlockBudgetName = '%s'",$budgetid);
+        }
+        $sqldb .= $sqls.")";
+      }
+
       if ($onlysuperblocks == 1) {
-        $extrasql = " AND cib.IsSuperBlock = 1";
+        $extrasql = " AND cib.IsSuperBlock = 1".$sqldb;
       }
       else {
         $extrasql = sprintf(" AND cib.BlockTime >= %d", $datefrom);
@@ -409,7 +441,11 @@ $app->get('/api/blocks', function() use ($app,&$mysqli) {
                                                                           'stats' => array('perversion' => $perversion,
                                                                                            'perminer' => $perminer,
                                                                                            'global' => $globalstats
-                                                                                          )
+                                                                                          ),
+            'cache' => array(
+                'time' => time(),
+                'fromcache' => false
+            )
                                                                          );
         //Change the HTTP status
         $response->setStatusCode(200, "OK");
@@ -551,6 +587,8 @@ $app->get('/api/blocks/consensus', function() use ($app,&$mysqli) {
 // Parameters:
 //   testnet=0|1
 //   onlyvalid=0|1
+//   budgethashes=[json array of hashes]
+//   budgetids=[json array of hashes]
 $app->get('/api/budgets', function() use ($app,&$mysqli) {
 
   //Create a response
@@ -585,6 +623,40 @@ $app->get('/api/budgets', function() use ($app,&$mysqli) {
     $onlyvalid = false;
   }
 
+  // Retrieve the 'budgetids' parameter
+  if ($request->hasQuery('budgetids')) {
+    $budgetids = json_decode($request->getQuery('budgetids'));
+    if (($budgetids === false) || !is_array($budgetids)) {
+      $errmsg[] = "Parameter budgetids: Not a JSON encoded list of budgets ids";
+    }
+    else {
+      foreach ($budgetids as $x => $budgetid) {
+        $budgetids[$x] = $mysqli->real_escape_string($budgetid);
+      }
+    }
+  }
+  else {
+    $budgetids = array();
+  }
+
+  // Retrieve the 'budgethashes' parameter
+  if ($request->hasQuery('budgethashes')) {
+    $budgethashes = json_decode($request->getQuery('budgethashes'));
+    if (($budgethashes === false) || !is_array($budgethashes)) {
+      $errmsg[] = "Parameter budgethashes: Not a JSON encoded list of budget hashes";
+    }
+    else {
+      foreach ($budgethashes as $budgethash) {
+        if ( strlen($budgethash) != 64 ) {
+          $errmsg[] = "Parameter budgethashes: Entry $budgethash: Incorrect hash format.";
+        }
+      }
+    }
+  }
+  else {
+    $budgethashes = array();
+  }
+
   if (count($errmsg) > 0) {
     //Change the HTTP status
     $response->setStatusCode(400, "Bad Request");
@@ -593,7 +665,8 @@ $app->get('/api/budgets', function() use ($app,&$mysqli) {
     $response->setJsonContent(array('status' => 'ERROR', 'messages' => $errmsg));
   }
   else {
-    $cachefnam = CACHEFOLDER.sprintf("dashninja_budgets_%d_%d",$testnet,$onlyvalid);
+    $cacheserial = sha1(serialize($budgetids).serialize($budgethashes));
+    $cachefnam = CACHEFOLDER.sprintf("dashninja_budgets_%d_%d_%d_%d_%s",$testnet,$onlyvalid,count($budgetids),count($budgethashes),$cacheserial);
     $cachefnamupdate = $cachefnam.".update";
     $cachevalid = (is_readable($cachefnam) && (((filemtime($cachefnam)+120)>=time()) || file_exists($cachefnamupdate)));
     if ($cachevalid) {
@@ -604,11 +677,38 @@ $app->get('/api/budgets', function() use ($app,&$mysqli) {
     else {
       touch($cachefnamupdate);
 
+      // Add selection by budget hashes
+      $sqlbh = "";
+      if (count($budgethashes) > 0) {
+        $sqls = '';
+        foreach($budgethashes as $budgethash) {
+          if (strlen($sqls)>0) {
+            $sqls .= ' OR ';
+          }
+          $sqls .= sprintf("BudgetHash = '%s'",$budgethash);
+        }
+        $sqlbh = " AND (".$sqls.")";
+      }
+
+      // Add selection by budget ids
+      $sqlbi = "";
+      if (count($budgetids) > 0) {
+        $sqls = '';
+        foreach($budgetids as $budgetid) {
+          if (strlen($sqls)>0) {
+            $sqls .= ' OR ';
+          }
+          $sqls .= sprintf("BudgetId = '%s'",$budgetid);
+        }
+        $sqlbi = " AND (".$sqls.")";
+      }
+
       // Get budgets
-      $sql = sprintf("SELECT * FROM cmd_budget WHERE BudgetTestnet = %d",$testnet);
+      $sql = sprintf("SELECT * FROM cmd_budget WHERE BudgetTestnet = %d%s%s",$testnet,$sqlbh,$sqlbi);
       if ($onlyvalid) {
         $sql .= " AND IsValid = 1";
       }
+
       $sqlblockids = array();
       if ($result = $mysqli->query($sql)) {
         $budgetvalid = 0;
@@ -686,7 +786,152 @@ $app->get('/api/budgets', function() use ($app,&$mysqli) {
         //Change the HTTP status
         $response->setStatusCode(200, "OK");
         $response->setJsonContent(array('status' => 'OK', 'data' => $data));
-//        file_put_contents($cachefnam,serialize($data),LOCK_EX);
+        file_put_contents($cachefnam,serialize($data),LOCK_EX);
+        unlink($cachefnamupdate);
+      }
+      else {
+        $response->setStatusCode(503, "Service Unavailable");
+        $response->setJsonContent(array('status' => 'ERROR', 'messages' => $mysqli->errno.': '.$mysqli->error));
+      }
+    }
+  }
+  return $response;
+
+});
+
+// Get budget votes
+// Parameters:
+//   testnet=0|1
+//   onlyvalid=0|1
+//   budgetid=name of the budget
+$app->get('/api/budgets/votes', function() use ($app,&$mysqli) {
+
+  //Create a response
+  $response = new Phalcon\Http\Response();
+  $response->setHeader('Access-Control-Allow-Origin', '*');
+  $response->setHeader("Content-Type", "application/json");
+
+  $request = $app->request;
+
+  $errmsg = array();
+
+  if (!array_key_exists('CONTENT_LENGTH',$_SERVER) || (intval($_SERVER['CONTENT_LENGTH']) != 0)) {
+    $errmsg[] = "No CONTENT expected";
+  }
+
+  // Retrieve the 'testnet' parameter
+  if ($request->hasQuery('testnet')) {
+    $testnet = intval($request->getQuery('testnet'));
+    if (($testnet != 0) && ($testnet != 1)) {
+      $testnet = 0;
+    }
+  }
+  else {
+    $testnet = 0;
+  }
+
+  // Retrieve the 'onlyvalid' parameter
+  if ($request->hasQuery('onlyvalid')) {
+    $onlyvalid = (intval($request->getQuery('onlyvalid')) == 1);
+  }
+  else {
+    $onlyvalid = false;
+  }
+
+  // Retrieve the 'debug' parameter
+  if ($request->hasQuery('debug')) {
+    $debug = (intval($request->getQuery('debug')) == 1);
+  }
+  else {
+    $debug = false;
+  }
+
+  // Retrieve the 'budgetid' parameter
+  if ($request->hasQuery('budgetid')) {
+    $budgetid = $request->getQuery('budgetid');
+    $budgetid = $mysqli->real_escape_string($budgetid);
+  }
+  else {
+    $errmsg[] = "Parameter budgetid is mandatory";
+  }
+
+  if (count($errmsg) > 0) {
+    //Change the HTTP status
+    $response->setStatusCode(400, "Bad Request");
+
+    //Send errors to the client
+    $response->setJsonContent(array('status' => 'ERROR', 'messages' => $errmsg));
+  }
+  else {
+    $cacheserial = sha1(serialize($budgetid));
+    $cachefnam = CACHEFOLDER.sprintf("dashninja_budgets_votes_%d_%d_%s",$testnet,$onlyvalid,$cacheserial);
+    $cachefnamupdate = $cachefnam.".update";
+    $cachetime = filemtime($cachefnam);
+    $cachevalid = (is_readable($cachefnam) && ((($cachetime+120)>=time()) || file_exists($cachefnamupdate)));
+    if ($cachevalid) {
+      $data = unserialize(file_get_contents($cachefnam));
+      $data["cache"]["fromcache"] = true;
+      $response->setStatusCode(200, "OK");
+      $response->setJsonContent(array('status' => 'OK', 'data' => $data));
+    }
+    else {
+      touch($cachefnamupdate);
+
+      // Get budget votes
+      $sql = sprintf("SELECT * FROM cmd_budget_votes WHERE BudgetTestnet = %d AND BudgetId = '%s'",$testnet,$budgetid);
+      if ($onlyvalid) {
+        $sql .= " AND VoteIsValid = 1";
+      }
+
+      if ($result = $mysqli->query($sql)) {
+        $votesvalid = 0;
+        $votesyes = 0;
+        $votesno = 0;
+        $votesabstain = 0;
+        $budgetsvotes = array();
+        while($row = $result->fetch_assoc()){
+          $budgetsvotes[] = array(
+              "ID" => $row["BudgetId"],
+              "MasternodeOutputHash" => $row["MasternodeOutputHash"],
+              "MasternodeOutputIndex" => intval($row["MasternodeOutputIndex"]),
+              "VoteHash" => $row["VoteHash"],
+              "VoteValue" => $row["VoteValue"],
+              "VoteTime" => intval($row["VoteTime"]),
+              "VoteIsValid" => ($row["VoteIsValid"] == 1)
+          );
+          if ($row["VoteValue"] == "YES") {
+            $votesyes++;
+          }
+          elseif ($row["VoteValue"] == "NO") {
+            $votesno++;
+          }
+          elseif ($row["VoteValue"] == "ABSTAIN") {
+            $votesabstain++;
+          }
+          $votesvalid+=intval($row["IsValid"]);
+        }
+
+        $data = array('budgetsvotes' => $budgetsvotes,
+            'stats' => array(
+                'votesvalid' => $votesvalid,
+                'votesyes' => $votesyes,
+                'votesno' => $votesno,
+                'votesabstain' => $votesabstain,
+            ),
+            'cache' => array(
+                'time' => time(),
+                'fromcache' => false
+            )
+        );
+
+        if ($debug) {
+          $data["debug"] = array("sql" => $sql);
+        }
+
+        //Change the HTTP status
+        $response->setStatusCode(200, "OK");
+        $response->setJsonContent(array('status' => 'OK', 'data' => $data));
+        file_put_contents($cachefnam,serialize($data),LOCK_EX);
         unlink($cachefnamupdate);
       }
       else {

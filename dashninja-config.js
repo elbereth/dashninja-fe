@@ -58,5 +58,7 @@ var dashninjaqueryexplorer = [[["http://explorer.dashninja.pl/search?q=%%q%%","e
 
 var dashninjamasternodemonitoring = ["https://dashninja.pl/masternodes.html?mnregexp=%%p%%#mnversions","https://test.dashninja.pl/masternodes.html?mnregexp=%%p%%#mnversions"];
 
+var dashninjabudgetdetail = ["https://dashninja.pl/budgetdetails.html?budgetid=%%b%%","https://test.dashninja.pl/budgetdetails.html?budgetid=%%b%%"];
+
 // Blocks per day
 var dashblocksperday = 553;
