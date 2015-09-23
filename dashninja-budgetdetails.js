@@ -20,7 +20,7 @@
 // Dash Ninja Front-End (dashninja-fe) - Budget Details
 // By elberethzone / https://dashtalk.org/members/elbereth.175/
 
-var dashninjaversion = '1.0.0';
+var dashninjaversion = '1.1.0';
 var tableVotes = null;
 var tableSuperBlocks = null;
 var dashoutputregexp = /^[a-z0-9]{64}-[0-9]+$/;
@@ -28,6 +28,7 @@ var dashbudgetregexp = /^[abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ01
 var budgetid = '';
 var budgethash = '';
 var latestblock = null;
+var currentbudget = null;
 
 $.fn.dataTable.ext.errMode = 'throw';
 
@@ -129,6 +130,7 @@ function budgetdetailsRefresh(useHash){
    }
    else {
 
+       currentbudget = data.data.budgets[0];
        $('#budgetid').text( data.data.budgets[0].ID );
        $('#budgethash').text( data.data.budgets[0].Hash );
        $('#budgethash1').text( data.data.budgets[0].Hash );
@@ -161,8 +163,8 @@ function budgetdetailsRefresh(useHash){
        $('#budgeturl').html( '<a href="'+url+'">'+data.data.budgets[0].URL+'</a>' );
        $('#budgetblockstart').text( data.data.budgets[0].BlockStart );
        $('#budgetblockend').text( data.data.budgets[0].BlockEnd );
-       $('#budgetmonthlyamount').text( addCommas( data.data.budgets[0].MonthlyPayment.toFixed(3) )+' '+dashninjacoin[dashninjatestnet] );
-       $('#budgettotalamount').text( addCommas( data.data.budgets[0].TotalPayment.toFixed(3) )+' '+dashninjacoin[dashninjatestnet] );
+       $('#budgetmonthlyamount').html( addCommas( data.data.budgets[0].MonthlyPayment.toFixed(3) )+' '+dashninjacoin[dashninjatestnet] + ' (<span id="budgetmonthlyamountusd">???</span> USD) (<span id="budgetmonthlyamounteur">???</span> EUR)');
+       $('#budgettotalamount').html( addCommas( data.data.budgets[0].TotalPayment.toFixed(3) )+' '+dashninjacoin[dashninjatestnet] + ' (<span id="budgettotalamountusd">???</span> USD) (<span id="budgettotalamounteur">???</span> EUR)' );
        $('#budgettotalpayments').text( data.data.budgets[0].TotalPaymentCount );
        $('#budgetremainingpayments').text( data.data.budgets[0].RemainingPaymentCount );
        $('#budgetyes').text( data.data.budgets[0].Yeas );
@@ -400,10 +402,79 @@ function budgetdetailsRefresh(useHash){
   }
 
    $('#budgetinfoLR').text( date.toLocaleString() );
+      refreshFiatValues();
    console.log("DEBUG: auto-refresh starting");
    setTimeout(budgetdetailsRefresh, 300000);
   });
 };
+
+function refreshFiatValues() {
+
+    if (currentbudget !== null) {
+        $('#fiatDASHBTCval').html( '<i class="fa fa-spinner fa-pulse"></i>' );
+        $('#fiatDASHBTCwho').html( '<i class="fa fa-spinner fa-pulse"></i>' );
+        $('#fiatDASHBTCwhen').html( '<i class="fa fa-spinner fa-pulse"></i>' );
+        $('#fiatUSDBTCval').html( '<i class="fa fa-spinner fa-pulse"></i>' );
+        $('#fiatUSDBTCwho').html( '<i class="fa fa-spinner fa-pulse"></i>' );
+        $('#fiatUSDBTCwhen').html( '<i class="fa fa-spinner fa-pulse"></i>' );
+        $('#fiatEURBTCval').html( '<i class="fa fa-spinner fa-pulse"></i>' );
+        $('#fiatEURBTCwho').html( '<i class="fa fa-spinner fa-pulse"></i>' );
+        $('#fiatEURBTCwhen').html( '<i class="fa fa-spinner fa-pulse"></i>' );
+        $('#budgetmonthlyamountusd').html( '<i class="fa fa-spinner fa-pulse"></i>' );
+        $('#budgetmonthlyamounteur').html( '<i class="fa fa-spinner fa-pulse"></i>' );
+        $('#budgettotalamountusd').html( '<i class="fa fa-spinner fa-pulse"></i>' );
+        $('#budgettotalamounteur').html( '<i class="fa fa-spinner fa-pulse"></i>' );
+        var query = 'https://dashninja.pl/api/tablevars';
+        $.getJSON( query, function( data ) {
+            console.log("DEBUG: REST api /tablevars query reply!");
+            if ((!data.hasOwnProperty("data")) || (!data.data.hasOwnProperty("tablevars")) || (data.data.tablevars === null)
+            || (!data.data.tablevars.hasOwnProperty("btcdrk")) || (!data.data.tablevars.hasOwnProperty("eurobtc"))
+            || (!data.data.tablevars.hasOwnProperty("usdbtc"))) {
+                $('#fiatDASHBTCval').text( '???' );
+                $('#fiatDASHBTCwho').text( '???' );
+                $('#fiatDASHBTCwhen').text( '???' );
+                $('#fiatUSDBTCval').text( '???' );
+                $('#fiatUSDBTCwho').text( '???' );
+                $('#fiatUSDBTCwhen').text( '???' );
+                $('#fiatEURBTCval').text( '???' );
+                $('#fiatEURBTCwho').text( '???' );
+                $('#fiatEURBTCwhen').text( '???' );
+                $('#budgetmonthlyamountusd').text( '???' );
+                $('#budgetmonthlyamounteur').text( '???' );
+                $('#budgettotalamountusd').text( '???' );
+                $('#budgettotalamounteur').text( '???' );
+            }
+            else {
+                $('#fiatDASHBTCval').text( data.data.tablevars.btcdrk.StatValue );
+                $('#fiatDASHBTCwho').text( data.data.tablevars.btcdrk.Source );
+                var tmpDate = new Date(parseInt(data.data.tablevars.btcdrk.LastUpdate)*1000);
+                $('#fiatDASHBTCwhen').text( tmpDate.toLocaleString() );
+                $('#fiatUSDBTCval').text( data.data.tablevars.usdbtc.StatValue );
+                $('#fiatUSDBTCwho').text( data.data.tablevars.usdbtc.Source );
+                tmpDate = new Date(parseInt(data.data.tablevars.usdbtc.LastUpdate)*1000);
+                $('#fiatUSDBTCwhen').text( tmpDate.toLocaleString() );
+                $('#fiatEURBTCval').text( data.data.tablevars.eurobtc.StatValue );
+                $('#fiatEURBTCwho').text( data.data.tablevars.eurobtc.Source );
+                tmpDate = new Date(parseInt(data.data.tablevars.eurobtc.LastUpdate)*1000);
+                $('#fiatEURBTCwhen').text( tmpDate.toLocaleString() );
+
+                var valBTC = currentbudget.MonthlyPayment * parseFloat(data.data.tablevars.btcdrk.StatValue);
+                var valUSD = valBTC * parseFloat(data.data.tablevars.usdbtc.StatValue);
+                var valEUR = valBTC * parseFloat(data.data.tablevars.eurobtc.StatValue);
+                $('#budgetmonthlyamountusd').text( addCommas(valUSD.toFixed(2)) );
+                $('#budgetmonthlyamounteur').text( addCommas(valEUR.toFixed(2)) );
+
+                valBTC = currentbudget.TotalPayment * parseFloat(data.data.tablevars.btcdrk.StatValue);
+                valUSD = valBTC * parseFloat(data.data.tablevars.usdbtc.StatValue);
+                valEUR = valBTC * parseFloat(data.data.tablevars.eurobtc.StatValue);
+                $('#budgettotalamountusd').text( addCommas(valUSD.toFixed(2)) );
+                $('#budgettotalamounteur').text( addCommas(valEUR.toFixed(2)) );
+
+            }
+        });
+    }
+
+}
 
 $(document).ready(function(){
 
