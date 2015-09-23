@@ -20,7 +20,7 @@
 // Dash Ninja Front-End (dashninja-fe) - Budget Details
 // By elberethzone / https://dashtalk.org/members/elbereth.175/
 
-var dashninjaversion = '1.1.0';
+var dashninjaversion = '1.1.1';
 var tableVotes = null;
 var tableSuperBlocks = null;
 var dashoutputregexp = /^[a-z0-9]{64}-[0-9]+$/;
@@ -525,12 +525,16 @@ $(document).ready(function(){
     $('#superblockstable').on('xhr.dt', function ( e, settings, json ) {
         latestblock = {BlockTime: 0, BlockId: -1};
         // Fill per version stats table
+        var numblocks = 0;
         for (var blockid in json.data.blocks){
             if(!json.data.blocks.hasOwnProperty(blockid)) {continue;}
+            numblocks++;
             if (json.data.blocks[blockid].BlockTime > latestblock.BlockTime) {
                 latestblock = json.data.blocks[blockid];
             }
         }
+
+        $('#budgetremainingpayments').text( (currentbudget.TotalPaymentCount-numblocks) );
 
         var outtxt = "";
         var cls = "danger";
