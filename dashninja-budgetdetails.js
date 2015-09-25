@@ -20,7 +20,7 @@
 // Dash Ninja Front-End (dashninja-fe) - Budget Details
 // By elberethzone / https://dashtalk.org/members/elbereth.175/
 
-var dashninjaversion = '1.1.1';
+var dashninjaversion = '1.2.1';
 var tableVotes = null;
 var tableSuperBlocks = null;
 var dashoutputregexp = /^[a-z0-9]{64}-[0-9]+$/;
@@ -29,6 +29,8 @@ var budgetid = '';
 var budgethash = '';
 var latestblock = null;
 var currentbudget = null;
+var currentbudgetprojection = null;
+var currentstats = null;
 
 $.fn.dataTable.ext.errMode = 'throw';
 
@@ -89,10 +91,10 @@ function budgetdetailsRefresh(useHash){
   $('#budgetinfoLR').html( '<i class="fa fa-spinner fa-pulse"></i> Refreshing <i class="fa fa-spinner fa-pulse"></i>' );
   var query = 'https://dashninja.pl/api/budgets?testnet='+dashninjatestnet;
   if (useHash) {
-    query += '&budgethashes=["'+budgethash+'"]';
+    query += '&budgethashes=["'+encodeURIComponent(budgethash)+'"]';
   }
   else {
-    query += '&budgetids=["'+budgetid+'"]';
+    query += '&budgetids=["'+encodeURIComponent(budgetid)+'"]';
   }
     console.log("DEBUG: REST query="+query);
   $.getJSON( query, function( data ) {
@@ -101,9 +103,9 @@ function budgetdetailsRefresh(useHash){
    var time = date.toLocaleTimeString();
    var result = "";
 
-   console.log("DEBUG: REST api query responded!");
+   console.log("DEBUG: REST api /budgets query responded!");
 
-   if ((!data.hasOwnProperty("data")) || (!data.data.hasOwnProperty("budgets")) || (data.data.budgets == null)) {
+   if ((!data.hasOwnProperty("data")) || (!data.data.hasOwnProperty("budgets")) || (!Array.isArray(data.data.budgets)) || (data.data.budgets.length == 0)) {
        result = 'Unknown budget';
     $('#budgetid').text(result+" ("+budgetid+")");
     $('#budgethash').text(result+" ("+budgethash+")");
@@ -131,6 +133,7 @@ function budgetdetailsRefresh(useHash){
    else {
 
        currentbudget = data.data.budgets[0];
+       currentstats = data.data.stats;
        $('#budgetid').text( data.data.budgets[0].ID );
        $('#budgethash').text( data.data.budgets[0].Hash );
        $('#budgethash1').text( data.data.budgets[0].Hash );
@@ -222,18 +225,21 @@ function budgetdetailsRefresh(useHash){
 
        result = "";
        cls = "";
+       var checkBP = false;
        if ((currenttimestamp() - data.data.budgets[0].LastReported) > 3600) {
            result = "Unlisted/Dropped";
            cls = "danger";
            $('#voteisover').show();
+           $('#voteisover2').hide();
            $('#voteyes').hide();
            $('#voteno').hide();
        }
        else {
            if (data.data.budgets[0].IsEstablished) {
                if (data.data.budgets[0].IsValid) {
-                   result = "Established and Valid";
+                   result = 'Valid, Established and <i class="fa fa-spinner fa-pulse"></i>';
                    cls = "success";
+                   checkBP = true;
                }
                else {
                    result = "Invalid ("+data.data.budgets[0].IsValidReason+")";
@@ -251,10 +257,11 @@ function budgetdetailsRefresh(useHash){
                }
            }
            $('#voteisover').hide();
+           $('#voteisover2').hide();
            $('#voteyes').show();
            $('#voteno').show();
        }
-       $('#budgetstatus').text(result).removeClass("danger").removeClass("success").removeClass("warning").addClass(cls);;
+       $('#budgetstatus').html(result).removeClass("danger").removeClass("success").removeClass("warning").addClass(cls);;
 
        if (tableVotes !== null) {
            tableVotes.api().ajax.reload();
@@ -262,7 +269,7 @@ function budgetdetailsRefresh(useHash){
        else {
            tableVotes = $('#votestable').dataTable({
                ajax: {
-                   url: '/api/budgets/votes?testnet=' + dashninjatestnet + '&budgetid=' + budgetid + '&onlyvalid=1',
+                   url: '/api/budgets/votes?testnet=' + dashninjatestnet + '&budgetid=' + encodeURIComponent(budgetid) + '&onlyvalid=1',
                    dataSrc: 'data.budgetsvotes'
                },
                lengthMenu: [[50, 100, 250, 500, -1], [50, 100, 250, 500, "All"]],
@@ -345,7 +352,7 @@ function budgetdetailsRefresh(useHash){
        else {
            tableSuperBlocks = $('#superblockstable').dataTable({
                ajax: {
-                   url: '/api/blocks?testnet=' + dashninjatestnet + '&budgetids=["' + budgetid + '"]&onlysuperblocks=1',
+                   url: '/api/blocks?testnet=' + dashninjatestnet + '&budgetids=["' + encodeURIComponent(budgetid) + '"]&onlysuperblocks=1',
                    dataSrc: 'data.blocks'
                },
                lengthMenu: [[50, 100, 250, 500, -1], [50, 100, 250, 500, "All"]],
@@ -390,7 +397,7 @@ function budgetdetailsRefresh(useHash){
                        if (type == "sort") {
                            return data.BlockMNValue;
                        } else {
-                           return data.BlockMNValue + " " + dashninjacoin[dashninjatestnet];
+                           return addCommas(data.BlockMNValue.toFixed(3)) + " " + dashninjacoin[dashninjatestnet];
                        }
                    }
                    }
@@ -403,10 +410,36 @@ function budgetdetailsRefresh(useHash){
 
    $('#budgetinfoLR').text( date.toLocaleString() );
       refreshFiatValues();
+      if (checkBP) {
+          refreshBudgetProjection(useHash);
+      }
    console.log("DEBUG: auto-refresh starting");
    setTimeout(budgetdetailsRefresh, 300000);
   });
 };
+
+function refreshBudgetProjection(useHash) {
+    console.log("DEBUG: refreshBudgetProjection starting");
+    var query = 'https://dashninja.pl/api/budgetsprojection?testnet=' + dashninjatestnet+'&onlyvalid=1';
+    if (useHash) {
+        query += '&budgethashes=["' + encodeURIComponent(budgethash) + '"]';
+    }
+    else {
+        query += '&budgetids=["' + encodeURIComponent(budgetid) + '"]';
+    }
+    console.log("DEBUG: REST query=" + query);
+    $.getJSON(query, function (data) {
+        console.log("DEBUG: REST api /budgetsprojection query responded!");
+
+        if ((data.hasOwnProperty("data")) && (data.data.hasOwnProperty("budgetsprojection")) && (Array.isArray(data.data.budgetsprojection)) && (data.data.budgetsprojection.length == 1) &&
+            ((currenttimestamp() - data.data.budgetsprojection[0].LastReported) < 3600)) {
+            $('#budgetstatus').html("Valid, Established and Alloted (" + addCommas(data.data.budgetsprojection[0].Alloted.toFixed(3)) + " " + dashninjacoin[dashninjatestnet] + ")");
+        }
+        else {
+            $('#budgetstatus').html("Valid and Established");
+        }
+    });
+}
 
 function refreshFiatValues() {
 
@@ -534,10 +567,42 @@ $(document).ready(function(){
             }
         }
 
-        $('#budgetremainingpayments').text( (currentbudget.TotalPaymentCount-numblocks) );
-
-        var outtxt = "";
+        var outtxt = (currentbudget.TotalPaymentCount-numblocks);
         var cls = "danger";
+
+        if ((currentbudget.TotalPaymentCount-numblocks) > 0) {
+            outtxt += " - ";
+            if ((currenttimestamp() - currentbudget.LastReported) > 3600) {
+                outtxt += "Won't get future payments (unlisted)";
+            }
+            else {
+                var mnLimit = Math.floor(currentstats.totalmns * 0.1);
+                var curPositive = currentbudget.Yeas - currentbudget.Nays;
+                var nextsuperblockdatetimestamp = currentstats.latestblock.BlockTime + (((currentstats.nextsuperblock.blockheight - currentstats.latestblock.BlockId) / 553) * 86400);
+                var datesuperblock = new Date(nextsuperblockdatetimestamp * 1000);
+                if (curPositive > mnLimit) {
+                    outtxt += "Next payment at super-block ";
+                }
+                else {
+                    outtxt += "Next possible super-block ";
+                }
+                outtxt += +currentstats.nextsuperblock.blockheight + " (est. " + datesuperblock.toLocaleString() + ", " + deltaTimeStampHRlong(nextsuperblockdatetimestamp, currenttimestamp()) + " from now)";
+                $('#voteisover').hide();
+                $('#voteisover2').hide();
+                $('#voteyes').show();
+                $('#voteno').show();
+            }
+        }
+        else {
+            $('#voteisover').hide();
+            $('#voteisover2').show();
+            $('#voteyes').hide();
+            $('#voteno').hide();
+        }
+        $('#budgetremainingpayments').text( outtxt );
+
+        outtxt = "";
+        cls = "danger";
         if (latestblock.BlockId == -1) {
             outtxt = "Never";
         }
@@ -551,6 +616,7 @@ $(document).ready(function(){
         }
 
         $('#budgetlastpaid').html( outtxt ).removeClass("danger").removeClass("success").addClass(cls);
+        $('#budgetlastpaid2').html( outtxt );
 
         // Change the last refresh date
         var date = new Date();
