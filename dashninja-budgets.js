@@ -20,16 +20,18 @@
 // Dash Ninja Front-End (dashninja-fe) - Budgets
 // By elberethzone / https://dashtalk.org/members/elbereth.175/
 
-var dashninjaversion = '1.3.2';
+var dashninjaversion = '1.4.0';
 var tableBudgets = null;
 var tableBudgetsProjection = null;
 var tableSuperBlocks = null;
+var tableMonthlyBudgetPayments = null;
 var latestblock = null;
 var superblock = null;
 var totalmns = 0;
 var latestblock2 = null;
 var superblock2 = null;
 var totalmns2 = 0;
+var arrayMonthlyPayments = [];
 
 $.fn.dataTable.ext.errMode = 'throw';
 
@@ -96,7 +98,7 @@ $(document).ready(function(){
         // Calculate the established project total amounts
         var totalamount = 0.0;
         for (var bix in json.data.budgets){
-            if ((json.data.budgets[bix].IsEstablished) && (json.data.budgets[bix].RemainingPaymentCount >0)) {
+            if ((json.data.budgets[bix].IsEstablished) && (json.data.budgets[bix].RemainingPaymentCount >0) && ((currenttimestamp() - json.data.budgets[bix].LastReported) <= 3600)) {
                 totalamount+=json.data.budgets[bix].MonthlyPayment;
             }
         }
@@ -107,7 +109,7 @@ $(document).ready(function(){
         $('#globalestablishedbudgetamount').text(addCommas(totalamount)+' '+dashninjacoin[dashninjatestnet]);
         var nextsuperblockdatetimestamp = json.data.stats.latestblock.BlockTime+(((json.data.stats.nextsuperblock.blockheight-json.data.stats.latestblock.BlockId)/553)*86400);
         var datesuperblock = new Date(nextsuperblockdatetimestamp*1000);
-        $('#globalnextsuperblockdate').text(datesuperblock.toLocaleDateString()+' '+datesuperblock.toLocaleTimeString());
+        $('#globalnextsuperblockdate').text(datesuperblock.toLocaleString());
         $('#globalnextsuperblockremaining').text(deltaTimeStampHRlong(nextsuperblockdatetimestamp,currenttimestamp()));
         $('#globalnextsuperblockid').text(json.data.stats.nextsuperblock.blockheight);
         $('#globalnextsuperblockamount').text(addCommas(Math.round(json.data.stats.nextsuperblock.estimatedbudgetamount*100)/100)+' '+dashninjacoin[dashninjatestnet]);
@@ -372,7 +374,7 @@ $(document).ready(function(){
         // Calculate the alloted project total amounts
         var totalamount = 0.0;
         for (var bix in json.data.budgetsprojection){
-            if ((json.data.budgetsprojection[bix].IsValid) && (json.data.budgetsprojection[bix].RemainingPaymentCount >0) && ((currenttimestamp() - json.data.budgetsprojection[bix].LastReported) > 3600)) {
+            if ((json.data.budgetsprojection[bix].IsValid) && (json.data.budgetsprojection[bix].RemainingPaymentCount >0) && ((currenttimestamp() - json.data.budgetsprojection[bix].LastReported) <= 3600)) {
                 totalamount+=json.data.budgetsprojection[bix].Alloted;
             }
         }
@@ -608,6 +610,116 @@ $(document).ready(function(){
         var n = date.toLocaleDateString();
         var time = date.toLocaleTimeString();
         $('#superblockstableLR').text( n + ' ' + time );
+
+        var monthlypayments = {};
+        var tmpDate;
+        var xaxis = [];
+        var paidbudgets = [];
+
+        for (var bix in json.data.blocks){
+            tmpDate = new Date(json.data.blocks[bix].BlockTime*1000);
+            curmonth = tmpDate.getFullYear().toString()+"-"+pad((tmpDate.getMonth()+1).toString(),2,"0",STR_PAD_LEFT);
+            if (!monthlypayments.hasOwnProperty(curmonth)) {
+                monthlypayments[curmonth] = {};
+            }
+            monthlypayments[curmonth][json.data.blocks[bix].SuperBlockBudgetName] = json.data.blocks[bix].BlockMNValue;
+            if ($.inArray(curmonth,xaxis) == -1) {
+                xaxis.push(curmonth);
+            }
+            if ($.inArray(json.data.blocks[bix].SuperBlockBudgetName,paidbudgets) == -1) {
+                paidbudgets.push(json.data.blocks[bix].SuperBlockBudgetName);
+            }
+        }
+
+        xaxis.sort();
+        paidbudgets.sort();
+
+        for (var x in xaxis) {
+            var thismonth = 0.0;
+            for (var b in monthlypayments[xaxis[x]]) {
+                thismonth += monthlypayments[xaxis[x]][b];
+            }
+            arrayMonthlyPayments.push([xaxis[x], thismonth]);
+        }
+
+        var series = [];
+
+        for (var p in paidbudgets) {
+            var thisserie = {name: paidbudgets[p],
+                             data: []};
+            for (var x in xaxis) {
+                if (monthlypayments[xaxis[x]].hasOwnProperty(paidbudgets[p])) {
+                    thisserie.data.push(monthlypayments[xaxis[x]][paidbudgets[p]]);
+                }
+                else {
+                    thisserie.data.push(null);
+                }
+            }
+            series.push(thisserie);
+        }
+
+        if (tableMonthlyBudgetPayments !== null) {
+            tableMonthlyBudgetPayments.api().rows().invalidate().draw();
+        }
+        else {
+            tableMonthlyBudgetPayments = $('#monthlybudgetpaymentstable').dataTable({
+                data: arrayMonthlyPayments,
+                paging: false,
+                order: [[0, "desc"]],
+                columns: [
+                    {title: "Month"},
+                    { data: null, render: function ( data, type, row ) {
+                        var outtxt = addCommas(data[1].toFixed(3))+" "+dashninjacoin[dashninjatestnet];
+                        return outtxt;
+                    } }
+                ]
+            });
+        }
+
+        $('#chartpayments').highcharts({
+            chart: {
+                type: 'area'
+            },
+            title: {
+                text: 'Monthly Budget Payments',
+                x: -20 //center
+            },
+            xAxis: {
+                categories: xaxis
+            },
+            yAxis: {
+                title: {
+                    text: 'Amount (DASH)'
+                },
+                plotLines: [{
+                    value: 0,
+                    width: 1,
+                    color: '#808080'
+                }]
+            },
+            tooltip: {
+                valueSuffix: 'DASH'
+            },
+            legend: {
+                layout: 'vertical',
+                align: 'right',
+                verticalAlign: 'middle',
+                borderWidth: 0
+            },
+            plotOptions: {
+                area: {
+                    stacking: 'normal',
+                    lineColor: '#666666',
+                    lineWidth: 1,
+                    marker: {
+                        lineWidth: 1,
+                        lineColor: '#666666'
+                    }
+                }
+            },
+            series: series
+        });
+
     } );
     tableSuperBlocks = $('#superblockstable').dataTable( {
         ajax: { url: "/api/blocks?testnet="+dashninjatestnet+"&onlysuperblocks=1",
@@ -654,7 +766,7 @@ $(document).ready(function(){
                 if (type == "sort") {
                     return data.BlockMNValue;
                 } else {
-                    return data.BlockMNValue+" "+dashninjacoin[dashninjatestnet];
+                    return addCommas(data.BlockMNValue.toFixed(3))+" "+dashninjacoin[dashninjatestnet];
                 }
             }
             }

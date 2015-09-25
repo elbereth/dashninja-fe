@@ -88,13 +88,14 @@ along with Dash Ninja.  If not, see <http://www.gnu.org/licenses/>.
           </ul>
             <ul class="nav nav-sidebar">
                 <li><a href="#superblocks">Super Blocks History</a></li>
+                <li><a href="#monthlybudgetpayments">Monthly Budget Payments</a></li>
             </ul>
         </div>
         <div class="col-sm-9 col-sm-offset-3 col-md-10 col-md-offset-2 main">
         <div class="page-header">
           <h1>DASH Ninja - Budget Monitoring</h1>
         <p>Page is dynamically refreshed (JavaScript required). All dates/times are using your system locale.<br/>
-Versions: <i>HTML v1.3.1 / JS v<span id="dashninjajsversion">?.?.?</span></i> (hint: might need to Ctrl+F5 to update JS)</p>
+Versions: <i>HTML v1.4.0 / JS v<span id="dashninjajsversion">?.?.?</span></i> (hint: might need to Ctrl+F5 to update JS)</p>
       </div>
     <div id="testnetalert" class="alert alert-danger" style="display: none">
       <h2>THIS IS TESTNET!</h2>
@@ -204,7 +205,27 @@ Brought to you by <a href="https://dashtalk.org/members/elbereth.175/">elberethz
                 Last refresh: <span id="superblockstableLR" style="font-decoration: italic;">Never</span><br>
             </div>
             <hr/>
-</div>
+            <h2 id="monthlybudgetpayments">Monthly Budget Payments History</h2>
+            <div class="table-responsive">
+                <table id="monthlybudgetpaymentstable" class="table table-striped table-condensed table-responsive text-nowrap">
+                    <thead>
+                    <tr>
+                        <th>Month</th>
+                        <th>Amount Paid to Budgets</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr>
+                        <td colspan="2">Please wait while loading... (JavaScript neeeded)</td>
+                    </tr>
+                    </tbody>
+                </table>
+                Last refresh: <span id="monthlybudgetpaymentstableLR" style="font-decoration: italic;">Never</span><br>
+            </div>
+            <div id="chartpayments" style="min-width: 600px; height: 400px; max-width: 900px; margin: 0 auto"></div>
+            <hr/>
+
+        </div>
 </div>
 </div>
 <div id="footer">
