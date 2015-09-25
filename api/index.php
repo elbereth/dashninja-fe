@@ -628,7 +628,7 @@ $app->get('/api/budgets', function() use ($app,&$mysqli) {
     $testnet = 0;
   }
 
-  // Retrieve the 'nodetail' parameter
+  // Retrieve the 'onlyvalid' parameter
   if ($request->hasQuery('onlyvalid')) {
     $onlyvalid = (intval($request->getQuery('onlyvalid')) == 1);
   }
@@ -723,10 +723,10 @@ $app->get('/api/budgets', function() use ($app,&$mysqli) {
         $sql .= " AND IsValid = 1";
       }
 
-      $sqlblockids = array();
       if ($result = $mysqli->query($sql)) {
         $budgetvalid = 0;
         $budgetestablished = 0;
+        $budgets = array();
         while($row = $result->fetch_assoc()){
           $budgets[] = array(
               "ID" => stripslashes($row["BudgetId"]),
@@ -981,6 +981,9 @@ $app->get('/api/budgets/votes', function() use ($app,&$mysqli) {
 // Get budgets projection (next super-block)
 // Parameters:
 //   testnet=0|1
+//   onlyvalid=0|1
+//   budgethashes=[json array of hashes]
+//   budgetids=[json array of hashes]
 $app->get('/api/budgetsprojection', function() use ($app,&$mysqli) {
 
   $apiversion = 1;
@@ -1010,6 +1013,48 @@ $app->get('/api/budgetsprojection', function() use ($app,&$mysqli) {
     $testnet = 0;
   }
 
+  // Retrieve the 'onlyvalid' parameter
+  if ($request->hasQuery('onlyvalid')) {
+    $onlyvalid = (intval($request->getQuery('onlyvalid')) == 1);
+  }
+  else {
+    $onlyvalid = false;
+  }
+
+  // Retrieve the 'budgetids' parameter
+  if ($request->hasQuery('budgetids')) {
+    $budgetids = json_decode($request->getQuery('budgetids'));
+    if (($budgetids === false) || !is_array($budgetids)) {
+      $errmsg[] = "Parameter budgetids: Not a JSON encoded list of budgets ids";
+    }
+    else {
+      foreach ($budgetids as $x => $budgetid) {
+        $budgetids[$x] = $mysqli->real_escape_string($budgetid);
+      }
+    }
+  }
+  else {
+    $budgetids = array();
+  }
+
+  // Retrieve the 'budgethashes' parameter
+  if ($request->hasQuery('budgethashes')) {
+    $budgethashes = json_decode($request->getQuery('budgethashes'));
+    if (($budgethashes === false) || !is_array($budgethashes)) {
+      $errmsg[] = "Parameter budgethashes: Not a JSON encoded list of budget hashes";
+    }
+    else {
+      foreach ($budgethashes as $budgethash) {
+        if ( strlen($budgethash) != 64 ) {
+          $errmsg[] = "Parameter budgethashes: Entry $budgethash: Incorrect hash format.";
+        }
+      }
+    }
+  }
+  else {
+    $budgethashes = array();
+  }
+
   if (count($errmsg) > 0) {
     //Change the HTTP status
     $response->setStatusCode(400, "Bad Request");
@@ -1018,7 +1063,8 @@ $app->get('/api/budgetsprojection', function() use ($app,&$mysqli) {
     $response->setJsonContent(array('status' => 'ERROR', 'messages' => $errmsg));
   }
   else {
-    $cachefnam = CACHEFOLDER.sprintf("dashninja_budgetsprojection_%d",$testnet);
+    $cacheserial = sha1(serialize($budgetids).serialize($budgethashes));
+    $cachefnam = CACHEFOLDER.sprintf("dashninja_budgetsprojection_%d_%d_%d_%d_%s",$testnet,$onlyvalid,count($budgetids),count($budgethashes),$cacheserial);
     $cachefnamupdate = $cachefnam.".update";
     $cachevalid = (is_readable($cachefnam) && (((filemtime($cachefnam)+120)>=time()) || file_exists($cachefnamupdate)));
     if ($cachevalid) {
@@ -1030,14 +1076,41 @@ $app->get('/api/budgetsprojection', function() use ($app,&$mysqli) {
     else {
       touch($cachefnamupdate);
 
-      // Get budgets
-      $sql = sprintf("SELECT * FROM cmd_budget_projection WHERE BudgetTestnet = %d",$testnet);
+      // Add selection by budget hashes
+      $sqlbh = "";
+      if (count($budgethashes) > 0) {
+        $sqls = '';
+        foreach($budgethashes as $budgethash) {
+          if (strlen($sqls)>0) {
+            $sqls .= ' OR ';
+          }
+          $sqls .= sprintf("BudgetHash = '%s'",$budgethash);
+        }
+        $sqlbh = " AND (".$sqls.")";
+      }
+
+      // Add selection by budget ids
+      $sqlbi = "";
+      if (count($budgetids) > 0) {
+        $sqls = '';
+        foreach($budgetids as $budgetid) {
+          if (strlen($sqls)>0) {
+            $sqls .= ' OR ';
+          }
+          $sqls .= sprintf("BudgetId = '%s'",$budgetid);
+        }
+        $sqlbi = " AND (".$sqls.")";
+      }
+
+      // Get budgets projection
+      $sql = sprintf("SELECT * FROM cmd_budget_projection WHERE BudgetTestnet = %d%s%s",$testnet,$sqlbh,$sqlbi);
       if ($onlyvalid) {
         $sql .= " AND IsValid = 1";
       }
-      $sqlblockids = array();
+
       if ($result = $mysqli->query($sql)) {
         $budgetvalid = 0;
+        $budgets = array();
         while($row = $result->fetch_assoc()){
           $budgets[] = array(
               "ID" => stripslashes($row["BudgetId"]),
@@ -1126,7 +1199,7 @@ $app->get('/api/budgetsprojection', function() use ($app,&$mysqli) {
         //Change the HTTP status
         $response->setStatusCode(200, "OK");
         $response->setJsonContent(array('status' => 'OK', 'data' => $data));
-//        file_put_contents($cachefnam,serialize($data),LOCK_EX);
+        file_put_contents($cachefnam,serialize($data),LOCK_EX);
         unlink($cachefnamupdate);
       }
       else {
