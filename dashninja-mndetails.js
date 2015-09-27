@@ -20,7 +20,7 @@
 // Dash Ninja Front-End (dashninja-fe) - Masternode Detail
 // By elberethzone / https://dashtalk.org/members/elbereth.175/
 
-var dashninjaversion = '2.2.3';
+var dashninjaversion = '2.2.4';
 var tablePayments = null;
 var dataProtocolDesc = [];
 var maxProtocol = -1;
@@ -131,7 +131,8 @@ function mndetailsRefresh(useVin){
     }
     $('#mnactiveduration').text ( result);
     if (data.data[0].MasternodeLastSeen > 0) {
-      result = deltaTimeStampHRlong(data.data[0].MasternodeLastSeen,currenttimestamp());
+        var tmpDate = new Date(data.data[0].MasternodeLastSeen*1000);
+        result = tmpDate.toLocaleString()+" ("+deltaTimeStampHRlong(data.data[0].MasternodeLastSeen,currenttimestamp())+" ago)";
     }
     else {
       result = 'Just now ('+data.data[0].MasternodeLastSeen+')';
@@ -150,12 +151,37 @@ function mndetailsRefresh(useVin){
     // Last Paid data
     var outtxt = "";
     if (data.data[0].MasternodeLastPaid != 0) {
-      outtxt = deltaTimeStampHR(data.MasternodeLastPaid,currenttimestamp());
+        var tmpDate = new Date(data.data[0].MasternodeLastPaid*1000);
+      outtxt = tmpDate.toLocaleString()+" ("+deltaTimeStampHRlong(parseInt(data.data[0].MasternodeLastPaid),currenttimestamp())+" ago)";
     }
     else {
       outtxt = 'Never/Unknown';
     }
     $('#mnlastpaid').html( outtxt );
+
+    // Last Paid from blocks data
+    var outtxt = "";
+    if (data.data[0].LastPaidFromBlocks !== false) {
+      var tmpDate = new Date(data.data[0].LastPaidFromBlocks.MNLastPaidTime*1000);
+      outtxt = tmpDate.toLocaleString()+" ("+deltaTimeStampHRlong(parseInt(data.data[0].LastPaidFromBlocks.MNLastPaidTime),currenttimestamp())+" ago) on block ";
+      if (dashninjaqueryexplorer[dashninjatestnet].length > 0) {
+        outtxt += '<a href="'+dashninjaqueryexplorer[dashninjatestnet][0][0].replace('%%q%%',data.data[0].LastPaidFromBlocks.MNLastPaidBlock)+'">'+data.data[0].LastPaidFromBlocks.MNLastPaidBlock+'</a>';
+      }
+      else {
+        outtxt += data.data[0].LastPaidFromBlocks.MNLastPaidBlock;
+      }
+    }
+    else {
+      outtxt = 'Never/Unknown';
+    }
+    $('#mnlastpaidfromblocks').html( outtxt );
+
+    cls = "danger";
+    if (Math.abs(parseInt(data.data[0].MasternodeLastPaid)-parseInt(data.data[0].LastPaidFromBlocks.MNLastPaidTime)) < 120) {
+      cls = "success";
+    }
+    $('#mnlastpaid').removeClass("success").removeClass("danger").addClass(cls);
+    $('#mnlastpaidfromblocks').removeClass("success").removeClass("danger").addClass(cls);
 
     // Port Check data
     $('#mncountry').html( '<img src="/static/flags/flags_iso/16/'+data.data[0].Portcheck.CountryCode+'.png" width=16 height=16 /> '+data.data[0].Portcheck.Country );
