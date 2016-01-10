@@ -20,7 +20,7 @@
 // Dash Ninja Front-End (dashninja-fe) - Blocks (v2)
 // By elberethzone / https://dashtalk.org/members/elbereth.175/
 
-var dashninjaversion = '2.2.1';
+var dashninjaversion = '2.2.2';
 var tableBlocks = null;
 var tablePerVersion = null;
 var tablePerMiner = null;
@@ -381,7 +381,7 @@ $(document).ready(function(){
                         return "<i>Unpaid block</i>";
                     } else {
                         if (data.IsSuperBlock) {
-                            return '<a href="' + dashninjaaddressexplorer[dashninjatestnet][0][0].replace('%%a%%', data.BlockMNPayee) + '">' + data.SuperBlockBudgetName + '</a>';
+                            return '<a href="' + dashninjabudgetdetail[dashninjatestnet].replace('%%b%%',encodeURIComponent(data.SuperBlockBudgetName)) + '">' + data.SuperBlockBudgetName + '</a>';
                         }
                         else {
                             return '<a href="' + dashninjamasternodemonitoring[dashninjatestnet].replace('%%p%%', data.BlockMNPayee) + '">' + data.BlockMNPayee + '</a>';

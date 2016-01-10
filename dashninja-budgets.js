@@ -20,10 +20,11 @@
 // Dash Ninja Front-End (dashninja-fe) - Budgets
 // By elberethzone / https://dashtalk.org/members/elbereth.175/
 
-var dashninjaversion = '1.4.1';
+var dashninjaversion = '1.5.0';
 var tableBudgets = null;
 var tableBudgetsProjection = null;
 var tableSuperBlocks = null;
+var tableSuperBlocksExpected = null;
 var tableMonthlyBudgetPayments = null;
 var latestblock = null;
 var superblock = null;
@@ -85,6 +86,12 @@ function tableSuperBlocksRefresh(){
     setTimeout(tableSuperBlocksRefresh, 150000);
 };
 
+
+function tableSuperBlocksExpectedRefresh(){
+    tableSuperBlocksExpected.api().ajax.reload();
+    // Set it to refresh in 60sec
+    setTimeout(tableSuperBlocksExpectedRefresh, 150000);
+};
 
 $(document).ready(function(){
 
@@ -769,5 +776,42 @@ $(document).ready(function(){
         }
     } );
     setTimeout(tableSuperBlocksRefresh, 150000);
+
+    $('#superblocksexpectedtable').on('xhr.dt', function ( e, settings, json ) {
+        // Change the last refresh date
+        var date = new Date();
+        $('#superblocksexpectedtableLR').text( date.toLocaleString() );
+    } );
+    tableSuperBlocksExpected = $('#superblocksexpectedtable').dataTable( {
+        ajax: { url: "/api/budgetsexpected?testnet="+dashninjatestnet,
+            dataSrc: 'data.budgetsexpected' },
+        paging: false,
+        order: [[ 0, "desc" ]],
+        columns: [
+            { data: null, render: function ( data, type, row ) {
+                var outtxt = data.BlockId;
+                return outtxt;
+            } },
+            { data: null, render: function ( data, type, row ) {
+                if (type == "sort") {
+                    return data.BlockProposal;
+                } else {
+                    return '<a href="' + dashninjabudgetdetail[dashninjatestnet].replace('%%b%%',encodeURIComponent(data.BlockProposal)) + '">' + data.BlockProposal + '</a>';
+                }
+            }
+            },
+            { data: null, render: function ( data, type, row ) {
+                if (type == "sort") {
+                    return data.MonthlyPayment;
+                } else {
+                    return addCommas(data.MonthlyPayment.toFixed(3))+" "+dashninjacoin[dashninjatestnet];
+                }
+            }
+            }
+        ],
+        createdRow: function ( row, data, index ) {
+        }
+    } );
+    setTimeout(tableSuperBlocksExpectedRefresh, 150000);
 
 });

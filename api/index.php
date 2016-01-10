@@ -825,6 +825,129 @@ $app->get('/api/budgets', function() use ($app,&$mysqli) {
 
 });
 
+$app->get('/api/budgetsexpected', function() use ($app,&$mysqli) {
+
+  $apiversion = 1;
+  $apiversioncompat = 1;
+
+  //Create a response
+  $response = new Phalcon\Http\Response();
+  $response->setHeader('Access-Control-Allow-Origin', '*');
+  $response->setHeader("Content-Type", "application/json");
+
+  $request = $app->request;
+
+  $errmsg = array();
+
+  if (!array_key_exists('CONTENT_LENGTH',$_SERVER) || (intval($_SERVER['CONTENT_LENGTH']) != 0)) {
+    $errmsg[] = "No CONTENT expected";
+  }
+
+  // Retrieve the 'testnet' parameter
+  if ($request->hasQuery('testnet')) {
+    $testnet = intval($request->getQuery('testnet'));
+    if (($testnet != 0) && ($testnet != 1)) {
+      $testnet = 0;
+    }
+  }
+  else {
+    $testnet = 0;
+  }
+
+  if (count($errmsg) > 0) {
+    //Change the HTTP status
+    $response->setStatusCode(400, "Bad Request");
+
+    //Send errors to the client
+    $response->setJsonContent(array('status' => 'ERROR', 'messages' => $errmsg));
+  }
+  else {
+    $cachefnam = CACHEFOLDER . sprintf("dashninja_budgets_final_%d", $testnet);
+    $cachefnamupdate = $cachefnam . ".update";
+    $cachetime = filemtime($cachefnam);
+    $cachevalid = (is_readable($cachefnam) && ((($cachetime + 120) >= time()) || file_exists($cachefnamupdate)));
+    if ($cachevalid) {
+      $data = unserialize(file_get_contents($cachefnam));
+      $data["cache"]["fromcache"] = true;
+      $response->setStatusCode(200, "OK");
+      $response->setJsonContent(array('status' => 'OK', 'data' => $data));
+    } else {
+      touch($cachefnamupdate);
+
+      // Retrieve all known final budgets
+      $sql = sprintf('SELECT BlockStart, BlockEnd, Proposals FROM cmd_budget_final WHERE VoteCount > 0 AND IsValid = 1 AND Status = "OK" AND BudgetTestnet = %d AND BlockStart > (SELECT max(BlockId) FROM cmd_info_blocks WHERE BlockTestnet = %d)', $testnet, $testnet);
+      $mnbudgets = array();
+      $proposalsfinal = array();
+      if ($result = $mysqli->query($sql)) {
+        while ($row = $result->fetch_assoc()) {
+          $pos = 0;
+          $proposals = explode(",", $row['Proposals']);
+          for ($x = intval($row['BlockStart']); $x <= intval($row['BlockEnd']); $x++) {
+            $mnbudgets[$x] = array(
+                "BlockId" => $x,
+                "BlockProposal" => $proposals[$pos]
+            );
+            $proposalsfinal[] = $proposals[$pos];
+            $pos++;
+          }
+        }
+
+        $proposalsvalues = array();
+        $sql = sprintf("SELECT BudgetId, MonthlyPayment, PaymentAddress FROM cmd_budget_projection WHERE BudgetTestnet = %d", $testnet);
+        if ($result = $mysqli->query($sql)) {
+          $test = array();
+          while ($row = $result->fetch_assoc()) {
+            $test[] = $row;
+            if (in_array($row['BudgetId'], $proposalsfinal)) {
+              $proposalsvalues[$row['BudgetId']] = $row;
+            }
+          }
+
+          $finaldata = array();
+          foreach ($mnbudgets as $mnbudgetdataid => $mnbudgetdatadata) {
+            if (array_key_exists($mnbudgetdatadata["BlockProposal"], $proposalsvalues)) {
+              $mnbudgets[$mnbudgetdataid]["MonthlyPayment"] = floatval($proposalsvalues[$mnbudgetdatadata["BlockProposal"]]["MonthlyPayment"]);
+              $mnbudgets[$mnbudgetdataid]["PaymentAddress"] = $proposalsvalues[$mnbudgetdatadata["BlockProposal"]]["PaymentAddress"];
+            } else {
+              $mnbudgets[$mnbudgetdataid]["MonthlyPayment"] = 0.0;
+              $mnbudgets[$mnbudgetdataid]["PaymentAddress"] = "";
+            };
+            $finaldata[] = $mnbudgets[$mnbudgetdataid];
+          }
+
+          $data = array(
+              'budgetsexpected' => $finaldata,
+              'cache' => array(
+                  'time' => time(),
+                  'fromcache' => false
+              ),
+              'api' => array(
+                  'version' => $apiversion,
+                  'compat' => $apiversioncompat,
+                  'bev' => 'be=' . DASHNINJA_BEV . "." . $apiversion
+              )
+          );
+
+          //Change the HTTP status
+          $response->setStatusCode(200, "OK");
+          $response->setJsonContent(array('status' => 'OK', 'data' => $data));
+          file_put_contents($cachefnam, serialize($data), LOCK_EX);
+        } else {
+          $response->setStatusCode(503, "Service Unavailable");
+          $response->setJsonContent(array('status' => 'ERROR', 'messages' => array($mysqli->errno . ': ' . $mysqli->error)));
+        }
+      } else {
+        $response->setStatusCode(503, "Service Unavailable");
+        $response->setJsonContent(array('status' => 'ERROR', 'messages' => array($mysqli->errno . ': ' . $mysqli->error)));
+      }
+      unlink($cachefnamupdate);
+    }
+  }
+
+  return $response;
+
+});
+
 // Get budget votes
 // Parameters:
 //   testnet=0|1
