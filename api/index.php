@@ -49,7 +49,7 @@ $router->setUriSource(\Phalcon\Mvc\Router::URI_SOURCE_SERVER_REQUEST_URI);
 //   budgetids=filter to chose budget names
 $app->get('/api/blocks', function() use ($app,&$mysqli) {
 
-  $apiversion = 1;
+  $apiversion = 2;
   $apiversioncompat = 1;
 
   //Create a response
@@ -229,7 +229,7 @@ $app->get('/api/blocks', function() use ($app,&$mysqli) {
         $extrasql.=$sqlpk;
       }
 
-      $sql = sprintf("SELECT BlockId, BlockHash, cib.BlockMNPayee BlockMNPayee, BlockMNPayeeDonation, BlockMNValue, BlockSupplyValue, BlockMNPayed, BlockPoolPubKey, PoolDescription, BlockMNProtocol, BlockTime, BlockDifficulty, BlockMNPayeeExpected, BlockMNValueRatioExpected, IsSuperblock, SuperBlockBudgetName FROM cmd_info_blocks cib LEFT JOIN cmd_pools_pubkey cpp ON cib.BlockPoolPubKey = cpp.PoolPubKey AND cib.BlockTestNet = cpp.PoolTestNet WHERE cib.BlockTestNet = %d%s ORDER BY BlockId DESC",$testnet,$extrasql);
+      $sql = sprintf("SELECT BlockId, BlockHash, cib.BlockMNPayee BlockMNPayee, BlockMNPayeeDonation, BlockMNValue, BlockSupplyValue, BlockMNPayed, BlockPoolPubKey, PoolDescription, BlockMNProtocol, BlockTime, BlockDifficulty, BlockMNPayeeExpected, BlockMNValueRatioExpected, IsSuperblock, SuperBlockBudgetName, BlockDarkSendTXCount, MemPoolDarkSendTXCount FROM cmd_info_blocks cib LEFT JOIN cmd_pools_pubkey cpp ON cib.BlockPoolPubKey = cpp.PoolPubKey AND cib.BlockTestNet = cpp.PoolTestNet WHERE cib.BlockTestNet = %d%s ORDER BY BlockId DESC",$testnet,$extrasql);
       $blocks = array();
       $maxprotocol = 0;
       $blockidlow = 9999999999;
@@ -263,7 +263,8 @@ $app->get('/api/blocks', function() use ($app,&$mysqli) {
              "BlockMNPayeeExpected" => $row["BlockMNPayeeExpected"],
              "BlockMNValueRatioExpected" => floatval($row["BlockMNValueRatioExpected"]),
              "IsSuperBlock" => $row["IsSuperblock"] == 1,
-             "SuperBlockBudgetName" => $row["SuperBlockBudgetName"],
+             "BlockDarkSendTXCount" => intval($row["BlockDarkSendTXCount"]),
+             "MemPoolDarkSendTXCount" => intval($row["MemPoolDarkSendTXCount"]),
           );
           $sqlblockids[] = sprintf($sqlwheretemplate,$row['BlockId']);
         }

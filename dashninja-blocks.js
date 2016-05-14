@@ -20,7 +20,7 @@
 // Dash Ninja Front-End (dashninja-fe) - Blocks (v2)
 // By elberethzone / https://dashtalk.org/members/elbereth.175/
 
-var dashninjaversion = '2.2.2';
+var dashninjaversion = '2.3.0';
 var tableBlocks = null;
 var tablePerVersion = null;
 var tablePerMiner = null;
@@ -397,6 +397,12 @@ $(document).ready(function(){
                 else {
                     return dataProtocolDesc[data.BlockMNProtocol];
                 }
+            } },
+            { data: null, render: function ( data, type, row ) {
+                return data.BlockDarkSendTXCount;
+            } },
+            { data: null, render: function ( data, type, row ) {
+                return data.MemPoolDarkSendTXCount;
             } }
         ],
         createdRow: function ( row, data, index ) {
