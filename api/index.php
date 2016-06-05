@@ -410,7 +410,13 @@ $app->get('/api/blocks', function() use ($app,&$mysqli) {
                              'SupplyAmount' => 0.0,
                              'MNPaymentsAmount' => 0.0);
         foreach($perminer as $miner => $info) {
-          $perminer[$miner]['RatioMNPayments'] = round($perminer[$miner]['MasternodeAmount'] / ($perminer[$miner]['TotalAmount']-$perminer[$miner]['BudgetAmount']-$perminer[$miner]['SuperBlockPoolAmount']),3);
+          $divamount = ($perminer[$miner]['TotalAmount']-$perminer[$miner]['BudgetAmount']-$perminer[$miner]['SuperBlockPoolAmount']);
+          if ($divamount == 0) {
+            $perminer[$miner]['RatioMNPayments'] = 1;
+          }
+          else {
+            $perminer[$miner]['RatioMNPayments'] = round($perminer[$miner]['MasternodeAmount'] / $divamount,3);
+          }
           if (count($blocks) == 0) {
             $perminer[$miner]['RatioBlocksFound'] = 0;
           }
