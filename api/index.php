@@ -207,7 +207,7 @@ $app->get('/api/blocks', function() use ($app,&$mysqli) {
         $sqlpk .= $sqls.")";
       }
 
-      $sqlsb = "";
+      $sqldb = "";
       // Add selection by budgetname
       if (count($budgetids) > 0) {
         $sqldb = " AND (";
@@ -263,6 +263,7 @@ $app->get('/api/blocks', function() use ($app,&$mysqli) {
              "BlockMNPayeeExpected" => $row["BlockMNPayeeExpected"],
              "BlockMNValueRatioExpected" => floatval($row["BlockMNValueRatioExpected"]),
              "IsSuperBlock" => $row["IsSuperblock"] == 1,
+             "SuperBlockBudgetName" => $row["SuperBlockBudgetName"],
              "BlockDarkSendTXCount" => intval($row["BlockDarkSendTXCount"]),
              "MemPoolDarkSendTXCount" => intval($row["MemPoolDarkSendTXCount"]),
           );
