@@ -12,8 +12,8 @@ It contains:
 * You will need a running website, official at https://dashninja.pl uses nginx
 
 For the REST API:
-* PHP v5.6 with mysqli
-* Phalcon v2.0.x (should work with any version)
+* PHP v5.6 with mysqli (works with PHP 7.0)
+* Phalcon v2.0.x (should work with any version) or v2.1.x
 * MySQL database with Dash Ninja Database (check dashninja-db repository)
 
 ## Optional:
