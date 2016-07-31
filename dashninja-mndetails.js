@@ -20,7 +20,7 @@
 // Dash Ninja Front-End (dashninja-fe) - Masternode Detail
 // By elberethzone / https://dashtalk.org/members/elbereth.175/
 
-var dashninjaversion = '2.2.4';
+var dashninjaversion = '2.3.0';
 var tablePayments = null;
 var dataProtocolDesc = [];
 var maxProtocol = -1;
@@ -98,7 +98,14 @@ function mndetailsRefresh(useVin){
 
     $('#mnoutput').text( data.data[0].MasternodeOutputHash+"-"+data.data[0].MasternodeOutputIndex );
     $('#mnpubkey').text( data.data[0].MasternodePubkey );
-    $('#mnipport').text( data.data[0].MasternodeIP+":"+data.data[0].MasternodePort );
+       var mnip = "";
+       if ( data.data[0].MasternodeIP == "::" ) {
+           mnip = data.data[0].MasternodeTor+".onion";
+       }
+       else {
+           mnip = data.data[0].MasternodeIP;
+       }
+    $('#mnipport').text( mnip+":"+data.data[0].MasternodePort );
     mnpubkey = data.data[0].MasternodePubkey;
 
     var activecount = parseInt(data.data[0].ActiveCount);
@@ -207,14 +214,19 @@ function mndetailsRefresh(useVin){
       $('#mnportchecknext').text(deltaTimeStampHRlong(data.data[0].Portcheck.NextCheck,currenttimestamp()));
     }
     var versioninfo = '<i>Unknown</i>';
-    if ((data.data[0].Portcheck.SubVer.length > 10) && (data.data[0].Portcheck.SubVer.substring(0,9) == '/Satoshi:') && (data.data[0].Portcheck.SubVer.substring(data.data[0].Portcheck.SubVer.length-1) == '/')) {
-      versioninfo = data.data[0].Portcheck.SubVer.substring(9,data.data[0].Portcheck.SubVer.indexOf('/',10));
+    if ((data.data[0].hasOwnProperty("Portcheck")) && (data.data[0].Portcheck != false)) {
+        if ((data.data[0].Portcheck.SubVer.length > 10) && (data.data[0].Portcheck.SubVer.substring(0, 9) == '/Satoshi:') && (data.data[0].Portcheck.SubVer.substring(data.data[0].Portcheck.SubVer.length - 1) == '/')) {
+            versioninfo = data.data[0].Portcheck.SubVer.substring(9, data.data[0].Portcheck.SubVer.indexOf('/', 10));
+        }
+        else if ((data.data[0].Portcheck.SubVer.length > 7) && (data.data[0].Portcheck.SubVer.substring(0, 6) == '/Core:') && (data.data[0].Portcheck.SubVer.substring(data.data[0].Portcheck.SubVer.length - 1) == '/')) {
+            versioninfo = data.data[0].Portcheck.SubVer.substring(6, data.data[0].Portcheck.SubVer.indexOf('/', 6));
+        }
+        else if ((data.data[0].Portcheck.SubVer.length > 11) && (data.data[0].Portcheck.SubVer.substring(0, 11) == '/Dash Core:') && (data.data[0].Portcheck.SubVer.substring(data.data[0].Portcheck.SubVer.length - 1) == '/')) {
+            versioninfo = data.data[0].Portcheck.SubVer.substring(11, data.data[0].Portcheck.SubVer.indexOf('/', 11));
+        }
     }
-    else if ((data.data[0].Portcheck.SubVer.length > 7) && (data.data[0].Portcheck.SubVer.substring(0,6) == '/Core:') && (data.data[0].Portcheck.SubVer.substring(data.data[0].Portcheck.SubVer.length-1) == '/')) {
-      versioninfo = data.data[0].Portcheck.SubVer.substring(6,data.data[0].Portcheck.SubVer.indexOf('/',6));
-    }
-    else if ((data.data[0].Portcheck.SubVer.length > 11) && (data.data[0].Portcheck.SubVer.substring(0,11) == '/Dash Core:') && (data.data[0].Portcheck.SubVer.substring(data.data[0].Portcheck.SubVer.length-1) == '/')) {
-      versioninfo = data.data[0].Portcheck.SubVer.substring(11,data.data[0].Portcheck.SubVer.indexOf('/',11));
+    else {
+        versioninfo = "Unknown";
     }
     $('#mnversion').html( versioninfo+" (Protocol="+data.data[0].MasternodeProtocol+")" );
    }

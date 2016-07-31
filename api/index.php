@@ -1662,6 +1662,7 @@ SELECT
     cim.MasternodeOutputHash MasternodeOutputHash,
     cim.MasternodeOutputIndex MasternodeOutputIndex,
     inet6_ntoa(cim.MasternodeIPv6) AS MasternodeIP,
+    cim.MasternodeTor MasternodeTor,
     cim.MasternodePort MasternodePort,
     cim.MasternodePubkey MasternodePubkey,
     MasternodeProtocol,
@@ -2381,7 +2382,13 @@ $app->get('/api/masternodes', function() use ($app,&$mysqli) {
       $mnipstrue = array();
       $mnpubkeystrue = array();
       foreach($nodes as $node) {
-        $tmpip = $node['MasternodeIP']."-".$node['MasternodePort'];
+        if ($node["MasternodeTor"] != "") {
+          $mnip = $node['MasternodeTor'].".onion";
+        }
+        else {
+          $mnip = $node['MasternodeIP'];
+        }
+        $tmpip = $mnip."-".$node['MasternodePort'];
         if (!in_array($tmpip,$mnipstrue)) {
           $mnipstrue[] = $tmpip;
         }
@@ -2397,8 +2404,14 @@ $app->get('/api/masternodes', function() use ($app,&$mysqli) {
         }
         else {
           foreach($nodes as $key => $node) {
-            if (array_key_exists($node['MasternodeIP']."-".$node['MasternodePort'],$portcheck)) {
-              $nodes[$key]['Portcheck'] = $portcheck[$node['MasternodeIP']."-".$node['MasternodePort']];
+            if ($node["MasternodeTor"] != "") {
+              $mnip = $node['MasternodeTor'].".onion";
+            }
+            else {
+              $mnip = $node['MasternodeIP'];
+            }
+            if (array_key_exists($mnip."-".$node['MasternodePort'],$portcheck)) {
+              $nodes[$key]['Portcheck'] = $portcheck[$mnip."-".$node['MasternodePort']];
             }
             else {
               $nodes[$key]['Portcheck'] = false;

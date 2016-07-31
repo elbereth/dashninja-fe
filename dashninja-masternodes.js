@@ -20,12 +20,12 @@
 // Dash Ninja Front-End (dashninja-fe) - Masternode List (v2)
 // By elberethzone / https://dashtalk.org/members/elbereth.175/
 
-var dashninjaversion = '2.2.6';
+var dashninjaversion = '2.3.0';
 var tableLocalNodes = null;
 var tableBlockConsensus = null;
 var tableMNList = null;
 var chartMNVersions = null;
-var dashversiondefault = "0.12.0.51";
+var dashversiondefault = "0.12.0.58";
 var dashversion = dashversiondefault;
 var dashversionsemaphore = false;
 var dashmaxprotocol = 0;
@@ -508,24 +508,37 @@ $(document).ready(function(){
                return outtxt;
             } },
             { data: null, render: function ( data, type, row ) {
-                return data.MasternodeIP+':'+data.MasternodePort;
-            } },
-            { data: null, render: function ( data, type, row ) {
-                var txt = data.Portcheck.Result;
-                if ((data.Portcheck.Result == 'closed') || (data.Portcheck.Result == 'timeout')) {
-                  txt = "Closed";
-                } else if (data.Portcheck.Result == 'unknown') {
-                  txt = "Pending";
-                } else if ((data.Portcheck.Result == 'open') || (data.Portcheck.Result == 'rogue')) {
-                  txt = "Open";
-                }
-                if (data.Portcheck.NextCheck < currenttimestamp()) {
-                  if (txt != "Pending") {
-                    txt = txt + ' (Re-check pending)';
-                  }
+                var mnip = "";
+                if ( data.MasternodeIP == "::" ) {
+                    mnip = data.MasternodeTor+".onion";
                 }
                 else {
-                  txt = txt + ' (' + deltaTimeStampHR(data.Portcheck.NextCheck,currenttimestamp())+')';
+                    mnip = data.MasternodeIP;
+                }
+                return mnip+':'+data.MasternodePort;
+            } },
+            { data: null, render: function ( data, type, row ) {
+                var txt = "";
+                if (data.Portcheck != false) {
+                    txt = data.Portcheck.Result;
+                    if ((data.Portcheck.Result == 'closed') || (data.Portcheck.Result == 'timeout')) {
+                        txt = "Closed";
+                    } else if (data.Portcheck.Result == 'unknown') {
+                        txt = "Pending";
+                    } else if ((data.Portcheck.Result == 'open') || (data.Portcheck.Result == 'rogue')) {
+                        txt = "Open";
+                    }
+                    if (data.Portcheck.NextCheck < currenttimestamp()) {
+                        if (txt != "Pending") {
+                            txt = txt + ' (Re-check pending)';
+                        }
+                    }
+                    else {
+                        txt = txt + ' (' + deltaTimeStampHR(data.Portcheck.NextCheck,currenttimestamp())+')';
+                    }
+                }
+                else {
+                    txt = "<i>Unknown</i>";
                 }
                 return txt;
             } },
@@ -625,10 +638,15 @@ $(document).ready(function(){
         "createdRow": function ( row, data, index ) {
             dashversion = getLatestdashVersion();
             var color = '#FF8F8F';
-            if (( data.Portcheck.Result == 'open' ) || ( data.Portcheck.Result == 'rogue' )) {
-              color = '#8FFF8F';
-            } else if (data.Portcheck.Result == 'unknown') {
-              color = '#8F8F8F';
+            if ( data.Portcheck == false ) {
+                color = '#8F8F8F';
+            }
+            else {
+                if (( data.Portcheck.Result == 'open' ) || ( data.Portcheck.Result == 'rogue' )) {
+                    color = '#8FFF8F';
+                } else if (data.Portcheck.Result == 'unknown') {
+                    color = '#8F8F8F';
+                }
             }
             $('td',row).eq(3).css({"background-color":color,"text-align": "center"});
             color = '#8FFF8F';
