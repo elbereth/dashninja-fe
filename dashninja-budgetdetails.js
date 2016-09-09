@@ -20,7 +20,7 @@
 // Dash Ninja Front-End (dashninja-fe) - Budget Details
 // By elberethzone / https://dashtalk.org/members/elbereth.175/
 
-var dashninjaversion = '1.2.1';
+var dashninjaversion = '1.2.3';
 var tableVotes = null;
 var tableSuperBlocks = null;
 var dashoutputregexp = /^[a-z0-9]{64}-[0-9]+$/;
@@ -40,6 +40,7 @@ if (typeof dashninjatestnet === 'undefined') {
 if (typeof dashninjatestnethost !== 'undefined') {
   if (window.location.hostname == dashninjatestnethost) {
     dashninjatestnet = 1;
+    $('a[name=menuitemexplorer]').attr("href", "https://"+dashninjatestnetexplorer);
   }
 }
 
@@ -89,7 +90,7 @@ if (typeof dashninjatxexplorer[1] === 'undefined') {
 function budgetdetailsRefresh(useHash){
   console.log("DEBUG: budgetdetailsRefresh starting");
   $('#budgetinfoLR').html( '<i class="fa fa-spinner fa-pulse"></i> Refreshing <i class="fa fa-spinner fa-pulse"></i>' );
-  var query = 'https://dashninja.pl/api/budgets?testnet='+dashninjatestnet;
+  var query = '/api/budgets?testnet='+dashninjatestnet;
   if (useHash) {
     query += '&budgethashes=["'+encodeURIComponent(budgethash)+'"]';
   }
@@ -420,7 +421,7 @@ function budgetdetailsRefresh(useHash){
 
 function refreshBudgetProjection(useHash) {
     console.log("DEBUG: refreshBudgetProjection starting");
-    var query = 'https://dashninja.pl/api/budgetsprojection?testnet=' + dashninjatestnet+'&onlyvalid=1';
+    var query = '/api/budgetsprojection?testnet=' + dashninjatestnet+'&onlyvalid=1';
     if (useHash) {
         query += '&budgethashes=["' + encodeURIComponent(budgethash) + '"]';
     }
@@ -457,7 +458,7 @@ function refreshFiatValues() {
         $('#budgetmonthlyamounteur').html( '<i class="fa fa-spinner fa-pulse"></i>' );
         $('#budgettotalamountusd').html( '<i class="fa fa-spinner fa-pulse"></i>' );
         $('#budgettotalamounteur').html( '<i class="fa fa-spinner fa-pulse"></i>' );
-        var query = 'https://dashninja.pl/api/tablevars';
+        var query = '/api/tablevars';
         $.getJSON( query, function( data ) {
             console.log("DEBUG: REST api /tablevars query reply!");
             if ((!data.hasOwnProperty("data")) || (!data.data.hasOwnProperty("tablevars")) || (data.data.tablevars === null)

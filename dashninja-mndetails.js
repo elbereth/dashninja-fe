@@ -20,7 +20,7 @@
 // Dash Ninja Front-End (dashninja-fe) - Masternode Detail
 // By elberethzone / https://dashtalk.org/members/elbereth.175/
 
-var dashninjaversion = '2.3.0';
+var dashninjaversion = '2.3.2';
 var tablePayments = null;
 var dataProtocolDesc = [];
 var maxProtocol = -1;
@@ -38,6 +38,7 @@ if (typeof dashninjatestnet === 'undefined') {
 if (typeof dashninjatestnethost !== 'undefined') {
   if (window.location.hostname == dashninjatestnethost) {
     dashninjatestnet = 1;
+    $('a[name=menuitemexplorer]').attr("href", "https://"+dashninjatestnetexplorer);
   }
 }
 
@@ -63,7 +64,7 @@ function tablePaymentsRefresh(){
 function mndetailsRefresh(useVin){
   console.log("DEBUG: mndetailsRefresh starting");
   $('#mninfosLR').html( '<i class="fa fa-spinner fa-pulse"></i> Refreshing <i class="fa fa-spinner fa-pulse"></i>' );
-  var query = 'https://dashninja.pl/api/masternodes?balance=1&portcheck=1&lastpaid=1&testnet='+dashninjatestnet;
+  var query = '/api/masternodes?balance=1&portcheck=1&lastpaid=1&testnet='+dashninjatestnet;
   if (useVin) {
     query += '&vins=["'+mnvin+'"]';
   }
