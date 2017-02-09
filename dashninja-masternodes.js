@@ -20,13 +20,14 @@
 // Dash Ninja Front-End (dashninja-fe) - Masternode List (v2)
 // By elberethzone / https://dashtalk.org/members/elbereth.175/
 
-var dashninjaversion = '2.3.1';
+var dashninjaversion = '2.3.3';
 var tableLocalNodes = null;
 var tableBlockConsensus = null;
 var tableMNList = null;
 var chartMNVersions = null;
-var dashversiondefault = "0.12.0.58";
+var dashversiondefault = "0.12.1.0";
 var dashversion = dashversiondefault;
+var dashversioncheck = dashversion;
 var dashversionsemaphore = false;
 var dashmaxprotocol = 0;
 
@@ -146,7 +147,7 @@ function getLatestdashVersion() {
    || ( sessionStorage.getItem("nextdashversion") === null )
    || ( sessionStorage.getItem("nextdashversion") < currentdate.getTime() )) && (dashversionsemaphore == false)) {
     dashversionsemaphore = true;
-    $.getJSON( "/dashninja-latestversion.json", function( data ) {
+    $.getJSON( "/dashninja-latestversion.json?nocache="+ (new Date()).getTime(), function( data ) {
       sessionStorage.setItem('currentdashversion', data.version.string);
       var currentdate = new Date();
       currentdate = new Date(currentdate.getTime() + 15*60000);
@@ -162,7 +163,13 @@ function getLatestdashVersion() {
     }
     displaydashVersion(dashversion);
   }
-  return dashversion;
+  if ((dashversion.length > 2) && (dashversion.substr(dashversion.length - 2) == ".0")) {
+      dashversioncheck = dashversion.substr(0,dashversion.length-2);
+  }
+  else {
+      dashversioncheck = dashversion;
+  }
+  return dashversioncheck;
 };
 
 $(document).ready(function(){
@@ -637,7 +644,7 @@ $(document).ready(function(){
             } },
         ],
         "createdRow": function ( row, data, index ) {
-            dashversion = getLatestdashVersion();
+            dashversioncheck = getLatestdashVersion();
             var color = '#FF8F8F';
             if ( data.Portcheck == false ) {
                 color = '#8F8F8F';
@@ -673,7 +680,7 @@ $(document).ready(function(){
             else if ( ( versioninfo.substring(0,5) == "0.10." ) || ( versioninfo.substring(0,7) == "0.11." ) ) {
               color = '#FF8F8F';
             }
-            else if ( versioninfo == dashversion ) {
+            else if ( versioninfo == dashversioncheck ) {
               color = '#8FFF8F';
             }
             else {
