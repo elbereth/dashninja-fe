@@ -40,6 +40,26 @@ $router->setUriSource(\Phalcon\Mvc\Router::URI_SOURCE_SERVER_REQUEST_URI);
 // Non-Auth required
 // *******************************************************
 
+// Get API version
+$app->get('/api/version', function() {
+
+  //Create a response
+  $response = new Phalcon\Http\Response();
+  $response->setHeader('Access-Control-Allow-Origin', '*');
+  $response->setHeader("Content-Type", "application/json");
+
+  //Change the HTTP status
+  $response->setStatusCode(200, "OK");
+  $response->setJsonContent(array('status' => 'OK', 'data' => array("version" => array(
+      "api" => DASHNINJA_BEV,
+      "phalcon" => Phalcon\Version::get(),
+      "php" => phpversion()
+  ))));
+
+  return $response;
+
+});
+
 // Get blocks detail + stats
 // Parameters:
 //   testnet=0|1
@@ -1340,6 +1360,239 @@ $app->get('/api/budgetsprojection', function() use ($app,&$mysqli) {
     }
   }
   return $response;
+
+});
+
+// Get governance proposals
+// Parameters:
+//   testnet=0|1
+//   onlyvalid=0|1
+//   proposalshashes=[json array of hashes]
+//   proposalsnames=[json array of hashes]
+$app->get('/api/governanceproposals', function() use ($app,&$mysqli) {
+
+    $apiversion = 1;
+    $apiversioncompat = 1;
+
+    //Create a response
+    $response = new Phalcon\Http\Response();
+    $response->setHeader('Access-Control-Allow-Origin', '*');
+    $response->setHeader("Content-Type", "application/json");
+
+    $request = $app->request;
+
+    $errmsg = array();
+
+    if (!array_key_exists('CONTENT_LENGTH',$_SERVER) || (intval($_SERVER['CONTENT_LENGTH']) != 0)) {
+        $errmsg[] = "No CONTENT expected";
+    }
+
+    // Retrieve the 'testnet' parameter
+    if ($request->hasQuery('testnet')) {
+        $testnet = intval($request->getQuery('testnet'));
+        if (($testnet != 0) && ($testnet != 1)) {
+            $testnet = 0;
+        }
+    }
+    else {
+        $testnet = 0;
+    }
+
+    // Retrieve the 'onlyvalid' parameter
+    if ($request->hasQuery('onlyvalid')) {
+        $onlyvalid = (intval($request->getQuery('onlyvalid')) == 1);
+    }
+    else {
+        $onlyvalid = false;
+    }
+
+    // Retrieve the 'proposalsnames' parameter
+    if ($request->hasQuery('proposalsnames')) {
+        $proposalsnames = json_decode($request->getQuery('proposalsnames'));
+        if (($proposalsnames === false) || !is_array($proposalsnames)) {
+            $errmsg[] = "Parameter proposalsnames: Not a JSON encoded list of budgets ids";
+        }
+        else {
+            foreach ($proposalsnames as $x => $proposalname) {
+                $proposalsnames[$x] = $mysqli->real_escape_string($proposalname);
+            }
+        }
+    }
+    else {
+        $proposalsnames = array();
+    }
+
+    // Retrieve the 'budgethashes' parameter
+    if ($request->hasQuery('proposalshashes')) {
+        $proposalshashes = json_decode($request->getQuery('proposalshashes'));
+        if (($proposalshashes === false) || !is_array($proposalshashes)) {
+            $errmsg[] = "Parameter proposalshashes: Not a JSON encoded list of budget hashes";
+        }
+        else {
+            foreach ($proposalshashes as $proposalhash) {
+                if ( strlen($proposalhash) != 64 ) {
+                    $errmsg[] = "Parameter proposalshashes: Entry $proposalhash: Incorrect hash format.";
+                }
+            }
+        }
+    }
+    else {
+        $proposalshashes = array();
+    }
+
+    if (count($errmsg) > 0) {
+        //Change the HTTP status
+        $response->setStatusCode(400, "Bad Request");
+
+        //Send errors to the client
+        $response->setJsonContent(array('status' => 'ERROR', 'messages' => $errmsg));
+    }
+    else {
+        $cacheserial = sha1(serialize($proposalsnames).serialize($proposalshashes));
+        $cachefnam = CACHEFOLDER.sprintf("dashninja_governanceproposals_%d_%d_%d_%d_%s",$testnet,$onlyvalid,count($proposalsnames),count($proposalshashes),$cacheserial);
+        $cachefnamupdate = $cachefnam.".update";
+//        $cachevalid = (is_readable($cachefnam) && (((filemtime($cachefnam)+120)>=time()) || file_exists($cachefnamupdate)));
+        $cachevalid = false;
+        if ($cachevalid) {
+            $data = unserialize(file_get_contents($cachefnam));
+            $data["cache"]["fromcache"] = true;
+            $response->setStatusCode(200, "OK");
+            $response->setJsonContent(array('status' => 'OK', 'data' => $data));
+        }
+        else {
+            touch($cachefnamupdate);
+
+            // Add selection by proposals hashes
+            $sqlhashes= "";
+            if (count($proposalshashes) > 0) {
+                $sqls = '';
+                foreach($proposalshashes as $proposalhash) {
+                    if (strlen($sqls)>0) {
+                        $sqls .= ' OR ';
+                    }
+                    $sqls .= sprintf("GovernanceObjectId = '%s'",$proposalhash);
+                }
+                $sqlhashes = " AND (".$sqls.")";
+            }
+
+            // Add selection by proposals names
+            $sqlnames = "";
+            if (count($proposalsnames) > 0) {
+                $sqls = '';
+                foreach($proposalsnames as $proposalname) {
+                    if (strlen($sqls)>0) {
+                        $sqls .= ' OR ';
+                    }
+                    $sqls .= sprintf("GovernanceObjectName = '%s'",$proposalname);
+                }
+                $sqlnames = " AND (".$sqls.")";
+            }
+
+            // Get governance proposals
+            $sql = sprintf("SELECT * FROM cmd_gobject_proposals WHERE GovernanceObjectTestnet = %d%s%s",$testnet,$sqlhashes,$sqlnames);
+            if ($onlyvalid) {
+                $sql .= " AND GovernanceObjectCachedValid = 1";
+            }
+
+            if ($result = $mysqli->query($sql)) {
+                $proposalsvalid = 0;
+                $proposalsfunded = 0;
+                $proposals = array();
+                while($row = $result->fetch_assoc()){
+                    $proposals[] = array(
+                        "Name" => stripslashes($row["GovernanceObjectName"]),
+                        "Hash" => stripslashes($row["GovernanceObjectId"]),
+                        "CollateralHash" => stripslashes($row["GovernanceObjectCollateral"]),
+                        "URL" => stripslashes($row["GovernanceObjectURL"]),
+                        "EpochStart" => intval($row["GovernanceObjectEpochStart"]),
+                        "EpochEnd" => intval($row["GovernanceObjectEpochEnd"]),
+                        "PaymentAddress" => stripslashes($row["GovernanceObjectPaymentAddress"]),
+                        "PaymentAmount" => floatval($row["GovernanceObjectPaymentAmount"]),
+                        "AbsoluteYes" => intval($row["GovernanceObjectVotesAbsoluteYes"]),
+                        "Yes" => intval($row["GovernanceObjectVotesYes"]),
+                        "No" => intval($row["GovernanceObjectVotesNo"]),
+                        "Abstain" => intval($row["GovernanceObjectVotesAbstain"]),
+                        "BlockchainValidity" => ($row["GovernanceObjectBlockchainValidity"] == 1),
+                        "IsValidReason" => stripslashes($row["IsValidReason"]),
+                        "CachedValid" => ($row["GovernanceObjectCachedValid"] == 1),
+                        "CachedFunding" => ($row["GovernanceObjectCachedFunding"] == 1),
+                        "CachedDelete" => ($row["GovernanceObjectCachedDelete"] == 1),
+                        "CachedEndorsed" => ($row["GovernanceObjectCachedEndorsed"] == 1),
+                        "FirstReported" => strtotime($row["FirstReported"]),
+                        "LastReported" => strtotime($row["LastReported"])
+                    );
+                    $proposalsvalid+=intval($row["GovernanceObjectBlockchainValidity"]);
+                    $proposalsfunded+=intval($row["GovernanceObjectCachedFunding"]);
+                }
+
+                $totalmninfo = 0;
+                $uniquemnips = 0;
+                $mninfo = drkmn_masternodes_count($mysqli,$testnet, $totalmninfo, $uniquemnips);
+                if ($mninfo === false) {
+                    $response->setStatusCode(503, "Service Unavailable");
+                    $response->setJsonContent(array('status' => 'ERROR', 'messages' => array($mysqli->errno.': '.$mysqli->error,$totalmninfo)));
+                    return $response;
+                }
+
+                $sql = sprintf("SELECT `BlockId`, `BlockTime`, `BlockDifficulty` FROM `cmd_info_blocks` WHERE BlockTestNet = %d ORDER BY BlockId DESC LIMIT 1",$testnet);
+                if ($result = $mysqli->query($sql)) {
+                    $currentblock = $result->fetch_assoc();
+                    $currentblock["BlockId"] = intval($currentblock["BlockId"]);
+                    $currentblock["BlockTime"] = intval($currentblock["BlockTime"]);
+                    $currentblock["BlockDifficulty"] = floatval($currentblock["BlockDifficulty"]);
+                }
+                else {
+                    $response->setStatusCode(503, "Service Unavailable");
+                    $response->setJsonContent(array('status' => 'ERROR', 'messages' => array($mysqli->errno.': '.$mysqli->error)));
+                    return $response;
+                }
+
+                $nSubsidy = 5;
+                if ($testnet == 0){
+                    $nextsuperblock = $currentblock["BlockId"] - ($currentblock["BlockId"] % 16616) + 16616;
+                    for($i = 210240; $i <= $nextsuperblock; $i += 210240) $nSubsidy -= $nSubsidy/14;
+                    $estimatedbudgetamount = (($nSubsidy/100)*10)*576*30;
+                } else {
+                    $nextsuperblock = $currentblock["BlockId"] - ($currentblock["BlockId"] % 50) + 50 ;
+                    for($i = 46200; $i <= $nextsuperblock; $i += 210240) $nSubsidy -= $nSubsidy/14;
+                    $estimatedbudgetamount = (($nSubsidy/100)*10)*50;
+                }
+
+                $data = array('governanceproposals' => $proposals,
+                    'stats' => array(
+                        'valid' => $proposalsvalid,
+                        'funded' => $proposalsfunded,
+                        'totalmns' => intval($totalmninfo),
+                        'nextsuperblock' => array(
+                            "blockheight" => $nextsuperblock,
+                            "estimatedbudgetamount" => $estimatedbudgetamount
+                        ),
+                        'latestblock' => $currentblock
+                    ),
+                    'cache' => array(
+                        'time' => time(),
+                        'fromcache' => false
+                    ),
+                    'api' => array(
+                        'version' => $apiversion,
+                        'compat' => $apiversioncompat,
+                        'bev' => 'gp='.DASHNINJA_BEV.".".$apiversion
+                    )
+                );
+
+                //Change the HTTP status
+                $response->setStatusCode(200, "OK");
+                $response->setJsonContent(array('status' => 'OK', 'data' => $data));
+                file_put_contents($cachefnam,serialize($data),LOCK_EX);
+                unlink($cachefnamupdate);
+            }
+            else {
+                $response->setStatusCode(503, "Service Unavailable");
+                $response->setJsonContent(array('status' => 'ERROR', 'messages' => $mysqli->errno.': '.$mysqli->error));
+            }
+        }
+    }
+    return $response;
 
 });
 
