@@ -20,7 +20,7 @@
 // Dash Ninja Front-End (dashninja-fe) - Masternode List (v2)
 // By elberethzone / https://dashtalk.org/members/elbereth.175/
 
-var dashninjaversion = '2.3.3';
+var dashninjaversion = '2.3.4';
 var tableLocalNodes = null;
 var tableBlockConsensus = null;
 var tableMNList = null;
@@ -178,6 +178,11 @@ $(document).ready(function(){
 
   if (dashninjatestnet == 1) {
     $('#testnetalert').show();
+  }
+
+  if (typeof dashninjator !== 'undefined') {
+      $('a[name=dashninjatorurl]').attr("href", "http://"+dashninjator+"/masternodes.html").text( dashninjator+"/masternodes.html" );
+      $('span[name=dashninjatordisplay]').show();
   }
 
   getLatestdashVersion();

@@ -23,6 +23,9 @@
 var dashninjatestnethost = 'test.dashninja.pl';
 var dashninjatestnetexplorer = 'test.explorer.dashninja.pl';
 
+// Tor onion hostname
+var dashninjator = 'seuhd5sihasshuqh.onion';
+
 // Coin logos
 var dashninjacoin = ['DASH','tDASH'];
 
@@ -60,6 +63,8 @@ var dashninjaqueryexplorer = [[["https://explorer.dashninja.pl/search?q=%%q%%","
 var dashninjamasternodemonitoring = ["https://www.dashninja.pl/masternodes.html?mnregexp=%%p%%#mnversions","https://test.dashninja.pl/masternodes.html?mnregexp=%%p%%#mnversions"];
 
 var dashninjabudgetdetail = ["https://www.dashninja.pl/budgetdetails.html?budgetid=%%b%%","https://test.dashninja.pl/budgetdetails.html?budgetid=%%b%%"];
+
+var dashninjagovernanceproposaldetail = ["https://www.dashninja.pl/proposaldetails.html?proposalhash=%%b%%","https://test.dashninja.pl/proposaldetails.html?proposalhash=%%b%%"];
 
 // Blocks per day
 var dashblocksperday = 553;

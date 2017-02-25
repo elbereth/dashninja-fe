@@ -20,7 +20,7 @@
 // Dash Ninja Front-End (dashninja-fe) - Blocks (v2)
 // By elberethzone / https://dashtalk.org/members/elbereth.175/
 
-var dashninjaversion = '2.3.1';
+var dashninjaversion = '2.3.3';
 var tableBlocks = null;
 var tablePerVersion = null;
 var tablePerMiner = null;
@@ -38,6 +38,7 @@ if (typeof dashninjatestnethost !== 'undefined') {
     $('a[name=menuitemexplorer]').attr("href", "https://"+dashninjatestnetexplorer);
   }
 }
+
 
 if (typeof dashninjacoin === 'undefined') {
   var dashninjacoin = ['',''];
@@ -74,6 +75,11 @@ $(document).ready(function(){
 
   if (dashninjatestnet == 1) {
     $('#testnetalert').show();
+  }
+
+  if (typeof dashninjator !== 'undefined') {
+      $('a[name=dashninjatorurl]').attr("href", "http://"+dashninjator+"/blocks.html").text( dashninjator+"/blocks.html" );
+      $('span[name=dashninjatordisplay]').show();
   }
 
    tablePerVersion = $('#perversiontable').dataTable( {
@@ -334,7 +340,8 @@ $(document).ready(function(){
    tableBlocks = $('#blockstable').dataTable( {
         ajax: { url: "/api/blocks?testnet="+dashninjatestnet,
                 dataSrc: 'data.blocks' },
-        paging: false,
+        lengthMenu: [ [20, 70, 136, 272, -1], ["20 (~1h)", "70 (~3h)", "136 (~6h)", "272 (~12h)", "All (24h)"] ],
+        pageLength: 20,
         order: [[ 0, "desc" ]],
         columns: [
             { data: null, render: function ( data, type, row ) {

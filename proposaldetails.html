@@ -91,17 +91,13 @@ along with Dash Ninja.  If not, see <http://www.gnu.org/licenses/>.
         </div>
       <div class="col-sm-9 col-sm-offset-3 col-md-10 col-md-offset-2 main">
       <div class="page-header">
-        <h1>DASH Ninja - Budget Details</h1>
+        <h1>DASH Ninja - Governance Proposal Details</h1>
         <p>Page is dynamically refreshed (JavaScript required). All times are in GMT/UTC.<br/>
-Versions: <i>HTML v1.2.4 / JS v<span id="dashninjajsversion">?.?.?</span></i> (hint: might need to Ctrl+F5 to update JS)</p>
+Versions: <i>HTML v0.9.0 / JS v<span id="dashninjajsversion">?.?.?</span></i> (hint: might need to Ctrl+F5 to update JS)</p>
       </div>
     <div id="testnetalert" class="alert alert-danger" style="display: none">
       <h2>THIS IS TESTNET!</h2>
     </div>
-          <div id="gobjectwarning" class="alert alert-warning">
-              <h2>This is OBSOLETE since v0.12.1 release!</h2>
-              <p>Go to the <a href="/governance.html">Governance Proposals Monitoring</a> page, for the new budget info.</p>
-          </div>
     <div class="alert alert-info">
 <p>If this page is useful to you, spare some coin: <a href="http://chainz.cryptoid.info/dash/address.dws?Xbon36F261wXDL4p1CEZAX28t8U4ayR9uu.htm">Xbon36F261wXDL4p1CEZAX28t8U4ayR9uu</a><br>
 Brought to you by <a href="https://www.dash.org/forum/members/elbereth.175/">elberethzone</a> (<a href="https://keybase.io/elbereth/key.asc">GPG</a>).</p>
@@ -111,32 +107,32 @@ Brought to you by <a href="https://www.dash.org/forum/members/elbereth.175/">elb
   <tbody>
   <tr>
       <td><i class="fa fa-tag"></i></td>
-      <th>Budget Name</th>
+      <th>Proposal Name</th>
       <td id="budgetid">???</td>
   </tr>
     <tr>
       <td><i class="fa fa-sign-in"></i></td>
-      <th>Budget Hash</th>
+      <th>Proposal Hash</th>
       <td id="budgethash">???</td>
     </tr>
   <tr>
       <td><i class="fa fa-link"></i></td>
-      <th>Budget URL</th>
+      <th>Proposal URL</th>
       <td id="budgeturl">???</td>
   </tr>
   <tr>
       <td><i class="fa fa-sign-out"></i></td>
-      <th>Budget Fee Transaction</th>
+      <th>Proposal Fee Transaction</th>
       <td id="budgetfee">???</td>
   </tr>
     <tr>
       <td><i class="fa fa-hourglass-start"></i></td>
-      <th>Block Start</th>
+      <th>Proposal Start</th>
       <td id="budgetblockstart">???</td>
     </tr>
     <tr>
       <td><i class="fa fa-hourglass-end"></i></td>
-      <th>Block End</th>
+      <th>Proposal End</th>
       <td id="budgetblockend">???</td>
     </tr>
     <tr>
@@ -146,7 +142,7 @@ Brought to you by <a href="https://www.dash.org/forum/members/elbereth.175/">elb
     </tr>
     <tr>
       <td><i class="fa fa-money"></i></td>
-      <th>Total Amount</th>
+      <th>Remaining Amount</th>
       <td id="budgettotalamount">???</td>
     </tr>
     <tr>
@@ -184,6 +180,11 @@ Brought to you by <a href="https://www.dash.org/forum/members/elbereth.175/">elb
       <th>Votes NO</th>
       <td id="budgetno">???</td>
     </tr>
+  <tr>
+      <td><i class="fa fa-square"></i></td>
+      <th>Votes ABSTAIN</th>
+      <td id="budgetabstain">???</td>
+  </tr>
     <tr>
       <td><i class="fa fa-check-square"></i></td>
       <th>Votes YES still needed</th>
@@ -219,23 +220,33 @@ Brought to you by <a href="https://www.dash.org/forum/members/elbereth.175/">elb
               </div>
           </div>
           <div id="voteyes" class="panel panel-success">
-              <div class="panel-heading">Vote YES</div>
+              <div class="panel-heading"><i class="fa fa-plus-square"></i> Vote YES</div>
               <div class="panel-body">
                   <p>From your masternode cold wallet (the one having your 1000 DASH vins and where the revenue arrives).</p>
                   <p>To vote from dash-qt (graphical wallet), go to Tools > Debug console and type:</p>
-                  <pre>mnbudget vote-many <span id="budgethash1">???</span> yes</pre>
+                  <pre>gobject vote-many <span id="budgethash1">???</span> funding yes</pre>
                   <p>To vote from dash-cli (command line, dashd must be running), type:</p>
-                  <pre>dash-cli mnbudget vote-many <span id="budgethash2">???</span> yes</pre>
+                  <pre>dash-cli gobject vote-many <span id="budgethash2">???</span> funding yes</pre>
               </div>
           </div>
           <div id="voteno" class="panel panel-danger">
-              <div class="panel-heading">Vote NO</div>
+              <div class="panel-heading"><i class="fa fa-minus-square"></i> Vote NO</div>
               <div class="panel-body">
                   <p>From your masternode cold wallet (the one having your 1000 DASH vins and where the revenue arrives).</p>
                   <p>To vote from dash-qt (graphical wallet), go to Tools > Debug console and type:</p>
-                  <pre>mnbudget vote-many <span id="budgethash3">???</span> no</pre>
+                  <pre>gobject vote-many <span id="budgethash3">???</span> funding no</pre>
                   <p>To vote from dash-cli (command line, dashd must be running), type:</p>
-                  <pre>dash-cli mnbudget vote-many <span id="budgethash4">???</span> no</pre>
+                  <pre>dash-cli gobject vote-many <span id="budgethash4">???</span> funding no</pre>
+              </div>
+          </div>
+          <div id="voteabstain" class="panel panel-warning">
+              <div class="panel-heading"><i class="fa fa-square"></i> Vote ABSTAIN (when you want to cancel a YES or NO vote)</div>
+              <div class="panel-body">
+                  <p>From your masternode cold wallet (the one having your 1000 DASH vins and where the revenue arrives).</p>
+                  <p>To vote from dash-qt (graphical wallet), go to Tools > Debug console and type:</p>
+                  <pre>gobject vote-many <span id="budgethash5">???</span> funding abstain</pre>
+                  <p>To vote from dash-cli (command line, dashd must be running), type:</p>
+                  <pre>dash-cli gobject vote-many <span id="budgethash6">???</span> funding abstain</pre>
               </div>
           </div>
           <hr/>
@@ -295,7 +306,7 @@ Brought to you by <a href="https://www.dash.org/forum/members/elbereth.175/">elb
     <script src="/static/datatables/datatables.min.js"></script>
     <script src="dashninja-config.js"></script>
     <script src="dashninja-common.js"></script>
-    <script src="dashninja-budgetdetails.js"></script>
+    <script src="dashninja-proposaldetails.js"></script>
   </body>
 </html>
 

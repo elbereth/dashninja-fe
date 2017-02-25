@@ -21,7 +21,7 @@ along with Dash Ninja.  If not, see <http://www.gnu.org/licenses/>.
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>DASH Ninja - Budget Monitoring</title>
+    <title>DASH Ninja - Governance Objects Monitoring</title>
 
     <link rel="icon" href="/static/dashninja-favicon.ico" />
     <link rel="icon" type="image/png" href="/static/dashninja-favicon.png" />
@@ -53,7 +53,7 @@ along with Dash Ninja.  If not, see <http://www.gnu.org/licenses/>.
           <ul class="nav navbar-nav">
             <li><a href="/blocks.html">Blocks Masternodes Payee</a></li>
             <li><a href="/masternodes.html">Masternodes Monitoring</a></li>
-            <li><a href="/governance.html">Governance Monitoring</a></li>
+            <li class="active"><a href="/governance.html">Governance Monitoring</a></li>
             <li><a name="menuitemexplorer" href="https://explorer.dashninja.pl">Block Explorer</a></li>
             <li class="dropdown">
              <a href="#" class="dropdown-toggle" data-toggle="dropdown">Other Tools <span class="caret"></span></a>
@@ -82,125 +82,82 @@ along with Dash Ninja.  If not, see <http://www.gnu.org/licenses/>.
           </ul>
           <ul class="nav nav-sidebar">
               <li><a href="#budgetinfo">Budget Info</a></li>
-              <li><a href="#budgetsdetail">Budgets Proposals Detail</a></li>
-              <li><a href="#budgetsprojectiondetail">Budgets Projection Detail</a></li>
+              <li><a href="#proposalsdetail">Budget Proposals Detail</a></li>
           </ul>
             <ul class="nav nav-sidebar">
-                <li><a href="#superblocksexpected">Super Blocks Expected (Final budget)</a></li>
+                <li><a href="#triggersdetail">Expected Super Block (Triggers)</a></li>
                 <li><a href="#superblocks">Super Blocks History</a></li>
-                <li><a href="#monthlybudgetpayments">Monthly Budget Payments</a></li>
             </ul>
         </div>
         <div class="col-sm-9 col-sm-offset-3 col-md-10 col-md-offset-2 main">
         <div class="page-header">
-          <h1>DASH Ninja - Budget Monitoring</h1>
-        <p>Page is dynamically refreshed (JavaScript required). All dates/times are using your system locale.<br/>
-Versions: <i>HTML v1.5.6 / JS v<span id="dashninjajsversion">?.?.?</span></i> (hint: might need to Ctrl+F5 to update JS)</p>
-      </div>
+          <h1>DASH Ninja - Governance Objects Monitoring</h1>
+        <p>Page is dynamically refreshed (JavaScript required). All dates/times are using your system locale.<br>
+<span name="dashninjatordisplay" style="display: none;">Available on Tor via <a name="dashninjatorurl" href="#">?</a><br></span>
+Old budgets (v0.12.0 or older) are available on <a href="/budgets.html">this page</a>.<br>
+Versions: <i>HTML v0.9.0 / JS v<span id="dashninjajsversion">?.?.?</span></i> (hint: might need to Ctrl+F5 to update JS)</p>
+        </div>
     <div id="testnetalert" class="alert alert-danger" style="display: none">
       <h2>THIS IS TESTNET!</h2>
-    </div>
-    <div id="gobjectwarning" class="alert alert-warning">
-      <h2>This is OBSOLETE since v0.12.1 release!</h2>
-        <p>Go to the <a href="/governance.html">Governance Proposals Monitoring</a> page, for the new budget info.</p>
     </div>
     <div class="alert alert-info">
 <p>If this page is useful to you, spare some coin: <a href="http://chainz.cryptoid.info/dash/address.dws?Xbon36F261wXDL4p1CEZAX28t8U4ayR9uu.htm">Xbon36F261wXDL4p1CEZAX28t8U4ayR9uu</a><br>
 Brought to you by <a href="https://www.dash.org/forum/members/elbereth.175/">elberethzone</a> (<a href="https://keybase.io/elbereth/key.asc">GPG</a>).</p>
     </div>
         <h2>Global Statistics</h2>
-        <p>There are <span id="globalvalidbudget" style="font-weight: bold;">???</span> valid budgets proposal of which <span id="globalestablishedbudget" style="font-weight: bold;">???</span> are established (total established payment: <span id="globalestablishedbudgetamount" style="font-weight: bold;">????.???????? DASH</span>) and <span id="globalallotedbudget" style="font-weight: bold;">???</span> are alloted (total alloted payment: <span id="globalallotedbudgetamount" style="font-weight: bold;">????.???????? DASH</span>).</p>
+        <p>There are <span id="globalvalidbudget" style="font-weight: bold;">???</span> valid budgets proposal of which <span id="globalestablishedbudget" style="font-weight: bold;">???</span> are funded (total funded payment: <span id="globalestablishedbudgetamount" style="font-weight: bold;">????.???????? DASH</span>).</p>
         <p>Next super-block will be <span id="globalnextsuperblockid" style="font-weight: bold;">???</span> on <span id="globalnextsuperblockdate" style="font-weight: bold;">??/??/????</span> (<span id="globalnextsuperblockremaining" style="font-weight: bold;">???</span>) and will provide <span id="globalnextsuperblockamount" style="font-weight: bold;">????.???????? DASH</span> for budgets.</p>
         <p><span id="globalnextsuperblockunallocated" style="font-weight: bold;">????.???????? DASH</span> unallocated in next super-block.</p>
 
             <h2 id="budgetinfo">Budget Info</h2>
-            <p>A budget proposal is <strong>valid</strong> if the fee was payed and it was submitted to peers successfully.</p>
-            <p>A budget proposal is <strong>established</strong> when it is older than 1 day.</p>
-            <p>A budget proposal is <strong>alloted</strong> (will get paid on next super-block and is in the <a href="#budgetsprojectiondetail">budgets projection</a> list) when Yea votes minus Nay votes is more than 10% of total masternodes.</p>
-            <h2 id="budgetsdetail">Budgets Proposals Detail</h2>
+            <p>A governance proposal is <strong>valid</strong> if the fee was payed and it was submitted to peers successfully.</p>
+            <p>A governance proposal is <strong>funded</strong> (will get paid on next super-block if enough funding available in next super-block.</p>
+            <h2 id="proposalsdetail">Budget Proposals Detail</h2>
 <div class="table-responsive">
-<table id="budgetsdetailtable" class="table table-striped table-condensed table-responsive text-nowrap">
+<table id="proposalsdetailtable" class="table table-striped table-condensed table-responsive text-nowrap">
  <thead>
   <tr>
     <th>Date&nbsp;Added</th>
-    <th>ID</th>
+    <th>Name</th>
     <th>Hash</th>
     <th>Fee Hash</th>
-    <th>Block Start</th>
-    <th>Est. Start</th>
-    <th>Block End</th>
-    <th>Est. End</th>
-    <th>Total Payments</th>
-    <th>Remaining Payments</th>
-    <th>Total Amount</th>
-    <th>Monthly Amount</th>
+    <th>Start</th>
+    <th>End</th>
+    <th>Amount</th>
     <th>Payment Address</th>
-    <th>Votes Yea</th>
-    <th>Votes Nay</th>
-    <th>Votes Ratio</th>
+    <th>Votes Yes</th>
+    <th>Votes No</th>
+    <th>Votes Abstain</th>
     <th>Total Ratio</th>
-    <th>Established</th>
     <th>Valid</th>
+    <th>Funded</th>
     <th>Last Seen</th>
   </tr>
  </thead>
  <tbody>
   <tr>
-    <td colspan="20">Please wait while loading... (JavaScript needed)</td>
+    <td colspan="16">Please wait while loading... (JavaScript needed)</td>
   </tr>
  </tbody>
 </table>
-    Last refresh: <span id="budgetstableLR" style="font-decoration: italic;">Never</span><br>
+    Last refresh: <span id="proposalsdetailtableLR" style="font-decoration: italic;">Never</span><br>
 </div>
-            <h2 id="budgetsprojectiondetail">Budgets Projection Detail</h2>
-            <div class="table-responsive">
-                <table id="budgetsprojectiondetailtable" class="table table-striped table-condensed table-responsive text-nowrap">
-                    <thead>
-                    <tr>
-                        <th>Date&nbsp;Added</th>
-                        <th>ID</th>
-                        <th>Hash</th>
-                        <th>Block Start</th>
-                        <th>Est. Start</th>
-                        <th>Block End</th>
-                        <th>Est. End</th>
-                        <th>Total Payments</th>
-                        <th>Remaining Payments</th>
-                        <th>Total Amount</th>
-                        <th>Monthly Amount</th>
-                        <th>Alloted Amount</th>
-                        <th>Total Budget Alloted</th>
-                        <th>Payment Address</th>
-                        <th>Votes Yea</th>
-                        <th>Votes Nay</th>
-                        <th>Votes Ratio</th>
-                        <th>Total Ratio</th>
-                        <th>Valid</th>
-                        <th>Last Seen</th>
-                    </tr>
-                    </thead>
-                    <tbody>
-                    <tr>
-                        <td colspan="20">Please wait while loading... (JavaScript needed)</td>
-                    </tr>
-                    </tbody>
-                </table>
-                Last refresh: <span id="budgetsprojectiontableLR" style="font-decoration: italic;">Never</span><br>
-            </div>
             <hr/>
-            <h2 id="superblocksexpected">Super Blocks Expected (Final Budget)</h2>
+            <h2 id="superblocksexpected">Expected Super Block (Triggers)</h2>
             <div class="table-responsive">
                 <table id="superblocksexpectedtable" class="table table-striped table-condensed table-responsive text-nowrap">
                     <thead>
                     <tr>
-                        <th>Height</th>
+                        <th>Trigger Hash</th>
+                        <th>Block Height</th>
+                        <th>Position</th>
                         <th>Budget Name</th>
                         <th>Budget Payment</th>
                     </tr>
                     </thead>
                     <tbody>
                     <tr>
-                        <td colspan="3">Please wait while loading... (JavaScript needed)</td>
+                        <td colspan="5">Please wait while loading... (JavaScript needed)</td>
                     </tr>
                     </tbody>
                 </table>
@@ -216,39 +173,20 @@ Brought to you by <a href="https://www.dash.org/forum/members/elbereth.175/">elb
                         <th>Height</th>
                         <th>Found&nbsp;by</th>
                         <th>Difficulty</th>
+                        <th>Position</th>
                         <th>Budget Name</th>
                         <th>Budget Payment</th>
                     </tr>
                     </thead>
                     <tbody>
                     <tr>
-                        <td colspan="6">Please wait while loading... (JavaScript needed)</td>
+                        <td colspan="7">Please wait while loading... (JavaScript needed)</td>
                     </tr>
                     </tbody>
                 </table>
                 Last refresh: <span id="superblockstableLR" style="font-decoration: italic;">Never</span><br>
             </div>
             <hr/>
-            <h2 id="monthlybudgetpayments">Monthly Budget Payments History</h2>
-            <div class="table-responsive">
-                <table id="monthlybudgetpaymentstable" class="table table-striped table-condensed table-responsive text-nowrap">
-                    <thead>
-                    <tr>
-                        <th>Month</th>
-                        <th>Amount Paid to Budgets</th>
-                    </tr>
-                    </thead>
-                    <tbody>
-                    <tr>
-                        <td colspan="2">Please wait while loading... (JavaScript needed)</td>
-                    </tr>
-                    </tbody>
-                </table>
-                Last refresh: <span id="monthlybudgetpaymentstableLR" style="font-decoration: italic;">Never</span><br>
-            </div>
-            <div id="chartpayments" style="min-width: 600px; height: 400px; max-width: 900px; margin: 0 auto"></div>
-            <hr/>
-
         </div>
 </div>
 </div>
@@ -264,6 +202,6 @@ Brought to you by <a href="https://www.dash.org/forum/members/elbereth.175/">elb
     <script src="/static/datatables/datatables.min.js"></script>
     <script src="dashninja-config.js"></script>
     <script src="dashninja-common.js"></script>
-    <script src="dashninja-budgets.js"></script>
+    <script src="dashninja-governance.js"></script>
   </body>
 </html>

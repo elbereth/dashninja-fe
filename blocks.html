@@ -53,7 +53,7 @@ along with Dash Ninja.  If not, see <http://www.gnu.org/licenses/>.
             <ul class="nav navbar-nav">
                 <li class="active"><a href="/blocks.html">Blocks Masternodes Payee</a></li>
                 <li><a href="/masternodes.html">Masternodes Monitoring</a></li>
-                <li><a href="/budgets.html">Budget Monitoring</a></li>
+                <li><a href="/governance.html">Governance Monitoring</a></li>
                 <li><a name="menuitemexplorer" href="https://explorer.dashninja.pl">Block Explorer</a></li>
                 <li class="dropdown">
                     <a href="#" class="dropdown-toggle" data-toggle="dropdown">Other Tools <span class="caret"></span></a>
@@ -92,7 +92,8 @@ along with Dash Ninja.  If not, see <http://www.gnu.org/licenses/>.
         <div class="page-header">
           <h1>DASH Ninja - Blocks Masternodes Payee</h1>
         <p>Page is dynamically refreshed (JavaScript required). All times are in GMT/UTC. Last refresh: <span id="blockstableLR" style="font-style: italic;">Never</span><br>
-Versions: <i>HTML v2.3.5 / JS v<span id="dashninjajsversion">?.?.?</span></i> (hint: might need to Ctrl+F5 to update JS)</p>
+<span name="dashninjatordisplay" style="display: none;">Available on Tor via <a name="dashninjatorurl" href="#">?</a><br></span>
+Versions: <i>HTML v2.3.8 / JS v<span id="dashninjajsversion">?.?.?</span></i> (hint: might need to Ctrl+F5 to update JS)</p>
       </div>
     <div id="testnetalert" class="alert alert-danger" style="display: none">
       <h2>THIS IS TESTNET!</h2>
@@ -126,7 +127,7 @@ Brought to you by <a href="https://www.dash.org/forum/members/elbereth.175/">elb
  </thead>
  <tbody>
   <tr>
-    <td colspan="9">Please wait while loading... (JavaScript neeeded)</td>
+    <td colspan="9">Please wait while loading... (JavaScript needed)</td>
   </tr>
  </tbody>
 </table>
@@ -143,15 +144,15 @@ Brought to you by <a href="https://www.dash.org/forum/members/elbereth.175/">elb
  <tbody>
   <tr>
     <td style="color:#FF0000; font-weight: bold">Bold red pool name/pubkey</td>
-    <td>You need to update <u>BOTH</u>:<br/><ul><li>Your mining software to include masternode payment (it is not complex): <a href="http://wiki.dash.eu/wiki/Important#Pool_Owners">http://wiki.dash.eu/wiki/Important#Pool_Owners</a></li><li>Your dashd wallet software to latest version</li></ul>Remark: Failing to update BOTH will result in your blocks not been accepted as of next enforcement).</td>
+    <td>You need to update <u>BOTH</u>:<br/><ul><li>Your mining software to include masternode payment (it is not complex): <a href="https://dashpay.atlassian.net/wiki/display/DOC/Mining+pools">https://dashpay.atlassian.net/wiki/display/DOC/Mining+pools</a></li><li>Your dashd wallet software to latest version</li></ul>Remark: Failing to update BOTH will result in your blocks not been accepted as of next enforcement).</td>
   </tr>
   <tr>
     <td style="background-color:#FF8f8F">Red background (<b>Payed to current protocol</b> field)</td>
-    <td>You need to update your dashd wallet software to latest version (check <a href="http://wiki.dash.eu/wiki/Important#Pool_Owners">this page</a>)</td>
+    <td>You need to update your dashd wallet software to latest version (check <a href="https://dashpay.atlassian.net/wiki/display/DOC/Mining+pools">this page</a>)</td>
   </tr>
   <tr>
     <td style="background-color:#FFcb8f">Orange background (<b>MN Payment ratio</b> field)</td>
-    <td>You need to update your mining software to include correct masternode payment ratio (it is an easy change): Check <a href="http://wiki.dash.eu/wiki/Important#Pool_Owners">this page</a></td>
+    <td>You need to update your mining software to include correct masternode payment ratio (it is an easy change): Check <a href="https://dashpay.atlassian.net/wiki/display/DOC/Mining+pools">this page</a></td>
   </tr>
   <tr>
     <td style="background-color:#FFFF8f">Yellow background</td>
@@ -178,7 +179,7 @@ Brought to you by <a href="https://www.dash.org/forum/members/elbereth.175/">elb
  </thead>
  <tbody>
   <tr>
-    <td colspan="10">Please wait while loading... (JavaScript neeeded)</td>
+    <td colspan="10">Please wait while loading... (JavaScript needed)</td>
   </tr>
  </tbody>
 </table>
@@ -197,13 +198,13 @@ Brought to you by <a href="https://www.dash.org/forum/members/elbereth.175/">elb
     <th>MNP&nbsp;Ratio<br>Expected/Actual</th>
     <th>MN&nbsp;Payee</th>
     <th>Masternode&nbsp;version</th>
-    <th>Block&nbsp;DS&nbsp;mixing<br>Transactions</th>
-    <th>Mempool&nbsp;DS&nbsp;mixing<br>Transactions</th>
+    <th>Block&nbsp;PrivateSend<br>mixing&nbsp;Transactions</th>
+    <th>Mempool&nbsp;PrivateSend<br>mixing&nbsp;Transactions</th>
   </tr>
  </thead>
  <tbody>
   <tr>
-    <td colspan="10">Please wait while loading... (JavaScript neeeded)</td>
+    <td colspan="10">Please wait while loading... (JavaScript needed)</td>
   </tr>
  </tbody>
 </table>

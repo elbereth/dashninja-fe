@@ -1451,8 +1451,7 @@ $app->get('/api/governanceproposals', function() use ($app,&$mysqli) {
         $cacheserial = sha1(serialize($proposalsnames).serialize($proposalshashes));
         $cachefnam = CACHEFOLDER.sprintf("dashninja_governanceproposals_%d_%d_%d_%d_%s",$testnet,$onlyvalid,count($proposalsnames),count($proposalshashes),$cacheserial);
         $cachefnamupdate = $cachefnam.".update";
-//        $cachevalid = (is_readable($cachefnam) && (((filemtime($cachefnam)+120)>=time()) || file_exists($cachefnamupdate)));
-        $cachevalid = false;
+        $cachevalid = (is_readable($cachefnam) && (((filemtime($cachefnam)+120)>=time()) || file_exists($cachefnamupdate)));
         if ($cachevalid) {
             $data = unserialize(file_get_contents($cachefnam));
             $data["cache"]["fromcache"] = true;
@@ -1577,6 +1576,311 @@ $app->get('/api/governanceproposals', function() use ($app,&$mysqli) {
                         'version' => $apiversion,
                         'compat' => $apiversioncompat,
                         'bev' => 'gp='.DASHNINJA_BEV.".".$apiversion
+                    )
+                );
+
+                //Change the HTTP status
+                $response->setStatusCode(200, "OK");
+                $response->setJsonContent(array('status' => 'OK', 'data' => $data));
+                file_put_contents($cachefnam,serialize($data),LOCK_EX);
+                unlink($cachefnamupdate);
+            }
+            else {
+                $response->setStatusCode(503, "Service Unavailable");
+                $response->setJsonContent(array('status' => 'ERROR', 'messages' => $mysqli->errno.': '.$mysqli->error));
+            }
+        }
+    }
+    return $response;
+
+});
+
+// Get governance proposals votes
+// Parameters:
+//   testnet=0|1
+//   proposalhash=hash of the proposal
+$app->get('/api/governanceproposals/votes', function() use ($app,&$mysqli) {
+
+    $apiversion = 1;
+    $apiversioncompat = 1;
+
+    $rehash = '/^[a-z0-9]{64}$/';
+
+    //Create a response
+    $response = new Phalcon\Http\Response();
+    $response->setHeader('Access-Control-Allow-Origin', '*');
+    $response->setHeader("Content-Type", "application/json");
+
+    $request = $app->request;
+
+    $errmsg = array();
+
+    if (!array_key_exists('CONTENT_LENGTH',$_SERVER) || (intval($_SERVER['CONTENT_LENGTH']) != 0)) {
+        $errmsg[] = "No CONTENT expected";
+    }
+
+    // Retrieve the 'testnet' parameter
+    if ($request->hasQuery('testnet')) {
+        $testnet = intval($request->getQuery('testnet'));
+        if (($testnet != 0) && ($testnet != 1)) {
+            $testnet = 0;
+        }
+    }
+    else {
+        $testnet = 0;
+    }
+
+    // Retrieve the 'debug' parameter
+    if ($request->hasQuery('debug')) {
+        $debug = (intval($request->getQuery('debug')) == 1);
+    }
+    else {
+        $debug = false;
+    }
+
+    // Retrieve the 'proposalhash' parameter
+    if ($request->hasQuery('proposalhash')) {
+        $budgetid = $request->getQuery('proposalhash');
+        $budgetid = $mysqli->real_escape_string($budgetid);
+    }
+    else {
+        $errmsg[] = "Parameter proposalhash is mandatory";
+    }
+
+    if (preg_match($rehash, $budgetid) !== 1) {
+        $errmsg[] = "Parameter proposalhash is incorrect";
+    }
+
+    if (count($errmsg) > 0) {
+        //Change the HTTP status
+        $response->setStatusCode(400, "Bad Request");
+
+        //Send errors to the client
+        $response->setJsonContent(array('status' => 'ERROR', 'messages' => $errmsg));
+    }
+    else {
+        $cacheserial = sha1(serialize($budgetid));
+        $cachefnam = CACHEFOLDER.sprintf("dashninja_governanceproposals_votes_%d_%s",$testnet,$cacheserial);
+        $cachefnamupdate = $cachefnam.".update";
+        $cachetime = filemtime($cachefnam);
+        $cachevalid = (is_readable($cachefnam) && ((($cachetime+120)>=time()) || file_exists($cachefnamupdate)));
+        if ($cachevalid) {
+            $data = unserialize(file_get_contents($cachefnam));
+            $data["cache"]["fromcache"] = true;
+            $response->setStatusCode(200, "OK");
+            $response->setJsonContent(array('status' => 'OK', 'data' => $data));
+        }
+        else {
+            touch($cachefnamupdate);
+
+            // Get budget votes
+            $sql = sprintf("SELECT * FROM cmd_gobject_votes WHERE GovernanceObjectTestnet = %d AND GovernanceObjectId = '%s'",$testnet,$budgetid);
+            if ($onlyvalid) {
+                $sql .= " AND VoteIsValid = 1";
+            }
+
+            if ($result = $mysqli->query($sql)) {
+                $votesyes = 0;
+                $votesno = 0;
+                $votesabstain = 0;
+                $governanceproposalvotes = array();
+                while($row = $result->fetch_assoc()){
+                    $governanceproposalvotes[] = array(
+                        "MasternodeOutputHash" => $row["MasternodeOutputHash"],
+                        "MasternodeOutputIndex" => intval($row["MasternodeOutputIndex"]),
+                        "VoteHash" => $row["VoteHash"],
+                        "VoteValue" => $row["VoteValue"],
+                        "VoteTime" => intval($row["VoteTime"])
+                    );
+                    if ($row["VoteValue"] == "YES") {
+                        $votesyes++;
+                    }
+                    elseif ($row["VoteValue"] == "NO") {
+                        $votesno++;
+                    }
+                    elseif ($row["VoteValue"] == "ABSTAIN") {
+                        $votesabstain++;
+                    }
+                }
+
+                $data = array('governanceproposalvotes' => $governanceproposalvotes,
+                    'stats' => array(
+                        'votesyes' => $votesyes,
+                        'votesno' => $votesno,
+                        'votesabstain' => $votesabstain,
+                    ),
+                    'cache' => array(
+                        'time' => time(),
+                        'fromcache' => false
+                    ),
+                    'api' => array(
+                        'version' => $apiversion,
+                        'compat' => $apiversioncompat,
+                        'bev' => 'gpv='.DASHNINJA_BEV.".".$apiversion
+                    )
+                );
+
+                if ($debug) {
+                    $data["debug"] = array("sql" => $sql);
+                }
+
+                //Change the HTTP status
+                $response->setStatusCode(200, "OK");
+                $response->setJsonContent(array('status' => 'OK', 'data' => $data));
+                file_put_contents($cachefnam,serialize($data),LOCK_EX);
+                unlink($cachefnamupdate);
+            }
+            else {
+                $response->setStatusCode(503, "Service Unavailable");
+                $response->setJsonContent(array('status' => 'ERROR', 'messages' => $mysqli->errno.': '.$mysqli->error));
+            }
+        }
+    }
+    return $response;
+
+});
+
+// Get governance triggers
+// Parameters:
+//   testnet=0|1
+//   onlyvalid=0|1
+//   afterblockheight=x
+$app->get('/api/governancetriggers', function() use ($app,&$mysqli) {
+
+    $apiversion = 1;
+    $apiversioncompat = 1;
+
+    //Create a response
+    $response = new Phalcon\Http\Response();
+    $response->setHeader('Access-Control-Allow-Origin', '*');
+    $response->setHeader("Content-Type", "application/json");
+
+    $request = $app->request;
+
+    $errmsg = array();
+
+    if (!array_key_exists('CONTENT_LENGTH',$_SERVER) || (intval($_SERVER['CONTENT_LENGTH']) != 0)) {
+        $errmsg[] = "No CONTENT expected";
+    }
+
+    // Retrieve the 'testnet' parameter
+    if ($request->hasQuery('testnet')) {
+        $testnet = intval($request->getQuery('testnet'));
+        if (($testnet != 0) && ($testnet != 1)) {
+            $testnet = 0;
+        }
+    }
+    else {
+        $testnet = 0;
+    }
+
+    // Retrieve the 'onlyvalid' parameter
+    if ($request->hasQuery('onlyvalid')) {
+        $onlyvalid = (intval($request->getQuery('onlyvalid')) == 1);
+    }
+    else {
+        $onlyvalid = false;
+    }
+
+    // Retrieve the 'afterblockheight' parameter
+    if ($request->hasQuery('afterblockheight')) {
+        $onlyfuture = true;
+        $afterblockheight = intval($request->getQuery('afterblockheight'));
+    }
+    else {
+        $onlyfuture = false;
+        $afterblockheight = 1;
+    }
+
+    if (count($errmsg) > 0) {
+        //Change the HTTP status
+        $response->setStatusCode(400, "Bad Request");
+
+        //Send errors to the client
+        $response->setJsonContent(array('status' => 'ERROR', 'messages' => $errmsg));
+    }
+    else {
+        $cachefnam = CACHEFOLDER.sprintf("dashninja_governancetriggers_%d_%d_%d_%d",$testnet,$onlyvalid,$onlyfuture,$afterblockheight);
+        $cachefnamupdate = $cachefnam.".update";
+        $cachevalid = (is_readable($cachefnam) && (((filemtime($cachefnam)+120)>=time()) || file_exists($cachefnamupdate)));
+        if ($cachevalid) {
+            $data = unserialize(file_get_contents($cachefnam));
+            $data["cache"]["fromcache"] = true;
+            $response->setStatusCode(200, "OK");
+            $response->setJsonContent(array('status' => 'OK', 'data' => $data));
+        }
+        else {
+            touch($cachefnamupdate);
+
+            // Get governance triggers
+            $sql = sprintf("SELECT cgot.GovernanceObjectId Hash, cgot.GovernanceObjectEventBlockHeight BlockHeight, "
+                          ." cgot.GovernanceObjectVotesAbsoluteYes AbsoluteYes, cgot.GovernanceObjectVotesYes Yes, "
+                          ." cgot.GovernanceObjectVotesNo No, cgot.GovernanceObjectVotesAbstain Abstain, "
+                          ." cgot.GovernanceObjectBlockchainValidity BlockchainValidity, "
+                ." cgot.GovernanceObjectIsValidReason IsValidReason, "
+                ." cgot.GovernanceObjectCachedValid CachedValid, "
+                ." cgot.GovernanceObjectCachedFunding CachedFunding, "
+                ." cgot.GovernanceObjectCachedDelete CachedDelete, "
+                ." cgot.GovernanceObjectCachedEndorsed CachedEndorsed, "
+                ." cgot.FirstReported FirstReported, "
+                ." cgot.LastReported LastReported, "
+                ." cgotp.GovernanceObjectPaymentPosition PaymentPosition, "
+                ." cgotp.GovernanceObjectPaymentAddress PaymentAddress, "
+                ." cgotp.GovernanceObjectPaymentAmount PaymentAmount, "
+                ." cgotp.GovernanceObjectPaymentProposalHash PaymentProposalHash, "
+                ." cgop.GovernanceObjectName PaymentProposalName "
+                ."FROM cmd_gobject_triggers cgot "
+                ."LEFT JOIN cmd_gobject_triggers_payments cgotp ON (cgotp.GovernanceObjectTestnet = cgot.GovernanceObjectTestnet AND cgotp.GovernanceObjectId = cgot.GovernanceObjectId) "
+                ."LEFT JOIN cmd_gobject_proposals cgop ON (cgop.GovernanceObjectTestnet = cgot.GovernanceObjectTestnet AND cgotp.GovernanceObjectPaymentProposalHash = cgop.GovernanceObjectId) "
+                ."WHERE "
+                ." cgot.GovernanceObjectTestnet = %d",$testnet);
+            if ($onlyvalid) {
+                $sql .= " AND cgot.GovernanceObjectCachedValid = 1";
+            }
+            if ($onlyfuture) {
+                $sql .= sprintf(" AND cgot.GovernanceObjectEventBlockHeight >= %d",$afterblockheight);
+            }
+
+            if ($result = $mysqli->query($sql)) {
+                $triggersvalid = 0;
+                $triggers = array();
+                while($row = $result->fetch_array()){
+                    $triggers[] = array(
+                        "Hash" => stripslashes($row["Hash"]),
+                        "BlockHeight" => stripslashes($row["BlockHeight"]),
+                        "AbsoluteYes" => intval($row["AbsoluteYes"]),
+                        "Yes" => intval($row["Yes"]),
+                        "No" => intval($row["No"]),
+                        "Abstain" => intval($row["Abstain"]),
+                        "BlockchainValidity" => ($row["BlockchainValidity"] == 1),
+                        "IsValidReason" => stripslashes($row["IsValidReason"]),
+                        "CachedValid" => ($row["CachedValid"] == 1),
+                        "CachedFunding" => ($row["CachedFunding"] == 1),
+                        "CachedDelete" => ($row["CachedDelete"] == 1),
+                        "CachedEndorsed" => ($row["CachedEndorsed"] == 1),
+                        "FirstReported" => strtotime($row["FirstReported"]),
+                        "LastReported" => strtotime($row["LastReported"]),
+                        "PaymentPosition" => intval($row["PaymentPosition"]),
+                        "PaymentAddress" => intval($row["PaymentAddress"]),
+                        "PaymentAmount" => intval($row["PaymentAmount"]),
+                        "PaymentProposalHash" => $row["PaymentProposalHash"],
+                        "PaymentProposalName" => $row["PaymentProposalName"],
+                    );
+                    $triggersvalid+=intval($row["BlockchainValidity"]);
+                }
+
+                $data = array('governancetriggers' => $triggers,
+                    'stats' => array(
+                        'valid' => $triggersvalid,
+                    ),
+                    'cache' => array(
+                        'time' => time(),
+                        'fromcache' => false
+                    ),
+                    'api' => array(
+                        'version' => $apiversion,
+                        'compat' => $apiversioncompat,
+                        'bev' => 'gt='.DASHNINJA_BEV.".".$apiversion
                     )
                 );
 
