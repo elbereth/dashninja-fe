@@ -20,7 +20,7 @@
 // Dash Ninja Front-End (dashninja-fe) - Proposal Details
 // By elberethzone / https://www.dash.org/forum/members/elbereth.175/
 
-var dashninjaversion = '0.9.0';
+var dashninjaversion = '1.0.0';
 var tableVotes = null;
 var tableSuperBlocks = null;
 var dashoutputregexp = /^[a-z0-9]{64}$/;
@@ -187,7 +187,7 @@ function budgetdetailsRefresh(useHash){
        }
        $('#budgetmonthlyamount').html( addCommas( data.data.governanceproposals[0].PaymentAmount.toFixed(3) )+' '+dashninjacoin[dashninjatestnet] + ' (<span id="budgetmonthlyamountusd">???</span> USD) (<span id="budgetmonthlyamounteur">???</span> EUR)');
        $('#budgettotalamount').html( addCommas( (data.data.governanceproposals[0].PaymentAmount*monthsleft).toFixed(3) )+' '+dashninjacoin[dashninjatestnet] + ' (<span id="budgettotalamountusd">???</span> USD) (<span id="budgettotalamounteur">???</span> EUR)' );
-//       $('#budgettotalpayments').text( data.data.governanceproposals[0].TotalPaymentCount );
+       $('#budgettotalpayments').html( '<i class="fa fa-spinner fa-pulse"></i>' );
        $('#budgetremainingpayments').text( monthsleft );
        $('#budgetyes').text( data.data.governanceproposals[0].Yes );
        $('#budgetno').text( data.data.governanceproposals[0].No );
@@ -259,7 +259,7 @@ function budgetdetailsRefresh(useHash){
            if (data.data.governanceproposals[0].BlockchainValidity) {
                result = 'Valid';
                if (data.data.governanceproposals[0].CachedFunding) {
-                   result += ' and will be paid. <i class="fa fa-spinner fa-pulse"></i>';
+                   result += ' and funding. <i class="fa fa-spinner fa-pulse"></i>';
                    checkBP = true;
                }
                cls = "success";
@@ -364,52 +364,43 @@ function budgetdetailsRefresh(useHash){
        else {
            tableSuperBlocks = $('#superblockstable').dataTable({
                ajax: {
-                   url: '/api/blocks?testnet=' + dashninjatestnet + '&budgetids=["' + encodeURIComponent(budgetid) + '"]&onlysuperblocks=1',
-                   dataSrc: 'data.blocks'
+                   url: '/api/blocks/superblocks?testnet=' + dashninjatestnet + '&proposalshash=["' + encodeURIComponent(currentbudget.Hash) + '"]',
+                   dataSrc: 'data.superblocks'
                },
                lengthMenu: [[50, 100, 250, 500, -1], [50, 100, 250, 500, "All"]],
                pageLength: 50,
                order: [[0, "desc"]],
                columns: [
-                   {
-                       data: null, render: function (data, type, row) {
+                   { data: null, render: function ( data, type, row ) {
                        if (type == 'sort') {
                            return data.BlockTime;
                        }
                        else {
-//                return deltaTimeStampHR(currenttimestamp(),data.BlockTime);
                            return timeSince((currenttimestamp() - data.BlockTime));
                        }
 
-                   }
-                   },
-                   {
-                       data: null, render: function (data, type, row) {
+                   } },
+                   { data: null, render: function ( data, type, row ) {
                        var outtxt = data.BlockId;
                        if (type != 'sort') {
                            if (dashninjablockexplorer[dashninjatestnet].length > 0) {
-                               outtxt = '<a href="' + dashninjablockexplorer[dashninjatestnet][0][0].replace('%%b%%', data.BlockHash) + '">' + data.BlockId + '</a>';
+                               outtxt = '<a href="'+dashninjablockexplorer[dashninjatestnet][0][0].replace('%%b%%',data.BlockHash)+'">'+data.BlockId+'</a>';
                            }
                        }
                        return outtxt;
-                   }
-                   },
-                   {
-                       data: null, render: function (data, type, row) {
+                   } },
+                   { data: null, render: function ( data, type, row ) {
                        var outtxt = data.BlockPoolPubKey;
                        if (data.PoolDescription) {
                            outtxt = data.PoolDescription;
                        }
                        return outtxt;
-                   }
-                   },
-                   {data: "BlockDifficulty"},
-                   {
-                       data: null, render: function (data, type, row) {
+                   } },
+                   { data: null, render: function ( data, type, row ) {
                        if (type == "sort") {
-                           return data.BlockMNValue;
+                           return data.SuperBlockPaymentAmount;
                        } else {
-                           return addCommas(data.BlockMNValue.toFixed(3)) + " " + dashninjacoin[dashninjatestnet];
+                           return addCommas(data.SuperBlockPaymentAmount.toFixed(3))+" "+dashninjacoin[dashninjatestnet];
                        }
                    }
                    }
@@ -443,7 +434,7 @@ function refreshBudgetProjection(useHash) {
             $('#budgetstatus').html("Valid and expected next super block (" + addCommas(data.data.budgetsprojection[0].Alloted.toFixed(3)) + " " + dashninjacoin[dashninjatestnet] + ").");
         }
         else {
-            $('#budgetstatus').html("Valid and will be paid.");
+            $('#budgetstatus').html("Valid");
         }
     });
 }
@@ -577,13 +568,16 @@ $(document).ready(function(){
         latestblock = {BlockTime: 0, BlockId: -1};
         // Fill per version stats table
         var numblocks = 0;
-        for (var blockid in json.data.blocks){
-            if(!json.data.blocks.hasOwnProperty(blockid)) {continue;}
+        var totalamount = 0.0;
+        for (var blockid in json.data.superblocks){
+            if(!json.data.superblocks.hasOwnProperty(blockid)) {continue;}
             numblocks++;
-            if (json.data.blocks[blockid].BlockTime > latestblock.BlockTime) {
-                latestblock = json.data.blocks[blockid];
+            totalamount += json.data.superblocks[blockid].SuperBlockPaymentAmount;
+            if (json.data.superblocks[blockid].BlockTime > latestblock.BlockTime) {
+                latestblock = json.data.superblocks[blockid];
             }
         }
+        $('#budgettotalpayments').text( numblocks+" - "+totalamount.toFixed(3)+' '+dashninjacoin[dashninjatestnet] );
 
         var nextsuperblockdatetimestamp = currentstats.latestblock.BlockTime+(((currentstats.nextsuperblock.blockheight-currentstats.latestblock.BlockId)/553)*86400);
         var monthsleft = Math.round (( currentbudget.EpochEnd - Math.max(currentbudget.EpochStart,nextsuperblockdatetimestamp)) / 2592000);

@@ -18,9 +18,9 @@
  */
 
 // Dash Ninja Front-End (dashninja-fe) - Masternode List (v2)
-// By elberethzone / https://dashtalk.org/members/elbereth.175/
+// By elberethzone / https://www.dash.org/forum/members/elbereth.175/
 
-var dashninjaversion = '2.3.4';
+var dashninjaversion = '2.3.5';
 var tableLocalNodes = null;
 var tableBlockConsensus = null;
 var tableMNList = null;
@@ -29,6 +29,8 @@ var dashversiondefault = "0.12.1.0";
 var dashversion = dashversiondefault;
 var dashversioncheck = dashversion;
 var dashversionsemaphore = false;
+var sentinelversiondefault = "1.0";
+var sentinelversion = sentinelversiondefault;
 var dashmaxprotocol = 0;
 
 $.fn.dataTable.ext.errMode = 'throw';
@@ -129,39 +131,46 @@ function mnpaymentsRefresh(){
   });
 };
 
-function displaydashVersion(dashversion) {
+function displaydashVersion(dashversion,sentinelversion) {
   if (dashversion != "?") {
     $('#msgalert').show();
   }
   else {
     $('#msgalert').hide();
   }
-  $('#currentdashversion').text( dashversion );
+    $('#currentdashversion').text( dashversion );
+    $('#currentsentinelversion').text( sentinelversion );
 }
 
 function getLatestdashVersion() {
   var currentdate = new Date();
-  dashversion = sessionStorage.getItem("currentdashversion");
+    dashversion = sessionStorage.getItem("currentdashversion");
+    sentinelversion = sessionStorage.getItem("currentsentinelversion");
   var nextdate = sessionStorage.getItem("nextdashversion");
-  if ((( dashversion === null )
+  if ((( dashversion === null ) || (sentinelversion === null)
    || ( sessionStorage.getItem("nextdashversion") === null )
    || ( sessionStorage.getItem("nextdashversion") < currentdate.getTime() )) && (dashversionsemaphore == false)) {
     dashversionsemaphore = true;
     $.getJSON( "/dashninja-latestversion.json?nocache="+ (new Date()).getTime(), function( data ) {
       sessionStorage.setItem('currentdashversion', data.version.string);
+      sessionStorage.setItem('currentsentinelversion', data.sentinelversion.string);
       var currentdate = new Date();
       currentdate = new Date(currentdate.getTime() + 15*60000);
       sessionStorage.setItem('nextdashversion', currentdate.getTime());
       dashversionsemaphore = false;
-      displaydashVersion(data.version.string);
+      displaydashVersion(data.version.string,data.sentinelversion.string);
     });
-    dashversion = dashversiondefault;
+      dashversion = dashversiondefault;
+      sentinelversion = sentinelversiondefault;
   }
   else {
     if (dashversion === null) {
       dashversion = dashversiondefault;
     }
-    displaydashVersion(dashversion);
+      if (sentinelversion === null) {
+          sentinelversion = sentinelversiondefault;
+      }
+    displaydashVersion(dashversion,sentinelversion);
   }
   if ((dashversion.length > 2) && (dashversion.substr(dashversion.length - 2) == ".0")) {
       dashversioncheck = dashversion.substr(0,dashversion.length-2);

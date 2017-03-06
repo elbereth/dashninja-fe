@@ -20,7 +20,7 @@
 // Dash Ninja Front-End (dashninja-fe) - Blocks (v2)
 // By elberethzone / https://dashtalk.org/members/elbereth.175/
 
-var dashninjaversion = '2.3.3';
+var dashninjaversion = '2.3.4';
 var tableBlocks = null;
 var tablePerVersion = null;
 var tablePerMiner = null;
@@ -388,11 +388,15 @@ $(document).ready(function(){
                     if (data.BlockMNPayee == "") {
                         return "<i>Unpaid block</i>";
                     } else {
-                        if (data.IsSuperBlock) {
-                            return '<a href="' + dashninjabudgetdetail[dashninjatestnet].replace('%%b%%',encodeURIComponent(data.SuperBlockBudgetName)) + '">' + data.SuperBlockBudgetName + '</a>';
-                        }
-                        else {
-                            return '<a href="' + dashninjamasternodemonitoring[dashninjatestnet].replace('%%p%%', data.BlockMNPayee) + '">' + data.BlockMNPayee + '</a>';
+                        if ((data.BlockMNPayee == "SUPERBLOCK") && (data.IsSuperBlock)) {
+                            return '<a href="/governance.html#superblocks">' + data.SuperBlockBudgetPayees + ' proposal(s) paid</a>';
+                        } else {
+                            if (data.IsSuperBlock) {
+                                return '<a href="' + dashninjabudgetdetail[dashninjatestnet].replace('%%b%%',encodeURIComponent(data.SuperBlockBudgetName)) + '">' + data.SuperBlockBudgetName + '</a>';
+                            }
+                            else {
+                                return '<a href="' + dashninjamasternodemonitoring[dashninjatestnet].replace('%%p%%', data.BlockMNPayee) + '">' + data.BlockMNPayee + '</a>';
+                            }
                         }
                     }
                 }
@@ -400,7 +404,12 @@ $(document).ready(function(){
             },
             { data: null, render: function ( data, type, row ) {
                 if (data.IsSuperBlock) {
-                    return "Unknown (v0.12.0.44+)";
+                    if (data.BlockMNProtocol == 0) {
+                        return "Dash 0.12.0.44+";
+                    }
+                    else {
+                        return dataProtocolDesc[data.BlockMNProtocol];
+                    }
                 }
                 else {
                     return dataProtocolDesc[data.BlockMNProtocol];

@@ -84,18 +84,21 @@ along with Dash Ninja.  If not, see <http://www.gnu.org/licenses/>.
           <ul class="nav nav-sidebar">
             <li><a href="#payments">Payments list</a></li>
           </ul>
+            <ul class="nav nav-sidebar">
+                <li><a href="#exstatus">Masternode Status Extended</a></li>
+            </ul>
         </div>
       <div class="col-sm-9 col-sm-offset-3 col-md-10 col-md-offset-2 main">
       <div class="page-header">
         <h1>DASH Ninja - Masternode Details Monitoring</h1>
         <p>Page is dynamically refreshed (JavaScript required). All times are in GMT/UTC.<br/>
-Versions: <i>HTML v2.2.10 / JS v<span id="dashninjajsversion">?.?.?</span></i> (hint: might need to Ctrl+F5 to update JS)</p>
+Versions: <i>HTML v3.0.0 / JS v<span id="dashninjajsversion">?.?.?</span></i> (hint: might need to Ctrl+F5 to update JS)</p>
       </div>
     <div id="testnetalert" class="alert alert-danger" style="display: none">
       <h2>THIS IS TESTNET!</h2>
     </div>
     <div id="msgalert" class="alert alert-warning" style="display: none">
-      <h2>Masternode operators <em>SHOULD</em> be <a href="http://darkcoin.io/downloads/">running</a> <span id="currentdashversion" style="font-weight: bold">?.?.?.?</span> or greater!</h2>
+      <h2>Masternode operators <em>SHOULD</em> be <a href="https://dash.org/downloads/">running</a> <span id="currentdashversion" style="font-weight: bold">?.?.?.?</span> or greater!</h2>
     </div>
     <div class="alert alert-info">
 <p>If this page is useful to you, spare some coin: <a href="http://chainz.cryptoid.info/dash/address.dws?Xbon36F261wXDL4p1CEZAX28t8U4ayR9uu.htm">Xbon36F261wXDL4p1CEZAX28t8U4ayR9uu</a><br>
@@ -201,6 +204,27 @@ Brought to you by <a href="https://www.dash.org/forum/members/elbereth.175/">elb
 <p>(Last refresh: <span id="paymentstableLR">Never</span>)</p>
 </div>
 <hr/>
+          <h2 id="exstatus">Masternode Status Extended</h2>
+          <div class="table-responsive">
+              <table id="exstatustable" class="table table-striped table-condensed table-responsive text-nowrap">
+                  <thead>
+                  <tr>
+                      <th>Daemon ID</th>
+                      <th>Daemon Version</th>
+                      <th>Daemon Protocol</th>
+                      <th>Status</th>
+                      <th>Extended Status</th>
+                  </tr>
+                  </thead>
+                  <tbody>
+                  <tr>
+                      <td colspan="5">Please wait while loading... (JavaScript needed)</td>
+                  </tr>
+                  </tbody>
+              </table>
+              <p>(Last refresh: <span id="exstatustableLR">Never</span>)</p>
+          </div>
+          <hr/>
 </div>
 </div>
 </div>

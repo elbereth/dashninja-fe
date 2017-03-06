@@ -20,8 +20,9 @@
 // Dash Ninja Front-End (dashninja-fe) - Masternode Detail
 // By elberethzone / https://dashtalk.org/members/elbereth.175/
 
-var dashninjaversion = '2.3.2';
+var dashninjaversion = '3.0.0';
 var tablePayments = null;
+var tableExStatus = null;
 var dataProtocolDesc = [];
 var maxProtocol = -1;
 var dashmainkeyregexp = /^[7X][a-zA-Z0-9]{33}$/;
@@ -64,7 +65,7 @@ function tablePaymentsRefresh(){
 function mndetailsRefresh(useVin){
   console.log("DEBUG: mndetailsRefresh starting");
   $('#mninfosLR').html( '<i class="fa fa-spinner fa-pulse"></i> Refreshing <i class="fa fa-spinner fa-pulse"></i>' );
-  var query = '/api/masternodes?balance=1&portcheck=1&lastpaid=1&testnet='+dashninjatestnet;
+  var query = '/api/masternodes?balance=1&portcheck=1&lastpaid=1&exstatus=1&testnet='+dashninjatestnet;
   if (useVin) {
     query += '&vins=["'+mnvin+'"]';
   }
@@ -232,7 +233,8 @@ function mndetailsRefresh(useVin){
     $('#mnversion').html( versioninfo+" (Protocol="+data.data[0].MasternodeProtocol+")" );
    }
    $('#mninfosLR').text( n + ' ' + time );
-   tablePayments = $('#paymentstable').dataTable( {
+
+      tablePayments = $('#paymentstable').dataTable( {
         ajax: { url: '/api/blocks?testnet='+dashninjatestnet+'&pubkeys=["'+data.data[0].MasternodePubkey+'"]&interval=P1M',
                 dataSrc: 'data.blocks' },
         paging: false,
@@ -309,6 +311,76 @@ function mndetailsRefresh(useVin){
           }
         }
    } );
+      tableExStatus = $('#exstatustable').dataTable( {
+          data: data.data[0].ExStatus,
+          paging: false,
+          order: [[ 0, "asc" ]],
+          columns: [
+              { data: "NodeName" },
+              { data: "NodeVersion" },
+              { data: "NodeProtocol" },
+              { data: null, render: function ( data, type, row ) {
+                  if (type == "sort") {
+                      return data.Status;
+                  } else if (data.Status == "active") {
+                      return '<i class="fa fa-play"> Active';
+                  } else if (data.Status == "inactive") {
+                      return '<i class="fa fa-pause"> Inactive';
+                  } else if (data.Status == "unlisted") {
+                      return '<i class="fa fa-stop"> Unlisted';
+                  }
+              } },
+              { data: null, render: function ( data, type, row ) {
+                  var outtxt = '';
+                  if (type != "sort") {
+                      if (data.StatusEx == "ENABLED") {
+                          outtxt = '<i class="fa fa-thumbs-up"> ';
+                      } else if (data.StatusEx == "PRE_ENABLED") {
+                          outtxt = '<i class="fa fa-thumbs-o-up"> ';
+                      } else if (data.StatusEx == "WATCHDOG_EXPIRED") {
+                          outtxt = '<i class="fa fa-cogs"> ';
+                      } else if (data.StatusEx == "POS_ERROR") {
+                          outtxt = '<i class="fa fa-exclamation-triangle"> ';
+                      } else if (data.StatusEx == "REMOVE") {
+                          outtxt = '<i class="fa fa-chain-broken"> ';
+                      } else if (data.StatusEx == "EXPIRED") {
+                          outtxt = '<i class="fa fa-clock-o"> ';
+                      } else if (data.StatusEx == "VIN_SPENT") {
+                          outtxt = '<i class="fa fa-money"> ';
+                      } else if (data.StatusEx == "NEW_START_REQUIRED") {
+                          outtxt = '<i class="fa fa-wrench"> ';
+                      } else if (data.StatusEx == "UPDATE_REQUIRED") {
+                          outtxt = '<i class="fa fa-wrench"> ';
+                      } else if (data.StatusEx != '') {
+                          outtxt = '<i class="fa fa-thumbs-down"> ';
+                      }
+                  }
+                  outtxt = outtxt+data.StatusEx;
+                  return outtxt;
+              } }
+          ],
+          createdRow: function ( row, data, index ) {
+              if (data.Status == "active") {
+                  $('td',row).eq(3).css({"background-color": "#dff0d8", "color": "#3c763d"});
+              }
+              else if (data.Status == "inactive") {
+                  $('td',row).eq(3).css({"background-color": "#fcf8e3", "color": "#8a6d3b"});
+              }
+              else {
+                  $('td',row).eq(3).css({"background-color": "#f2dede", "color": "#a94442"});
+              }
+              if (data.StatusEx == "ENABLED") {
+                  $('td',row).eq(4).css({"background-color": "#dff0d8", "color": "#3c763d"});
+              }
+              else if (data.StatusEx == "PRE_ENABLED") {
+                  $('td',row).eq(4).css({"background-color": "#fcf8e3", "color": "#8a6d3b"});
+              }
+              else {
+                  $('td',row).eq(4).css({"background-color": "#f2dede", "color": "#a94442"});
+              }
+          }
+      } );
+      $('#exstatustableLR').text( n + ' ' + time );
    console.log("DEBUG: auto-refresh starting");
    setTimeout(mndetailsRefresh, 300000);
   });

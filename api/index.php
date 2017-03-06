@@ -242,14 +242,14 @@ $app->get('/api/blocks', function() use ($app,&$mysqli) {
       }
 
       if ($onlysuperblocks == 1) {
-        $extrasql = " AND cib.IsSuperBlock = 1".$sqldb;
+        $extrasql = " AND cib.IsSuperBlock > 0".$sqldb;
       }
       else {
         $extrasql = sprintf(" AND cib.BlockTime >= %d", $datefrom);
         $extrasql.=$sqlpk;
       }
 
-      $sql = sprintf("SELECT BlockId, BlockHash, cib.BlockMNPayee BlockMNPayee, BlockMNPayeeDonation, BlockMNValue, BlockSupplyValue, BlockMNPayed, BlockPoolPubKey, PoolDescription, BlockMNProtocol, BlockTime, BlockDifficulty, BlockMNPayeeExpected, BlockMNValueRatioExpected, IsSuperblock, SuperBlockBudgetName, BlockDarkSendTXCount, MemPoolDarkSendTXCount FROM cmd_info_blocks cib LEFT JOIN cmd_pools_pubkey cpp ON cib.BlockPoolPubKey = cpp.PoolPubKey AND cib.BlockTestNet = cpp.PoolTestNet WHERE cib.BlockTestNet = %d%s ORDER BY BlockId DESC",$testnet,$extrasql);
+      $sql = sprintf("SELECT BlockId, BlockHash, cib.BlockMNPayee BlockMNPayee, BlockMNPayeeDonation, BlockMNValue, BlockSupplyValue, BlockMNPayed, BlockPoolPubKey, PoolDescription, BlockMNProtocol, BlockTime, BlockDifficulty, BlockMNPayeeExpected, BlockMNValueRatioExpected, IsSuperblock, SuperBlockBudgetName, BlockDarkSendTXCount, MemPoolDarkSendTXCount, SuperBlockBudgetPayees, SuperBlockBudgetAmount FROM cmd_info_blocks cib LEFT JOIN cmd_pools_pubkey cpp ON cib.BlockPoolPubKey = cpp.PoolPubKey AND cib.BlockTestNet = cpp.PoolTestNet WHERE cib.BlockTestNet = %d%s ORDER BY BlockId DESC",$testnet,$extrasql);
       $blocks = array();
       $maxprotocol = 0;
       $blockidlow = 9999999999;
@@ -282,8 +282,10 @@ $app->get('/api/blocks', function() use ($app,&$mysqli) {
              "BlockDifficulty" => floatval($row["BlockDifficulty"]),
              "BlockMNPayeeExpected" => $row["BlockMNPayeeExpected"],
              "BlockMNValueRatioExpected" => floatval($row["BlockMNValueRatioExpected"]),
-             "IsSuperBlock" => $row["IsSuperblock"] == 1,
+             "IsSuperBlock" => $row["IsSuperblock"] != 0,
              "SuperBlockBudgetName" => $row["SuperBlockBudgetName"],
+             "SuperBlockBudgetPayees" => intval($row["SuperBlockBudgetPayees"]),
+             "SuperBlockBudgetAmount" => floatval($row["SuperBlockBudgetAmount"]),
              "BlockDarkSendTXCount" => intval($row["BlockDarkSendTXCount"]),
              "MemPoolDarkSendTXCount" => intval($row["MemPoolDarkSendTXCount"]),
           );
@@ -618,6 +620,152 @@ $app->get('/api/blocks/consensus', function() use ($app,&$mysqli) {
     }
   }
   return $response;
+
+});
+
+// Get super blocks payments details
+// Parameters:
+//   testnet=0|1
+//   proposalshash=filter to chose only some proposals
+$app->get('/api/blocks/superblocks', function() use ($app,&$mysqli) {
+
+    $apiversion = 1;
+    $apiversioncompat = 1;
+
+    //Create a response
+    $response = new Phalcon\Http\Response();
+    $response->setHeader('Access-Control-Allow-Origin', '*');
+    $response->setHeader("Content-Type", "application/json");
+
+    $request = $app->request;
+
+    $errmsg = array();
+
+    if (!array_key_exists('CONTENT_LENGTH',$_SERVER) || (intval($_SERVER['CONTENT_LENGTH']) != 0)) {
+        $errmsg[] = "No CONTENT expected";
+    }
+
+    // Retrieve the 'testnet' parameter
+    if ($request->hasQuery('testnet')) {
+        $testnet = intval($request->getQuery('testnet'));
+        if (($testnet != 0) && ($testnet != 1)) {
+            $testnet = 0;
+        }
+    }
+    else {
+        $testnet = 0;
+    }
+
+    // Retrieve the 'proposalshash' parameter
+    if ($request->hasQuery('proposalshash')) {
+        $proposalshash = json_decode($request->getQuery('proposalshash'));
+        if (($proposalshash === false) || !is_array($proposalshash)) {
+            $errmsg[] = "Parameter proposalshash: Not a JSON encoded list of proposal names";
+        }
+        else {
+            foreach ($proposalshash as $x => $proposalhash) {
+                $proposalshash[$x] = $mysqli->real_escape_string($proposalhash);
+            }
+        }
+    }
+    else {
+        $proposalshash = array();
+    }
+
+    if (count($errmsg) > 0) {
+        //Change the HTTP status
+        $response->setStatusCode(400, "Bad Request");
+
+        //Send errors to the client
+        $response->setJsonContent(array('status' => 'ERROR', 'messages' => $errmsg));
+    }
+    else {
+        $cacheserial = sha1(serialize($proposalshash));
+        $cachefnam = CACHEFOLDER.sprintf("dashninja_blocks_superblockspayments_%d_%d_%s",$testnet,count($proposalshash),$cacheserial);
+        $cachefnamupdate = $cachefnam.".update";
+        $cachevalid = (is_readable($cachefnam) && (((filemtime($cachefnam)+$cachetime)>=time()) || file_exists($cachefnamupdate)));
+        if ($cachevalid) {
+            $data = unserialize(file_get_contents($cachefnam));
+            $data["cache"]["fromcache"] = true;
+            $response->setStatusCode(200, "OK");
+            $response->setJsonContent(array('status' => 'OK', 'data' => $data));
+        }
+        else {
+            touch($cachefnamupdate);
+
+            $sqldb = "";
+            // Add selection by budgetname
+            if (count($proposalshash) > 0) {
+                $sqldb = " AND (";
+                $sqls = '';
+                foreach($proposalshash as $hash) {
+                    if (strlen($sqls)>0) {
+                        $sqls .= ' OR ';
+                    }
+                    $sqls .= sprintf("cibs.GovernanceObjectPaymentProposalHash = '%s'",$hash);
+                }
+                $sqldb .= $sqls.")";
+            }
+
+            $sql = sprintf("SELECT cib.BlockId BlockId, cib.BlockHash BlockHash, cib.BlockPoolPubKey BlockPoolPubKey, cpp.PoolDescription PoolDescription, cib.BlockMNPayee SuperblockV1PaymentAddress, "
+                ."cib.BlockTime BlockTime, cib.BlockDifficulty BlockDifficulty, cib.IsSuperblock SuperblockVersion, cib.BlockMNValue TotalAmount, cib.SuperBlockBudgetName SuperblockV1BudgetName, "
+                ."cgop.GovernanceObjectName SuperblockV2ProposalName, cibs.GovernanceObjectPaymentProposalHash SuperblockV2ProposalHash, cibs.GovernanceObjectPaymentAmount SuperblockV2ProposalPaymentAmount, "
+                ."cibs.GovernanceObjectPaymentAddress SuperblockV2PaymentAddress FROM cmd_info_blocks cib "
+                ."LEFT JOIN cmd_pools_pubkey cpp ON cib.BlockPoolPubKey = cpp.PoolPubKey AND cib.BlockTestNet = cpp.PoolTestNet "
+                ."LEFT JOIN cmd_info_blocks_superblockpayments cibs ON cib.BlockTestNet = cibs.BlockTestNet AND cib.BlockId = cibs.BlockId "
+                ."LEFT JOIN cmd_gobject_proposals cgop ON cibs.GovernanceObjectPaymentProposalHash = cgop.GovernanceObjectId AND cibs.BlockTestNet = cgop.GovernanceObjectTestNet "
+                ."WHERE cib.BlockTestNet = %d AND cib.IsSuperblock > 0%s ORDER BY BlockId DESC",$testnet,$sqldb);
+            $superblocks = array();
+            if ($result = $mysqli->query($sql)) {
+                while($row = $result->fetch_assoc()){
+                    if ($row["SuperblockVersion"] == 1) {
+                      $amount = floatval($row["TotalAmount"]);
+                      $name = $row["SuperblockV1BudgetName"];
+                      $address = $row["SuperblockV1PaymentAddress"];
+                    }
+                    else {
+                      $amount = floatval($row["SuperblockV2ProposalPaymentAmount"]);
+                      $name = $row["SuperblockV2ProposalName"];
+                      $address = $row["SuperblockV2PaymentAddress"];
+                    }
+                    $superblocks[] = array(
+                        "BlockId" => intval($row["BlockId"]),
+                        "BlockHash" => $row["BlockHash"],
+                        "BlockPoolPubKey" => $row["BlockPoolPubKey"],
+                        "PoolDescription" => $row["PoolDescription"],
+                        "BlockTime" => intval($row["BlockTime"]),
+                        "SuperBlockVersion" => intval($row["SuperblockVersion"]),
+                        "SuperBlockProposalName" => $name,
+                        "SuperBlockProposalHash" => $row["SuperblockV2ProposalHash"],
+                        "SuperBlockPaymentAmount" => $amount,
+                        "SuperBlockPaymentAddress" => $address
+                    );
+                }
+
+                $data = array('superblocks' => $superblocks,
+                    'cache' => array(
+                        'time' => time(),
+                        'fromcache' => false
+                    ),
+                    'api' => array(
+                        'version' => $apiversion,
+                        'compat' => $apiversioncompat,
+                        'bev' => 'sb='.DASHNINJA_BEV.".".$apiversion
+                    )
+                );
+                //Change the HTTP status
+                $response->setStatusCode(200, "OK");
+                $response->setJsonContent(array('status' => 'OK', 'data' => $data));
+                file_put_contents($cachefnam,serialize($data),LOCK_EX);
+                unlink($cachefnamupdate);
+            }
+            else {
+                $response->setStatusCode(503, "Service Unavailable");
+                $response->setJsonContent(array('status' => 'ERROR', 'messages' => $mysqli->errno.': '.$mysqli->error));
+            }
+        }
+    }
+    return $response;
 
 });
 
@@ -1547,14 +1695,38 @@ $app->get('/api/governanceproposals', function() use ($app,&$mysqli) {
                 }
 
                 $nSubsidy = 5;
-                if ($testnet == 0){
+                if ($testnet == 0) {
                     $nextsuperblock = $currentblock["BlockId"] - ($currentblock["BlockId"] % 16616) + 16616;
-                    for($i = 210240; $i <= $nextsuperblock; $i += 210240) $nSubsidy -= $nSubsidy/14;
-                    $estimatedbudgetamount = (($nSubsidy/100)*10)*576*30;
+                    for ($i = 210240; $i <= $nextsuperblock; $i += 210240) $nSubsidy -= $nSubsidy / 14;
+                    $estimatedbudgetamount = (($nSubsidy / 100) * 10) * (60 * 24 * 30) / 2.6;
                 } else {
-                    $nextsuperblock = $currentblock["BlockId"] - ($currentblock["BlockId"] % 50) + 50 ;
-                    for($i = 46200; $i <= $nextsuperblock; $i += 210240) $nSubsidy -= $nSubsidy/14;
-                    $estimatedbudgetamount = (($nSubsidy/100)*10)*50;
+                    $nextsuperblock = $currentblock["BlockId"] - ($currentblock["BlockId"] % 50) + 50;
+                    for ($i = 46200; $i <= $nextsuperblock; $i += 210240) $nSubsidy -= $nSubsidy / 14;
+                    $estimatedbudgetamount = (($nSubsidy / 100) * 10) * 50;
+                }
+
+                $keyst1 = "governancebudget";
+                $keyst2 = "governancesb";
+                if ($testnet == 1) {
+                    $keyst1 .= "test";
+                    $keyst2 .= "test";
+                }
+                $sql = sprintf('SELECT `StatKey`, `StatValue` FROM `cmd_stats_values` WHERE StatKey = "%s" OR  StatKey = "%s" LIMIT 2',$keyst1,$keyst2);
+                if ($result = $mysqli->query($sql)) {
+                    while($row = $result->fetch_assoc()){
+                        if ($row["StatKey"] == $keyst1) {
+                            $estimatedbudgetamount = floatval($row["StatValue"]);
+                        }
+                        elseif ($row["StatKey"] == $keyst2) {
+                            $nextsuperblock = floatval($row["StatValue"]);
+                        }
+
+                    }
+                }
+                else {
+                    $response->setStatusCode(503, "Service Unavailable");
+                    $response->setJsonContent(array('status' => 'ERROR', 'messages' => array($mysqli->errno.': '.$mysqli->error)));
+                    return $response;
                 }
 
                 $data = array('governanceproposals' => $proposals,
@@ -1833,7 +2005,7 @@ $app->get('/api/governancetriggers', function() use ($app,&$mysqli) {
                 ."LEFT JOIN cmd_gobject_triggers_payments cgotp ON (cgotp.GovernanceObjectTestnet = cgot.GovernanceObjectTestnet AND cgotp.GovernanceObjectId = cgot.GovernanceObjectId) "
                 ."LEFT JOIN cmd_gobject_proposals cgop ON (cgop.GovernanceObjectTestnet = cgot.GovernanceObjectTestnet AND cgotp.GovernanceObjectPaymentProposalHash = cgop.GovernanceObjectId) "
                 ."WHERE "
-                ." cgot.GovernanceObjectTestnet = %d",$testnet);
+                ." cgot.GovernanceObjectTestnet = %d AND cgot.GovernanceObjectVotesAbsoluteYes > 0",$testnet);
             if ($onlyvalid) {
                 $sql .= " AND cgot.GovernanceObjectCachedValid = 1";
             }
@@ -2594,6 +2766,55 @@ function drkmn_masternodes_balance_get($mysqli, $mnkeys, $testnet = 0) {
   return $balances;
 }
 
+// Function to retrieve the extended status info
+function dmn_masternodes_exstatus_get($mysqli, $mnkeys, $testnet = 0) {
+
+    $cacheserial = sha1(serialize($mnkeys));
+    $cachefnam = CACHEFOLDER.sprintf("dashninja_masternodes_exstatus_get_%d_%d_%s",$testnet,count($mnkeys),$cacheserial);
+    $cachevalid = (is_readable($cachefnam) && ((filemtime($cachefnam)+120)>=time()));
+    if ($cachevalid) {
+        $exstatus = unserialize(file_get_contents($cachefnam));
+    }
+    else {
+        // Retrieve the extended status info for the specific pubkey
+        $sql = sprintf("SELECT MasternodeOutputHash, MasternodeOutputIndex, NodeName, NodeVersion, NodeProtocol, MasternodeStatus, MasternodeStatusEx FROM cmd_info_masternode2_list cim2l LEFT OUTER JOIN cmd_nodes cn ON cn.NodeID = cim2l.NodeID  LEFT OUTER JOIN cmd_nodes_status cns ON cn.NodeID = cns.NodeID WHERE MasternodeTestNet = %d",$testnet);
+        // Add the filtering to masternode output hash and index (in $mnkeys parameter)
+        if (count($mnkeys) > 0) {
+            $sql .= " AND (";
+            $sqls = '';
+            foreach($mnkeys as $mnkey) {
+                if (strlen($sqls)>0) {
+                    $sqls .= ' OR ';
+                }
+                list($mnhash,$mnindex) = explode("-",$mnkey);
+                $sqls .= sprintf("(MasternodeOutputHash = '%s' AND MasternodeOutputIndex = %d)",$mysqli->real_escape_string($mnhash),intval($mnindex));
+            }
+            $sql .= $sqls.")";
+        }
+        $sql .= " ORDER BY MasternodeOutputHash, MasternodeOutputIndex, NodeName";
+
+        // Run the query
+        if ($result = $mysqli->query($sql)) {
+            $exstatus = array();
+            // Group the result by masternode output hash-index
+            while($row = $result->fetch_assoc()){
+                $exstatus[$row['MasternodeOutputHash']."-".$row['MasternodeOutputIndex']][] = array('NodeName' => $row['NodeName'],
+                    'NodeVersion' => intval($row['NodeVersion']),
+                    'NodeProtocol' => intval($row['NodeProtocol']),
+                    'Status' => $row['MasternodeStatus'],
+                    'StatusEx' => $row['MasternodeStatusEx']
+                );
+            }
+        }
+        else {
+            $exstatus = false;
+        }
+        file_put_contents($cachefnam,serialize($exstatus),LOCK_EX);
+    }
+
+    return $exstatus;
+}
+
 function drkmn_masternodes_count($mysqli,$testnet,&$totalmncount,&$uniquemnips) {
 
   $cachefnam = CACHEFOLDER.sprintf("dashninja_masternodes_count_%d",$testnet);
@@ -2677,7 +2898,16 @@ function drkmn_masternodes_count($mysqli,$testnet,&$totalmncount,&$uniquemnips) 
 //   testnet=0|1
 //   pubkeys=JSON encoded list of pubkeys
 //   ips=JSON encoded list of ip:port
+//   vins=JSON encoded list of output-index
 //   protocol=latest|integer (optional, then value=latest)
+//   prev12=0|1 (optional, respond as pre v0.12 Dash Ninja API, obsolete)
+// Each following enabled parameter will slow down the query, only activate if you really need the data :
+//   balance=0|1 (optional, add balance info)
+//   donation=0|1 (optional, add donation info, obsolete)
+//   exstatus=0|1 (optional, add extended masternode status)
+//   portcheck=0|1 (optional, add portcheck info)
+//   lastpaid=0|1 (optional, add lastpaid info)
+//   votes=0|1 (optional, add votes info, obsolete)
 $app->get('/api/masternodes', function() use ($app,&$mysqli) {
 
   //Create a response
@@ -2825,6 +3055,7 @@ $app->get('/api/masternodes', function() use ($app,&$mysqli) {
   $withlastpaid = ($request->hasQuery('lastpaid') && ($request->getQuery('lastpaid') == 1));
   $withdonation = ($request->hasQuery('donation') && ($request->getQuery('donation') == 1));
   $withvotes = ($request->hasQuery('votes') && ($request->getQuery('votes') == 1));
+  $withexstatus = ($request->hasQuery('exstatus') && ($request->getQuery('exstatus') == 1));
   $prev12 = ($request->hasQuery('prev12') && ($request->getQuery('prev12') == 1));
 
   if (count($errmsg) > 0) {
@@ -2938,7 +3169,12 @@ $app->get('/api/masternodes', function() use ($app,&$mysqli) {
       // Generate the final list of IP:port (resulting from the query)
       $mnipstrue = array();
       $mnpubkeystrue = array();
+      $mnvinstrue = array();
       foreach($nodes as $node) {
+        $tmpvin = $node["MasternodeOutputHash"]."-".$node["MasternodeOutputIndex"];
+        if (!in_array($tmpvin,$mnvinstrue)) {
+            $mnvinstrue[] = $tmpvin;
+        }
         if ($node["MasternodeTor"] != "") {
           $mnip = $node['MasternodeTor'].".onion";
         }
@@ -2995,6 +3231,25 @@ $app->get('/api/masternodes', function() use ($app,&$mysqli) {
           }
         }
       }
+
+        // If we need the extended status info, let's retrieve it
+        if ($withexstatus) {
+            $exstatus = dmn_masternodes_exstatus_get($mysqli, $mnvinstrue, $testnet);
+            if ($portcheck === false) {
+                $response->setStatusCode(503, "Service Unavailable");
+                $response->setJsonContent(array('status' => 'ERROR', 'messages' => array($mysqli->errno.': '.$mysqli->error)));
+            }
+            else {
+                foreach($nodes as $key => $node) {
+                    if (array_key_exists($node["MasternodeOutputHash"]."-".$node['MasternodeOutputIndex'],$exstatus)) {
+                        $nodes[$key]['ExStatus'] = $exstatus[$node["MasternodeOutputHash"]."-".$node['MasternodeOutputIndex']];
+                    }
+                    else {
+                        $nodes[$key]['ExStatus'] = false;
+                    }
+                }
+            }
+        }
 
       //Change the HTTP status
       $response->setStatusCode(200, "OK");

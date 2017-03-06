@@ -20,13 +20,13 @@
 // Dash Ninja Front-End (dashninja-fe) - Governance
 // By elberethzone / https://www.dash.org/forum/members/elbereth.175/
 
-var dashninjaversion = '0.9.1';
+var dashninjaversion = '1.0.0';
 var tableGovernance = null;
 var tableBudgetsProjection = null;
 var tableSuperBlocks = null;
 var tableSuperBlocksExpected = null;
 var tableMonthlyBudgetPayments = null;
-var latestblock = 155000;
+var latestblock = null;
 var superblock = null;
 var totalmns = 0;
 var latestblock2 = null;
@@ -75,19 +75,11 @@ function tableGovernanceRefresh(){
     setTimeout(tableGovernanceRefresh, 150000);
 };
 
-/*
-function tableBudgetsProjectionRefresh(){
-    tableBudgets.api().ajax.reload();
-    // Set it to refresh in 60sec
-    setTimeout(tableBudgetsProjectionRefresh, 150000);
-};
-
 function tableSuperBlocksRefresh(){
     tableSuperBlocks.api().ajax.reload();
     // Set it to refresh in 60sec
     setTimeout(tableSuperBlocksRefresh, 150000);
 };
-*/
 
 function tableSuperBlocksExpectedRefresh(){
     tableSuperBlocksExpected.api().ajax.reload();
@@ -120,8 +112,8 @@ $(document).ready(function(){
         // Show global stats
         $('#globalvalidbudget').text(json.data.stats.valid);
         $('#globalestablishedbudget').text(json.data.stats.funded);
-        $('#globalestablishedbudgetamount').text(addCommas(totalamount)+' '+dashninjacoin[dashninjatestnet]);
-        var nextsuperblockdatetimestamp = json.data.stats.latestblock.BlockTime+(((json.data.stats.nextsuperblock.blockheight-json.data.stats.latestblock.BlockId)/553)*86400);
+        $('#globalestablishedbudgetamount').text(addCommas(Math.round(totalamount*100)/100)+' '+dashninjacoin[dashninjatestnet]);
+        var nextsuperblockdatetimestamp = json.data.stats.latestblock.BlockTime+(((json.data.stats.nextsuperblock.blockheight-json.data.stats.latestblock.BlockId)/553.85)*86400);
         var datesuperblock = new Date(nextsuperblockdatetimestamp*1000);
         $('#globalnextsuperblockdate').text(datesuperblock.toLocaleString());
         $('#globalnextsuperblockremaining').text(deltaTimeStampHRlong(nextsuperblockdatetimestamp,currenttimestamp()));
@@ -131,9 +123,63 @@ $(document).ready(function(){
 
 
         // Store information for future use
-        //latestblock = json.data.stats.latestblock;
+        latestblock = json.data.stats.latestblock;
         superblock = json.data.stats.nextsuperblock;
         totalmns = json.data.stats.totalmns;
+
+        if (tableSuperBlocksExpected !== null) {
+            tableSuperBlocksExpected.api().ajax.reload();
+        }
+        else {
+            tableSuperBlocksExpected = $('#superblocksexpectedtable').dataTable({
+                ajax: {
+                    url: "/api/governancetriggers?testnet=" + dashninjatestnet + "&onlyvalid=1&afterblockheight=" + latestblock.BlockId,
+                    dataSrc: 'data.governancetriggers'
+                },
+                paging: false,
+                order: [[0, "desc"]],
+                columns: [
+                    {
+                        data: null, render: function (data, type, row) {
+                        var outtxt = data.Hash;
+                        return outtxt;
+                    }
+                    },
+                    {
+                        data: null, render: function (data, type, row) {
+                        var outtxt = data.BlockHeight;
+                        return outtxt;
+                    }
+                    },
+                    {
+                        data: null, render: function (data, type, row) {
+                        var outtxt = data.PaymentPosition;
+                        return outtxt;
+                    }
+                    },
+                    {
+                        data: null, render: function (data, type, row) {
+                        if (type == "sort") {
+                            return data.PaymentProposalName;
+                        } else {
+                            return '<a href="' + dashninjagovernanceproposaldetail[dashninjatestnet].replace('%%b%%', encodeURIComponent(data.PaymentProposalHash)) + '">' + data.PaymentProposalName + '</a>';
+                        }
+                    }
+                    },
+                    {
+                        data: null, render: function (data, type, row) {
+                        if (type == "sort") {
+                            return data.PaymentAmount;
+                        } else {
+                            return addCommas(data.PaymentAmount.toFixed(3)) + " " + dashninjacoin[dashninjatestnet];
+                        }
+                    }
+                    }
+                ],
+                createdRow: function (row, data, index) {
+                }
+            });
+        }
 
         // Change the last refresh date
         var date = new Date();
@@ -287,7 +333,7 @@ $(document).ready(function(){
             var isalloted = false;
             var color = '#8F8F8F';
             if (data.BlockchainValidity) {
-                if (totalvotesratio < 0.1) {
+                if (totalvotesratio < 0.1000) {
                     color = '#FF8F8F';
                 }
                 else if (totalvotesratio <= 0.25) {
@@ -373,7 +419,6 @@ $(document).ready(function(){
     } );
     setTimeout(tableGovernanceRefresh, 150000);
 
-    /*
     $('#superblockstable').on('xhr.dt', function ( e, settings, json ) {
         // Change the last refresh date
         var date = new Date();
@@ -381,7 +426,7 @@ $(document).ready(function(){
         var time = date.toLocaleTimeString();
         $('#superblockstableLR').text( n + ' ' + time );
 
-        var monthlypayments = {};
+/*        var monthlypayments = {};
         var tmpDate;
         var xaxis = [];
         var paidbudgets = [];
@@ -489,12 +534,15 @@ $(document).ready(function(){
             },
             series: series
         });
+        */
 
     } );
     tableSuperBlocks = $('#superblockstable').dataTable( {
-        ajax: { url: "/api/blocks?testnet="+dashninjatestnet+"&onlysuperblocks=1",
-            dataSrc: 'data.blocks' },
-        paging: false,
+        ajax: { url: "/api/blocks/superblocks?testnet="+dashninjatestnet,
+            dataSrc: 'data.superblocks' },
+        paging: true,
+        lengthMenu: [ [20, 50, 100, 200, -1], [20, 50, 100, 200, "All"] ],
+        pageLength: 20,
         order: [[ 0, "desc" ]],
         columns: [
             { data: null, render: function ( data, type, row ) {
@@ -523,69 +571,56 @@ $(document).ready(function(){
                 }
                 return outtxt;
             } },
-            { data: "BlockDifficulty" },
             { data: null, render: function ( data, type, row ) {
                 if (type == "sort") {
-                    return data.SuperBlockBudgetName;
+                    return data.SuperBlockProposalName;
                 } else {
-                    return '<a href="' + dashninjabudgetdetail[dashninjatestnet].replace('%%b%%',encodeURIComponent(data.SuperBlockBudgetName)) + '">' + data.SuperBlockBudgetName + '</a>';
+                    if (data.SuperBlockVersion == 1) {
+                        return '<a href="' + dashninjabudgetdetail[dashninjatestnet].replace('%%b%%', encodeURIComponent(data.SuperBlockProposalName)) + '">' + data.SuperBlockProposalName + '</a>';
+                    }
+                    else {
+                        return '<a href="' + dashninjagovernanceproposaldetail[dashninjatestnet].replace('%%b%%', encodeURIComponent(data.SuperBlockProposalHash)) + '">' + data.SuperBlockProposalName + '</a>';
+                    }
                 }
               }
             },
             { data: null, render: function ( data, type, row ) {
                 if (type == "sort") {
-                    return data.BlockMNValue;
+                    return data.SuperBlockPaymentAmount;
                 } else {
-                    return addCommas(data.BlockMNValue.toFixed(3))+" "+dashninjacoin[dashninjatestnet];
+                    return addCommas(data.SuperBlockPaymentAmount.toFixed(3))+" "+dashninjacoin[dashninjatestnet];
                 }
-            }
+              }
+            },
+            { data: null, render: function ( data, type, row ) {
+                if (type == "sort") {
+                    return data.SuperBlockPaymentAddress;
+                } else {
+                    var outtxt = "";
+                    var ix = 0;
+                    for ( var i=0, ien=dashninjaaddressexplorer[dashninjatestnet].length ; i<ien ; i++ ) {
+                        if (ix == 0) {
+                            outtxt += '<a href="'+dashninjaaddressexplorer[dashninjatestnet][0][0].replace('%%a%%',data.SuperBlockPaymentAddress)+'">'+data.SuperBlockPaymentAddress+'</a>';
+                        }
+                        else {
+                            outtxt += '<a href="'+dashninjaaddressexplorer[dashninjatestnet][i][0].replace('%%a%%',data.SuperBlockPaymentAddress)+'">['+ix+']</a>';
+                        }
+                        ix++;
+                    }
+                    return outtxt;
+                }
+              }
             }
         ],
         createdRow: function ( row, data, index ) {
         }
     } );
     setTimeout(tableSuperBlocksRefresh, 150000);
-*/
 
     $('#superblocksexpectedtable').on('xhr.dt', function ( e, settings, json ) {
         // Change the last refresh date
         var date = new Date();
         $('#superblocksexpectedtableLR').text( date.toLocaleString() );
     } );
-    tableSuperBlocksExpected = $('#superblocksexpectedtable').dataTable( {
-        ajax: { url: "/api/governancetriggers?testnet="+dashninjatestnet+"&onlyvalid=1&afterblockheight="+latestblock,
-            dataSrc: 'data.governancetriggers' },
-        paging: false,
-        order: [[ 0, "desc" ]],
-        columns: [
-            { data: null, render: function ( data, type, row ) {
-                var outtxt = data.Hash;
-                return outtxt;
-            } },
-            { data: null, render: function ( data, type, row ) {
-                var outtxt = data.PaymentPosition;
-                return outtxt;
-            } },
-            { data: null, render: function ( data, type, row ) {
-                if (type == "sort") {
-                    return data.PaymentProposalName;
-                } else {
-                    return '<a href="' + dashninjabudgetdetail[dashninjatestnet].replace('%%b%%',encodeURIComponent(data.PaymentProposalHash)) + '">' + data.PaymentProposalName + '</a>';
-                }
-            }
-            },
-            { data: null, render: function ( data, type, row ) {
-                if (type == "sort") {
-                    return data.PaymentAmount;
-                } else {
-                    return addCommas(data.PaymentAmount.toFixed(3))+" "+dashninjacoin[dashninjatestnet];
-                }
-            }
-            }
-        ],
-        createdRow: function ( row, data, index ) {
-        }
-    } );
-    setTimeout(tableSuperBlocksExpectedRefresh, 150000);
 
 });
