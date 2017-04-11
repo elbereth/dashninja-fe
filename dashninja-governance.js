@@ -20,7 +20,7 @@
 // Dash Ninja Front-End (dashninja-fe) - Governance
 // By elberethzone / https://www.dash.org/forum/members/elbereth.175/
 
-var dashninjaversion = '1.0.0';
+var dashninjaversion = '1.0.2';
 var tableGovernance = null;
 var tableBudgetsProjection = null;
 var tableSuperBlocks = null;
@@ -114,6 +114,23 @@ $(document).ready(function(){
         $('#globalestablishedbudget').text(json.data.stats.funded);
         $('#globalestablishedbudgetamount').text(addCommas(Math.round(totalamount*100)/100)+' '+dashninjacoin[dashninjatestnet]);
         var nextsuperblockdatetimestamp = json.data.stats.latestblock.BlockTime+(((json.data.stats.nextsuperblock.blockheight-json.data.stats.latestblock.BlockId)/553.85)*86400);
+        if ((json.data.stats.nextsuperblock.blockheight-1662)<=json.data.stats.latestblock.BlockId) {
+            $('#globalnextvotelimitdate').text( "Current month vote is over!" );
+            $('#globalnextvotelimitremaining').text("Too late...");
+            $('#votedeadline').css('color', '');
+        }
+        else {
+            var nextvotelimitdatetimestamp = json.data.stats.latestblock.BlockTime+(((json.data.stats.nextsuperblock.blockheight-1662-json.data.stats.latestblock.BlockId)/553.85)*86400);
+            var datevotelimit = new Date(nextvotelimitdatetimestamp*1000);
+            $('#globalnextvotelimitdate').text(datevotelimit.toLocaleString());
+            $('#globalnextvotelimitremaining').text(deltaTimeStampHRlong(nextvotelimitdatetimestamp,currenttimestamp()));
+            if ((nextvotelimitdatetimestamp - currenttimestamp()) <= 86400) {
+                $('#votedeadline').css('color', 'red');
+            }
+            else {
+                $('#votedeadline').css('color', 'green');
+            }
+        }
         var datesuperblock = new Date(nextsuperblockdatetimestamp*1000);
         $('#globalnextsuperblockdate').text(datesuperblock.toLocaleString());
         $('#globalnextsuperblockremaining').text(deltaTimeStampHRlong(nextsuperblockdatetimestamp,currenttimestamp()));

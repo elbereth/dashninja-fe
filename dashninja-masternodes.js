@@ -20,12 +20,12 @@
 // Dash Ninja Front-End (dashninja-fe) - Masternode List (v2)
 // By elberethzone / https://www.dash.org/forum/members/elbereth.175/
 
-var dashninjaversion = '2.3.5';
+var dashninjaversion = '2.3.7';
 var tableLocalNodes = null;
 var tableBlockConsensus = null;
 var tableMNList = null;
 var chartMNVersions = null;
-var dashversiondefault = "0.12.1.0";
+var dashversiondefault = "0.12.1.5";
 var dashversion = dashversiondefault;
 var dashversioncheck = dashversion;
 var dashversionsemaphore = false;
@@ -181,6 +181,30 @@ function getLatestdashVersion() {
   return dashversioncheck;
 };
 
+function getVoteLimit() {
+    $.getJSON("/api/governanceproposals/votelimit?testnet=" + dashninjatestnet, function (data) {
+        var cls = "alert-danger";
+        if (data.data.votelimit.nextvote.BlockTime == 0) {
+            var datevotelimit = new Date(data.data.votelimit.nextsuperblock.BlockTime * 1000);
+            $('#nextvotelimit').text( "Vote is over for this month, next superblock approximatly on "+datevotelimit.toLocaleString() );
+            $('#nextvotelimithr').text( "Too late!");
+        }
+        else {
+            var datevotelimit = new Date(data.data.votelimit.nextvote.BlockTime * 1000);
+            $('#nextvotelimit').text("Approximately on "+datevotelimit.toLocaleString());
+            $('#nextvotelimithr').text(deltaTimeStampHRlong(data.data.votelimit.nextvote.BlockTime, currenttimestamp()));
+            if ((data.data.votelimit.nextvote.BlockTime - currenttimestamp()) <= 86400) {
+                cls = "alert-warning";
+            }
+            else {
+                cls = "alert-success";
+            }
+        }
+        $('#msgalert2').removeClass("alert-success").removeClass("alert-danger").removeClass("alert-warning").addClass(cls);
+    });
+};
+
+
 $(document).ready(function(){
 
   $('#dashninjajsversion').text( dashninjaversion );
@@ -195,6 +219,7 @@ $(document).ready(function(){
   }
 
   getLatestdashVersion();
+  getVoteLimit();
 
   var pkutxt = '<ul>';
   var ix = 0;
