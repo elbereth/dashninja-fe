@@ -1714,13 +1714,13 @@ $app->get('/api/governanceproposals', function() use ($app,&$mysqli) {
                 $sql = sprintf('SELECT `StatKey`, `StatValue` FROM `cmd_stats_values` WHERE StatKey = "%s" OR  StatKey = "%s" LIMIT 2',$keyst1,$keyst2);
                 if ($result = $mysqli->query($sql)) {
                     while($row = $result->fetch_assoc()){
-                        if ($row["StatKey"] == $keyst1) {
-                            $estimatedbudgetamount = floatval($row["StatValue"]);
-                        }
-                        elseif ($row["StatKey"] == $keyst2) {
-                            $nextsuperblock = floatval($row["StatValue"]);
-                        }
-
+                      if (!is_null($row["StatValue"]) && ($row["StatValue"] > 0)) {
+                          if ($row["StatKey"] == $keyst1) {
+                              $estimatedbudgetamount = floatval($row["StatValue"]);
+                          } elseif ($row["StatKey"] == $keyst2) {
+                              $nextsuperblock = floatval($row["StatValue"]);
+                          }
+                      }
                     }
                 }
                 else {
@@ -1766,6 +1766,132 @@ $app->get('/api/governanceproposals', function() use ($app,&$mysqli) {
     return $response;
 
 });
+
+// Get governance proposals vote limit
+// Parameters:
+//   testnet=0|1
+$app->get('/api/governanceproposals/votelimit', function() use ($app,&$mysqli) {
+
+    $apiversion = 1;
+    $apiversioncompat = 1;
+
+    //Create a response
+    $response = new Phalcon\Http\Response();
+    $response->setHeader('Access-Control-Allow-Origin', '*');
+    $response->setHeader("Content-Type", "application/json");
+
+    $request = $app->request;
+
+    $errmsg = array();
+
+    if (!array_key_exists('CONTENT_LENGTH',$_SERVER) || (intval($_SERVER['CONTENT_LENGTH']) != 0)) {
+        $errmsg[] = "No CONTENT expected";
+    }
+
+    $testnet = 0;
+    // Retrieve the 'testnet' parameter
+    if ($request->hasQuery('testnet')) {
+        $testnet = intval($request->getQuery('testnet'));
+        if (($testnet != 0) && ($testnet != 1)) {
+            $testnet = 0;
+        }
+    }
+
+    $cachefnam = CACHEFOLDER.sprintf("dashninja_governanceproposals_votelimit_%d",$testnet);
+    $cachefnamupdate = $cachefnam.".update";
+    $cachevalid = (is_readable($cachefnam) && (((filemtime($cachefnam)+120)>=time()) || file_exists($cachefnamupdate)));
+    if ($cachevalid) {
+        $data = unserialize(file_get_contents($cachefnam));
+        $data["cache"]["fromcache"] = true;
+
+        $response->setStatusCode(200, "OK");
+        $response->setJsonContent(array('status' => 'OK', 'data' => $data));
+    }
+    else {
+        touch($cachefnamupdate);
+
+        // Retrieve current block
+        $sql = sprintf("SELECT `BlockId`, `BlockTime`, `BlockDifficulty` FROM `cmd_info_blocks` WHERE BlockTestNet = %d ORDER BY BlockId DESC LIMIT 1", $testnet);
+        if ($result = $mysqli->query($sql)) {
+            $currentblock = $result->fetch_assoc();
+            $currentblock["BlockId"] = intval($currentblock["BlockId"]);
+            $currentblock["BlockTime"] = intval($currentblock["BlockTime"]);
+            $currentblock["BlockDifficulty"] = floatval($currentblock["BlockDifficulty"]);
+        } else {
+            $response->setStatusCode(503, "Service Unavailable");
+            $response->setJsonContent(array('status' => 'ERROR', 'messages' => array($mysqli->errno . ': ' . $mysqli->error)));
+            return $response;
+        }
+
+        if ($testnet == 0) {
+            $nextsuperblock = $currentblock["BlockId"] - ($currentblock["BlockId"] % 16616) + 16616;
+        } else {
+            $nextsuperblock = $currentblock["BlockId"] - ($currentblock["BlockId"] % 50) + 50;
+        }
+
+        $keyst = "governancesb";
+        if ($testnet == 1) {
+            $keyst .= "test";
+        }
+        $sql = sprintf('SELECT `StatKey`, `StatValue` FROM `cmd_stats_values` WHERE StatKey = "%s" LIMIT 2', $keyst);
+        if ($result = $mysqli->query($sql)) {
+            while ($row = $result->fetch_assoc()) {
+                if (!is_null($row["StatValue"]) && ($row["StatValue"] > 0)) {
+                    if ($row["StatKey"] == $keyst) {
+                        $nextsuperblock = floatval($row["StatValue"]);
+                    }
+                }
+            }
+        } else {
+            $response->setStatusCode(503, "Service Unavailable");
+            $response->setJsonContent(array('status' => 'ERROR', 'messages' => array($mysqli->errno . ': ' . $mysqli->error)));
+            return $response;
+        }
+
+        // Vote limit is 1662 blocks before next superblock
+        $nextsuperblockid = $nextsuperblock - 1662;
+        $nextsuperblocktime = round($currentblock["BlockTime"]+((($nextsuperblock - 1662 - $currentblock["BlockId"])/553.85)*86400));
+        if ($nextsuperblockid <= $currentblock["BlockId"]) {
+            $nextsuperblockid = 0;
+            $nextsuperblocktime = 0;
+        }
+        $nextvotelimitblock = array(
+            "BlockId" => $nextsuperblockid,
+            "BlockTime" => $nextsuperblocktime
+        );
+
+        $nextsuperblock = array(
+            "BlockId" => $nextsuperblock,
+            "BlockTime" => round($currentblock["BlockTime"]+((($nextsuperblock - $currentblock["BlockId"])/553.85)*86400))
+        );
+
+        $data = array('votelimit' => array(
+                'nextvote' => $nextvotelimitblock,
+                'nextsuperblock' => $nextsuperblock,
+                'latestblock' => $currentblock
+            ),
+            'cache' => array(
+                'time' => time(),
+                'fromcache' => false
+            ),
+            'api' => array(
+                'version' => $apiversion,
+                'compat' => $apiversioncompat,
+                'bev' => 'gpvl=' . DASHNINJA_BEV . "." . $apiversion
+            )
+        );
+
+        //Change the HTTP status
+        $response->setStatusCode(200, "OK");
+        $response->setJsonContent(array('status' => 'OK', 'data' => $data));
+        file_put_contents($cachefnam, serialize($data), LOCK_EX);
+        unlink($cachefnamupdate);
+    }
+
+    return $response;
+
+});
+
 
 // Get governance proposals votes
 // Parameters:
@@ -2777,7 +2903,7 @@ function dmn_masternodes_exstatus_get($mysqli, $mnkeys, $testnet = 0) {
     }
     else {
         // Retrieve the extended status info for the specific pubkey
-        $sql = sprintf("SELECT MasternodeOutputHash, MasternodeOutputIndex, NodeName, NodeVersion, NodeProtocol, MasternodeStatus, MasternodeStatusEx FROM cmd_info_masternode2_list cim2l LEFT OUTER JOIN cmd_nodes cn ON cn.NodeID = cim2l.NodeID  LEFT OUTER JOIN cmd_nodes_status cns ON cn.NodeID = cns.NodeID WHERE MasternodeTestNet = %d",$testnet);
+        $sql = sprintf("SELECT MasternodeOutputHash, MasternodeOutputIndex, NodeName, NodeVersion, NodeProtocol, MasternodeStatus, MasternodeStatusEx FROM cmd_info_masternode2_list cim2l LEFT OUTER JOIN cmd_nodes cn ON cn.NodeID = cim2l.NodeID LEFT OUTER JOIN cmd_nodes_status cns ON cn.NodeID = cns.NodeID WHERE MasternodeTestNet = %d AND cn.NodeEnabled = 1",$testnet);
         // Add the filtering to masternode output hash and index (in $mnkeys parameter)
         if (count($mnkeys) > 0) {
             $sql .= " AND (";
