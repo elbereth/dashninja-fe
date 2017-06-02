@@ -20,7 +20,7 @@
 // Dash Ninja Front-End (dashninja-fe) - Proposal Details
 // By elberethzone / https://www.dash.org/forum/members/elbereth.175/
 
-var dashninjaversion = '1.0.0';
+var dashninjaversion = '1.0.1';
 var tableVotes = null;
 var tableSuperBlocks = null;
 var dashoutputregexp = /^[a-z0-9]{64}$/;
@@ -601,7 +601,16 @@ $(document).ready(function(){
             else {
                 var mnLimit = Math.floor(currentstats.totalmns * 0.1);
                 var curPositive = currentbudget.Yes - currentbudget.No;
-                var nextsuperblockdatetimestamp = currentstats.latestblock.BlockTime + (((currentstats.nextsuperblock.blockheight - currentstats.latestblock.BlockId) / 553) * 86400);
+                var blockheightshow = currentstats.nextsuperblock.blockheight;
+                if (nextsuperblockdatetimestamp < currentbudget.EpochStart) {
+                    var howmany = Math.round((currentbudget.EpochStart - nextsuperblockdatetimestamp)/2592000);
+                    var howmany2 = (currentbudget.EpochStart - nextsuperblockdatetimestamp) % 2592000;
+                    if (howmany2 > 0) {
+                        howmany++;
+                    }
+                    nextsuperblockdatetimestamp += howmany*2592000;
+                    blockheightshow += howmany+(553*30);
+                }
                 var datesuperblock = new Date(nextsuperblockdatetimestamp * 1000);
                 if (curPositive > mnLimit) {
                     outtxt += "Next payment at super-block ";
@@ -609,7 +618,7 @@ $(document).ready(function(){
                 else {
                     outtxt += "Next possible super-block ";
                 }
-                outtxt += +currentstats.nextsuperblock.blockheight + " (est. " + datesuperblock.toLocaleString() + ", " + deltaTimeStampHRlong(nextsuperblockdatetimestamp, currenttimestamp()) + " from now)";
+                outtxt += blockheightshow + " (est. " + datesuperblock.toLocaleString() + ", " + deltaTimeStampHRlong(nextsuperblockdatetimestamp, currenttimestamp()) + " from now)";
                 $('#voteisover').hide();
                 $('#voteisover2').hide();
                 $('#voteyes').show();
