@@ -1519,7 +1519,7 @@ $app->get('/api/budgetsprojection', function() use ($app,&$mysqli) {
 //   proposalsnames=[json array of hashes]
 $app->get('/api/governanceproposals', function() use ($app,&$mysqli) {
 
-    $apiversion = 1;
+    $apiversion = 2;
     $apiversioncompat = 1;
 
     //Create a response
@@ -1635,6 +1635,35 @@ $app->get('/api/governanceproposals', function() use ($app,&$mysqli) {
                 $sqlnames = " AND (".$sqls.")";
             }
 
+            // Retrieve current block
+            $sql = sprintf("SELECT `BlockId`, `BlockTime`, `BlockDifficulty` FROM `cmd_info_blocks` WHERE BlockTestNet = %d ORDER BY BlockId DESC LIMIT 1",$testnet);
+            if ($result = $mysqli->query($sql)) {
+                $currentblock = $result->fetch_assoc();
+                $currentblock["BlockId"] = intval($currentblock["BlockId"]);
+                $currentblock["BlockTime"] = intval($currentblock["BlockTime"]);
+                $currentblock["BlockDifficulty"] = floatval($currentblock["BlockDifficulty"]);
+            }
+            else {
+                $response->setStatusCode(503, "Service Unavailable");
+                $response->setJsonContent(array('status' => 'ERROR', 'messages' => array($mysqli->errno.': '.$mysqli->error)));
+                return $response;
+            }
+
+            // Calculate next superblock height
+            $nSubsidy = 5;
+            if ($testnet == 0) {
+                $nextsuperblock = $currentblock["BlockId"] - ($currentblock["BlockId"] % 16616) + 16616;
+                for ($i = 210240; $i <= $nextsuperblock; $i += 210240) $nSubsidy -= $nSubsidy / 14;
+                $estimatedbudgetamount = (($nSubsidy / 100) * 10) * (60 * 24 * 30) / 2.6;
+            } else {
+                $nextsuperblock = $currentblock["BlockId"] - ($currentblock["BlockId"] % 50) + 50;
+                for ($i = 46200; $i <= $nextsuperblock; $i += 210240) $nSubsidy -= $nSubsidy / 14;
+                $estimatedbudgetamount = (($nSubsidy / 100) * 10) * 50;
+            }
+
+            // Calculate next superblock timestamp
+            $nextsuperblocktimestamp = round($currentblock['BlockTime']+(($nextsuperblock-$currentblock['BlockId'])/553.85)*86400);
+
             // Get governance proposals
             $sql = sprintf("SELECT * FROM cmd_gobject_proposals WHERE GovernanceObjectTestnet = %d%s%s",$testnet,$sqlhashes,$sqlnames);
             if ($onlyvalid) {
@@ -1669,7 +1698,9 @@ $app->get('/api/governanceproposals', function() use ($app,&$mysqli) {
                         "LastReported" => strtotime($row["LastReported"])
                     );
                     $proposalsvalid+=intval($row["GovernanceObjectBlockchainValidity"]);
-                    $proposalsfunded+=intval($row["GovernanceObjectCachedFunding"]);
+                    if (($row['GovernanceObjectEpochStart'] <= $nextsuperblocktimestamp) && ($row['GovernanceObjectEpochEnd'] > time())) {
+                        $proposalsfunded+=intval($row["GovernanceObjectCachedFunding"]);
+                    }
                 }
 
                 $totalmninfo = 0;
@@ -1679,30 +1710,6 @@ $app->get('/api/governanceproposals', function() use ($app,&$mysqli) {
                     $response->setStatusCode(503, "Service Unavailable");
                     $response->setJsonContent(array('status' => 'ERROR', 'messages' => array($mysqli->errno.': '.$mysqli->error,$totalmninfo)));
                     return $response;
-                }
-
-                $sql = sprintf("SELECT `BlockId`, `BlockTime`, `BlockDifficulty` FROM `cmd_info_blocks` WHERE BlockTestNet = %d ORDER BY BlockId DESC LIMIT 1",$testnet);
-                if ($result = $mysqli->query($sql)) {
-                    $currentblock = $result->fetch_assoc();
-                    $currentblock["BlockId"] = intval($currentblock["BlockId"]);
-                    $currentblock["BlockTime"] = intval($currentblock["BlockTime"]);
-                    $currentblock["BlockDifficulty"] = floatval($currentblock["BlockDifficulty"]);
-                }
-                else {
-                    $response->setStatusCode(503, "Service Unavailable");
-                    $response->setJsonContent(array('status' => 'ERROR', 'messages' => array($mysqli->errno.': '.$mysqli->error)));
-                    return $response;
-                }
-
-                $nSubsidy = 5;
-                if ($testnet == 0) {
-                    $nextsuperblock = $currentblock["BlockId"] - ($currentblock["BlockId"] % 16616) + 16616;
-                    for ($i = 210240; $i <= $nextsuperblock; $i += 210240) $nSubsidy -= $nSubsidy / 14;
-                    $estimatedbudgetamount = (($nSubsidy / 100) * 10) * (60 * 24 * 30) / 2.6;
-                } else {
-                    $nextsuperblock = $currentblock["BlockId"] - ($currentblock["BlockId"] % 50) + 50;
-                    for ($i = 46200; $i <= $nextsuperblock; $i += 210240) $nSubsidy -= $nSubsidy / 14;
-                    $estimatedbudgetamount = (($nSubsidy / 100) * 10) * 50;
                 }
 
                 $keyst1 = "governancebudget";
@@ -1736,7 +1743,8 @@ $app->get('/api/governanceproposals', function() use ($app,&$mysqli) {
                         'totalmns' => intval($totalmninfo),
                         'nextsuperblock' => array(
                             "blockheight" => $nextsuperblock,
-                            "estimatedbudgetamount" => $estimatedbudgetamount
+                            "estimatedbudgetamount" => $estimatedbudgetamount,
+                            "estimatedblocktime" => $nextsuperblocktimestamp
                         ),
                         'latestblock' => $currentblock
                     ),

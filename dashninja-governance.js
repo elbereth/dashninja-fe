@@ -20,7 +20,7 @@
 // Dash Ninja Front-End (dashninja-fe) - Governance
 // By elberethzone / https://www.dash.org/forum/members/elbereth.175/
 
-var dashninjaversion = '1.0.2';
+var dashninjaversion = '1.0.3';
 var tableGovernance = null;
 var tableBudgetsProjection = null;
 var tableSuperBlocks = null;
@@ -101,10 +101,13 @@ $(document).ready(function(){
     }
 
     $('#proposalsdetailtable').on('xhr.dt', function ( e, settings, json ) {
+
+        var nextsuperblockdatetimestamp = json.data.stats.latestblock.BlockTime+(((json.data.stats.nextsuperblock.blockheight-json.data.stats.latestblock.BlockId)/553.85)*86400);
+
          // Calculate the established project total amounts
          var totalamount = 0.0;
          for (var bix in json.data.governanceproposals){
-             if ((json.data.governanceproposals[bix].CachedFunding) && (json.data.governanceproposals[bix].EpochEnd > currenttimestamp()) && ((currenttimestamp() - json.data.governanceproposals[bix].LastReported) <= 3600)) {
+             if ((json.data.governanceproposals[bix].CachedFunding) && (json.data.governanceproposals[bix].EpochEnd > currenttimestamp()) && (json.data.governanceproposals[bix].EpochStart <= nextsuperblockdatetimestamp) && ((currenttimestamp() - json.data.governanceproposals[bix].LastReported) <= 3600)) {
                  totalamount+=json.data.governanceproposals[bix].PaymentAmount;
              }
          }
@@ -113,7 +116,6 @@ $(document).ready(function(){
         $('#globalvalidbudget').text(json.data.stats.valid);
         $('#globalestablishedbudget').text(json.data.stats.funded);
         $('#globalestablishedbudgetamount').text(addCommas(Math.round(totalamount*100)/100)+' '+dashninjacoin[dashninjatestnet]);
-        var nextsuperblockdatetimestamp = json.data.stats.latestblock.BlockTime+(((json.data.stats.nextsuperblock.blockheight-json.data.stats.latestblock.BlockId)/553.85)*86400);
         if ((json.data.stats.nextsuperblock.blockheight-1662)<=json.data.stats.latestblock.BlockId) {
             $('#globalnextvotelimitdate').text( "Current month vote is over!" );
             $('#globalnextvotelimitremaining').text("Too late...");
