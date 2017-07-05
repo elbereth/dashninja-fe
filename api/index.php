@@ -641,6 +641,8 @@ $app->get('/api/blocks/superblocks', function() use ($app,&$mysqli) {
 
     $errmsg = array();
 
+    $cachetime = 150;
+
     if (!array_key_exists('CONTENT_LENGTH',$_SERVER) || (intval($_SERVER['CONTENT_LENGTH']) != 0)) {
         $errmsg[] = "No CONTENT expected";
     }
@@ -1689,7 +1691,7 @@ $app->get('/api/governanceproposals', function() use ($app,&$mysqli) {
                         "No" => intval($row["GovernanceObjectVotesNo"]),
                         "Abstain" => intval($row["GovernanceObjectVotesAbstain"]),
                         "BlockchainValidity" => ($row["GovernanceObjectBlockchainValidity"] == 1),
-                        "IsValidReason" => stripslashes($row["IsValidReason"]),
+                        "IsValidReason" => stripslashes($row["GovernanceObjectIsValidReason"]),
                         "CachedValid" => ($row["GovernanceObjectCachedValid"] == 1),
                         "CachedFunding" => ($row["GovernanceObjectCachedFunding"] == 1),
                         "CachedDelete" => ($row["GovernanceObjectCachedDelete"] == 1),
