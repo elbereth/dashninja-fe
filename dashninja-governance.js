@@ -20,7 +20,7 @@
 // Dash Ninja Front-End (dashninja-fe) - Governance
 // By elberethzone / https://www.dash.org/forum/members/elbereth.175/
 
-var dashninjaversion = '1.0.3';
+var dashninjaversion = '1.0.4';
 var tableGovernance = null;
 var tableBudgetsProjection = null;
 var tableSuperBlocks = null;
@@ -98,6 +98,10 @@ $(document).ready(function(){
     if (typeof dashninjator !== 'undefined') {
         $('a[name=dashninjatorurl]').attr("href", "http://"+dashninjator+"/governance.html").text( dashninjator+"/governance.html" );
         $('span[name=dashninjatordisplay]').show();
+    }
+    if (typeof dashninjai2p !== 'undefined') {
+        $('a[name=dashninjai2purl]').attr("href", "http://" + dashninjai2p + "/governance.html").text(dashninjai2p + "/governance.html");
+        $('span[name=dashninjai2pdisplay]').show();
     }
 
     $('#proposalsdetailtable').on('xhr.dt', function ( e, settings, json ) {

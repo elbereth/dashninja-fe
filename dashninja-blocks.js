@@ -82,6 +82,11 @@ $(document).ready(function(){
       $('span[name=dashninjatordisplay]').show();
   }
 
+  if (typeof dashninjai2p !== 'undefined') {
+      $('a[name=dashninjai2purl]').attr("href", "http://" + dashninjai2p + "/blocks.html").text(dashninjai2p + "/blocks.html");
+      $('span[name=dashninjai2pdisplay]').show();
+  }
+
    tablePerVersion = $('#perversiontable').dataTable( {
         data: [],
         paging: false,

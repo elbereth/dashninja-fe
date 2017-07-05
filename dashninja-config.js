@@ -25,6 +25,7 @@ var dashninjatestnetexplorer = 'test.explorer.dashninja.pl';
 
 // Tor onion hostname
 var dashninjator = 'seuhd5sihasshuqh.onion';
+var dashninjai2p = 'dzjzoefy7fx57h5xkdknikvfv3ckbxu2bx5wryn6taud343g2jma.b32.i2p';
 
 // Coin logos
 var dashninjacoin = ['DASH','tDASH'];
@@ -38,11 +39,11 @@ var dashninjablockexplorer = [[["https://explorer.dashninja.pl/block/%%b%%","elb
                            ["http://test.insight.masternode.io:3001/block/%%b%%","coingun's Testnet Dash Blockchain Explorer"]]];
 
 // Address info
-var dashninjamndetail = [[["https://www.dashninja.pl/mndetails.html?mnpubkey=%%a%%","Dash Ninja Masternode Detail"],
+var dashninjamndetail = [[["/mndetails.html?mnpubkey=%%a%%","Dash Ninja Masternode Detail"],
                           ["http://www.dashnodes.com/index/address/%%a%%","darkchild's Masternode Monitoring"]],
-                         [["https://test.dashninja.pl/mndetails.html?mnpubkey=%%a%%","Dash Ninja Testnet Masternode Detail"]]];
-var dashninjamndetailvin = [[["https://www.dashninja.pl/mndetails.html?mnoutput=%%a%%","Dash Ninja Masternode Detail"]],
-                            [["https://test.dashninja.pl/mndetails.html?mnoutput=%%a%%","Dash Ninja Testnet Masternode Detail"]]];
+                         [["/mndetails.html?mnpubkey=%%a%%","Dash Ninja Testnet Masternode Detail"]]];
+var dashninjamndetailvin = [[["/mndetails.html?mnoutput=%%a%%","Dash Ninja Masternode Detail"]],
+                            [["/mndetails.html?mnoutput=%%a%%","Dash Ninja Testnet Masternode Detail"]]];
 
 var dashninjaaddressexplorer = [[["https://explorer.dashninja.pl/address/%%a%%","elberethzone's Dash Blockchain Explorer"],
                                  ["https://chainz.cryptoid.info/dash/address.dws?%%a%%.htm","cryptoID Dash Blockchain Explorer"]],
@@ -60,11 +61,11 @@ var dashninjaqueryexplorer = [[["https://explorer.dashninja.pl/search?q=%%q%%","
                             [["https://test.explorer.dashninja.pl/search?q=%%q%%","Dash Ninja Testnet Blockchain Explorer"],
                              ["http://test.explorer.darkcoin.qa/search?q=%%q%%","Official Testnet Dash Blockchain Explorer"]]];
 
-var dashninjamasternodemonitoring = ["https://www.dashninja.pl/masternodes.html?mnregexp=%%p%%#mnversions","https://test.dashninja.pl/masternodes.html?mnregexp=%%p%%#mnversions"];
+var dashninjamasternodemonitoring = ["/masternodes.html?mnregexp=%%p%%#mnversions","/masternodes.html?mnregexp=%%p%%#mnversions"];
 
-var dashninjabudgetdetail = ["https://www.dashninja.pl/budgetdetails.html?budgetid=%%b%%","https://test.dashninja.pl/budgetdetails.html?budgetid=%%b%%"];
+var dashninjabudgetdetail = ["/budgetdetails.html?budgetid=%%b%%","/budgetdetails.html?budgetid=%%b%%"];
 
-var dashninjagovernanceproposaldetail = ["https://www.dashninja.pl/proposaldetails.html?proposalhash=%%b%%","https://test.dashninja.pl/proposaldetails.html?proposalhash=%%b%%"];
+var dashninjagovernanceproposaldetail = ["/proposaldetails.html?proposalhash=%%b%%","/proposaldetails.html?proposalhash=%%b%%"];
 
 // Blocks per day
 var dashblocksperday = 553;

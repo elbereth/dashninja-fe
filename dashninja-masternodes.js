@@ -20,7 +20,7 @@
 // Dash Ninja Front-End (dashninja-fe) - Masternode List (v2)
 // By elberethzone / https://www.dash.org/forum/members/elbereth.175/
 
-var dashninjaversion = '2.3.7';
+var dashninjaversion = '2.3.9';
 var tableLocalNodes = null;
 var tableBlockConsensus = null;
 var tableMNList = null;
@@ -205,217 +205,241 @@ function getVoteLimit() {
 };
 
 
-$(document).ready(function(){
+$(document).ready(function() {
 
-  $('#dashninjajsversion').text( dashninjaversion );
+    $('#dashninjajsversion').text(dashninjaversion);
 
-  if (dashninjatestnet == 1) {
-    $('#testnetalert').show();
-  }
-
-  if (typeof dashninjator !== 'undefined') {
-      $('a[name=dashninjatorurl]').attr("href", "http://"+dashninjator+"/masternodes.html").text( dashninjator+"/masternodes.html" );
-      $('span[name=dashninjatordisplay]').show();
-  }
-
-  getLatestdashVersion();
-  getVoteLimit();
-
-  var pkutxt = '<ul>';
-  var ix = 0;
-  for ( var i=0, ien=dashninjamndetail[dashninjatestnet].length ; i<ien ; i++ ) {
-    if (ix == 0) {
-      pkutxt += '<li>[Link]';
-    } else {
-      pkutxt += '<li>['+ix+']';
+    if (dashninjatestnet == 1) {
+        $('#testnetalert').show();
     }
-    pkutxt += ' '+dashninjamndetail[dashninjatestnet][i][1]+"</li>";
-    ix++;
-  }
-  for ( var i=0, ien=dashninjaaddressexplorer[dashninjatestnet].length ; i<ien ; i++ ) {
-    if (ix == 0) {
-      pkutxt += '<li>[Link]';
-    } else {
-      pkutxt += '<li>['+ix+']';
-    }
-    pkutxt += ' '+dashninjaaddressexplorer[dashninjatestnet][i][1]+"</li>";
-    ix++;
-  }
-  pkutxt += '</ul>';
-  $("#pubkeyurllist").html(pkutxt);
 
-   $('#localnodes').on('xhr.dt', function ( e, settings, json ) {
+    if (typeof dashninjator !== 'undefined') {
+        $('a[name=dashninjatorurl]').attr("href", "http://" + dashninjator + "/masternodes.html").text(dashninjator + "/masternodes.html");
+        $('span[name=dashninjatordisplay]').show();
+    }
+
+    if (typeof dashninjai2p !== 'undefined') {
+        $('a[name=dashninjai2purl]').attr("href", "http://" + dashninjai2p + "/masternodes.html").text(dashninjai2p + "/masternodes.html");
+        $('span[name=dashninjai2pdisplay]').show();
+    }
+
+    getLatestdashVersion();
+    getVoteLimit();
+
+    var pkutxt = '<ul>';
+    var ix = 0;
+    for (var i = 0, ien = dashninjamndetail[dashninjatestnet].length; i < ien; i++) {
+        if (ix == 0) {
+            pkutxt += '<li>[Link]';
+        } else {
+            pkutxt += '<li>[' + ix + ']';
+        }
+        pkutxt += ' ' + dashninjamndetail[dashninjatestnet][i][1] + "</li>";
+        ix++;
+    }
+    for (var i = 0, ien = dashninjaaddressexplorer[dashninjatestnet].length; i < ien; i++) {
+        if (ix == 0) {
+            pkutxt += '<li>[Link]';
+        } else {
+            pkutxt += '<li>[' + ix + ']';
+        }
+        pkutxt += ' ' + dashninjaaddressexplorer[dashninjatestnet][i][1] + "</li>";
+        ix++;
+    }
+    pkutxt += '</ul>';
+    $("#pubkeyurllist").html(pkutxt);
+
+    $('#localnodes').on('xhr.dt', function (e, settings, json) {
         var date = new Date();
         var n = date.toDateString();
         var time = date.toLocaleTimeString();
-        $('#localnodesLR').text( n + ' ' + time );
-        $('#localnodes').DataTable().column(1).search('^(?:(?!Disabled).)*$',true,false).draw();
-      } );
-   tableLocalNodes = $('#localnodes').dataTable( {
+        $('#localnodesLR').text(n + ' ' + time);
+        $('#localnodes').DataTable().column(1).search('^(?:(?!Disabled).)*$', true, false).draw();
+    });
+    tableLocalNodes = $('#localnodes').dataTable({
         dom: "Tfrtp",
-        ajax: "/api/nodes?testnet="+dashninjatestnet,
+        ajax: "/api/nodes?testnet=" + dashninjatestnet,
         "paging": false,
         columns: [
-            { data: "NodeName" },
-            { data: null, render: function ( data, type, row ) {
+            {data: "NodeName"},
+            {
+                data: null, render: function (data, type, row) {
                 if (data.NodeEnabled == 0) {
-                  return '<img src="/static/status/daemon-disabled.png" width=16 height=16 /> Disabled';
+                    return '<img src="/static/status/daemon-disabled.png" width=16 height=16 /> Disabled';
                 }
                 else {
-                  var iconurl = '<img src="/static/status/daemon-'+data.NodeProcessStatus+'.png" width=16 height=16 /> ';
-                  if (data.NodeProcessStatus == 'running') {
-                    return iconurl+'Running';
-                  } else if (data.NodeProcessStatus == 'stopped') {
-                    return iconurl+'Stopped';
-                  } else if (data.NodeProcessStatus == 'notresponding') {
-                    return iconurl+'Not Responding';
-                  } else {
-                    return data.NodeProcessStatus;
-                  }
+                    var iconurl = '<img src="/static/status/daemon-' + data.NodeProcessStatus + '.png" width=16 height=16 /> ';
+                    if (data.NodeProcessStatus == 'running') {
+                        return iconurl + 'Running';
+                    } else if (data.NodeProcessStatus == 'stopped') {
+                        return iconurl + 'Stopped';
+                    } else if (data.NodeProcessStatus == 'notresponding') {
+                        return iconurl + 'Not Responding';
+                    } else {
+                        return data.NodeProcessStatus;
+                    }
                 }
-            } },
-            { data: null, render: function ( data, type, row) {
-               var outtxt = '';
-               if ((data.NodeEnabled != 0) && (data.NodeProcessStatus == 'running')) {
-                 outtxt = data.NodeVersion;
-               }
-               return outtxt;
-            } },
-            { data: null, render: function ( data, type, row) {
-               var outtxt = '';
-               if ((data.NodeEnabled != 0) && (data.NodeProcessStatus == 'running')) {
-                 outtxt = data.NodeProtocol;
-               }
-               return outtxt;
-            } },
-            { data: null, render: function ( data, type, row) {
-               var outtxt = '';
-               if ((data.NodeEnabled != 0) && (data.NodeProcessStatus == 'running')) {
-                 outtxt = data.NodeBlocks;
-               }
-               return outtxt;
-            } },
-            { data: null, render: function ( data, type, row) {
-               var outtxt = '';
-               if ((data.NodeEnabled != 0) && (data.NodeProcessStatus == 'running')) {
-                 if (type != 'sort') {
-                   if (dashninjablockexplorer[dashninjatestnet].length > 0) {
-                     outtxt += '<a href="'+dashninjablockexplorer[dashninjatestnet][0][0].replace('%%b%%',data.NodeLastBlockHash)+'">'+data.NodeLastBlockHash+'</a>';
-                     for ( var i=1, ien=dashninjablockexplorer[dashninjatestnet].length ; i<ien ; i++ ) {
-                       outtxt += '<a href="'+dashninjablockexplorer[dashninjatestnet][i][0].replace('%%b%%',data.NodeLastBlockHash)+'">['+i+']</a>';
-                     }
-                   }
-                 }
-                 else {
-                   outtxt = data.NodeLastBlockHash;
-                 }
-               }
-               return outtxt;
-            } },
-            { data: null, render: function ( data, type, row) {
-               var outtxt = '';
-               if ((data.NodeEnabled != 0) && (data.NodeProcessStatus == 'running')) {
-                 outtxt = data.NodeConnections;
-               }
-               return outtxt;
-            } }
+            }
+            },
+            {
+                data: null, render: function (data, type, row) {
+                var outtxt = '';
+                if ((data.NodeEnabled != 0) && (data.NodeProcessStatus == 'running')) {
+                    outtxt = data.NodeVersion;
+                }
+                return outtxt;
+            }
+            },
+            {
+                data: null, render: function (data, type, row) {
+                var outtxt = '';
+                if ((data.NodeEnabled != 0) && (data.NodeProcessStatus == 'running')) {
+                    outtxt = data.NodeProtocol;
+                }
+                return outtxt;
+            }
+            },
+            {
+                data: null, render: function (data, type, row) {
+                var outtxt = '';
+                if ((data.NodeEnabled != 0) && (data.NodeProcessStatus == 'running')) {
+                    outtxt = data.NodeBlocks;
+                }
+                return outtxt;
+            }
+            },
+            {
+                data: null, render: function (data, type, row) {
+                var outtxt = '';
+                if ((data.NodeEnabled != 0) && (data.NodeProcessStatus == 'running')) {
+                    if (type != 'sort') {
+                        if (dashninjablockexplorer[dashninjatestnet].length > 0) {
+                            outtxt += '<a href="' + dashninjablockexplorer[dashninjatestnet][0][0].replace('%%b%%', data.NodeLastBlockHash) + '">' + data.NodeLastBlockHash + '</a>';
+                            for (var i = 1, ien = dashninjablockexplorer[dashninjatestnet].length; i < ien; i++) {
+                                outtxt += '<a href="' + dashninjablockexplorer[dashninjatestnet][i][0].replace('%%b%%', data.NodeLastBlockHash) + '">[' + i + ']</a>';
+                            }
+                        }
+                    }
+                    else {
+                        outtxt = data.NodeLastBlockHash;
+                    }
+                }
+                return outtxt;
+            }
+            },
+            {
+                data: null, render: function (data, type, row) {
+                var outtxt = '';
+                if ((data.NodeEnabled != 0) && (data.NodeProcessStatus == 'running')) {
+                    outtxt = data.NodeConnections;
+                }
+                return outtxt;
+            }
+            }
         ]
-    } );
-   setTimeout(tableLocalNodesRefresh, 60000);
+    });
+    setTimeout(tableLocalNodesRefresh, 60000);
 
-   $('#blockconsensus').on('xhr.dt', function ( e, settings, json ) {
+    $('#blockconsensus').on('xhr.dt', function (e, settings, json) {
         var date = new Date();
         var n = date.toDateString();
         var time = date.toLocaleTimeString();
-        $('#blockconsensusLR').text( n + ' ' + time );
-      } );
-   tableBlockConsensus = $('#blockconsensus').dataTable( {
+        $('#blockconsensusLR').text(n + ' ' + time);
+    });
+    tableBlockConsensus = $('#blockconsensus').dataTable({
         dom: "Trtp",
-        ajax: "/api/blocks/consensus?testnet="+dashninjatestnet,
+        ajax: "/api/blocks/consensus?testnet=" + dashninjatestnet,
         "paging": false,
-        "order": [[ 0, "desc" ]],
+        "order": [[0, "desc"]],
         columns: [
-            { data: "BlockID" },
-            { data: null, render: function ( data, type, row ) {
-                return (Math.round(data.Consensus*10000)/100)+ '%';
-            } },
-            { data: null, render: function ( data, type, row ) {
+            {data: "BlockID"},
+            {
+                data: null, render: function (data, type, row) {
+                return (Math.round(data.Consensus * 10000) / 100) + '%';
+            }
+            },
+            {
+                data: null, render: function (data, type, row) {
                 if (data.ConsensusPubKey == '') {
-                  return "<i>None</i>";
+                    return "<i>None</i>";
                 } else {
-                  return data.ConsensusPubKey;
+                    return data.ConsensusPubKey;
                 }
-            } },
-            { data: null, render: function ( data, type, row) {
-               var str = '<ul>';
-               var sstr = '';
-               for (var col in data.Others) {
-                 str += '<li>';
-                 if ( data.Others[col].Payee == '' ) {
-                   str += '<i>None</i>';
-                 } else {
-                   str += data.Others[col].Payee;
-                 }
-                 str += ' ('+(Math.round(data.Others[col].RatioVotes*10000)/100)+ '% - Nodes: ';
-                 sstr = '';
-                 for (var uname in data.Others[col].NodeNames) {
-                   if (sstr != '') {
-                     sstr += ' ';
-                   }
-                   sstr += data.Others[col].NodeNames[uname];
-                 }
-                 str += sstr+')</li>'
-               };
-               return str+'</ul>';
-            } }
+            }
+            },
+            {
+                data: null, render: function (data, type, row) {
+                var str = '<ul>';
+                var sstr = '';
+                for (var col in data.Others) {
+                    str += '<li>';
+                    if (data.Others[col].Payee == '') {
+                        str += '<i>None</i>';
+                    } else {
+                        str += data.Others[col].Payee;
+                    }
+                    str += ' (' + (Math.round(data.Others[col].RatioVotes * 10000) / 100) + '% - Nodes: ';
+                    sstr = '';
+                    for (var uname in data.Others[col].NodeNames) {
+                        if (sstr != '') {
+                            sstr += ' ';
+                        }
+                        sstr += data.Others[col].NodeNames[uname];
+                    }
+                    str += sstr + ')</li>'
+                }
+                ;
+                return str + '</ul>';
+            }
+            }
         ],
-        "createdRow": function ( row, data, index ) {
-            if ( data.Consensus == 1 ) {
-                $('td',row).eq(1).css({"background-color":"#8FFF8F"});
+        "createdRow": function (row, data, index) {
+            if (data.Consensus == 1) {
+                $('td', row).eq(1).css({"background-color": "#8FFF8F"});
             } else {
-                $('td',row).eq(1).css({"background-color":"#FF8F8F"});
+                $('td', row).eq(1).css({"background-color": "#FF8F8F"});
             }
         }
-    } );
-   setTimeout(tableBlockConsensusRefresh, 150000);
+    });
+    setTimeout(tableBlockConsensusRefresh, 150000);
 
-   chartMNVersions = $('#mnversions').highcharts({
-     chart: {
-       plotBackgroundColor: null,
-       plotBorderWidth: null,//null,
-       plotShadow: false
-     },
-     title: {
-       text: 'Masternode versions (only compatible protocols)'
-     },
-     tooltip: {
-       pointFormat: '{series.name}: <b>{point.percentage:.1f}%</b>'
-     },
-     plotOptions: {
-       pie: {
-         allowPointSelect: true,
-         cursor: 'pointer',
-         dataLabels: {
-           enabled: true,
-            format: '<b>{point.name}</b>: {point.percentage:.1f} %',
-             style: {
-                      color: (Highcharts.theme && Highcharts.theme.contrastTextColor) || 'black'
+    chartMNVersions = $('#mnversions').highcharts({
+        chart: {
+            plotBackgroundColor: null,
+            plotBorderWidth: null,//null,
+            plotShadow: false
+        },
+        title: {
+            text: 'Masternode versions (only compatible protocols)'
+        },
+        tooltip: {
+            pointFormat: '{series.name}: <b>{point.percentage:.1f}%</b>'
+        },
+        plotOptions: {
+            pie: {
+                allowPointSelect: true,
+                cursor: 'pointer',
+                dataLabels: {
+                    enabled: true,
+                    format: '<b>{point.name}</b>: {point.percentage:.1f} %',
+                    style: {
+                        color: (Highcharts.theme && Highcharts.theme.contrastTextColor) || 'black'
                     }
-         }
-       }
-     },
-     series: [{
-       type: 'pie',
-       name: 'Masternode version',
-       data: [['Unknown', 100]]
-     }]
-   });
+                }
+            }
+        },
+        series: [{
+            type: 'pie',
+            name: 'Masternode version',
+            data: [['Unknown', 100]]
+        }]
+    });
 
-   $('#mnregexp').on( 'keyup click', function () {
-     $('#mnlist').DataTable().search($('#mnregexp').val(), true, false).draw();
-   } );
- 
-   $('#mnregexp').val(getParameter("mnregexp"));
+    $('#mnregexp').on('keyup click', function () {
+        $('#mnlist').DataTable().search($('#mnregexp').val(), true, false).draw();
+    });
+
+    $('#mnregexp').val(getParameter("mnregexp"));
 
    $('#mnlist').on('xhr.dt', function ( e, settings, json ) {
         var date = new Date();
@@ -755,6 +779,12 @@ $(document).ready(function(){
             $('td',row).eq(10).css({"background-color":color,"text-align": "center"});
         }
     } );
+    var mnlistsize = getParameter("mnlistsize");
+    if (mnlistsize != "") {
+        $('#mnlist').DataTable().page.len(parseInt(mnlistsize));
+    }
+
+
    setTimeout(tableMNListRefresh, 300000);
 
   //mnpaymentsRefresh();
