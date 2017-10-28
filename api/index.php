@@ -1238,7 +1238,7 @@ $app->get('/api/budgets/votes', function() use ($app,&$mysqli) {
           elseif ($row["VoteValue"] == "ABSTAIN") {
             $votesabstain++;
           }
-          $votesvalid+=intval($row["IsValid"]);
+          $votesvalid+=intval($row["VoteIsValid"]);
         }
 
         $data = array('budgetsvotes' => $budgetsvotes,
