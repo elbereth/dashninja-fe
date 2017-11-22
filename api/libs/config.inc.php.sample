@@ -25,10 +25,13 @@
 DEFINE('CACHEFOLDER',"/home/dashninja/cache/");
 
 // Path to the data folder (must be accessible by the website)
-DEFINE('DATAFOLDER',"/home/dash-mnwww/www/main/data/");
+DEFINE('DATAFOLDER',"/home/dashninja/www/data/");
 
 // Semaphore for the cron script of masternodefulllist
-DEFINE('DMN_CRON_MNFL_SEMAPHORE','/home/dash-mnwww/dash-mnwww-cron-mnfl.pid');
+DEFINE('DMN_CRON_MNFL_SEMAPHORE','/home/dashninja/dash-mnwww-cron-mnfl.pid');
+
+// Semaphore for the cron script of block24h
+DEFINE('DMN_CRON_BK24_SEMAPHORE','/home/dashninja/dash-mnwww-cron-bk24.pid');
 
 // Indicate here all MySQL configuration to connect to Dash Ninja Database
 DEFINE('MYSQLUSER',"dashninja-api");
