@@ -20,7 +20,7 @@
 // Dash Ninja Front-End (dashninja-fe) - Blocks (v2)
 // By elberethzone / https://dashtalk.org/members/elbereth.175/
 
-var dashninjaversion = '2.3.4';
+var dashninjaversion = '2.5.1';
 var tableBlocks = null;
 var tablePerVersion = null;
 var tablePerMiner = null;
@@ -71,19 +71,19 @@ function tableBlockFilterReset() {
 
 $(document).ready(function(){
 
-  $('#dashninjajsversion').text( dashninjaversion );
+  $('#dashninjajsversion').text( dashninjaversion ).addClass("label-info").removeClass("label-danger");
 
   if (dashninjatestnet == 1) {
     $('#testnetalert').show();
   }
 
   if (typeof dashninjator !== 'undefined') {
-      $('a[name=dashninjatorurl]').attr("href", "http://"+dashninjator+"/blocks.html").text( dashninjator+"/blocks.html" );
+      $('a[name=dashninjatorurl]').attr("href", "http://"+dashninjator+"/blocks.html");
       $('span[name=dashninjatordisplay]').show();
   }
 
   if (typeof dashninjai2p !== 'undefined') {
-      $('a[name=dashninjai2purl]').attr("href", "http://" + dashninjai2p + "/blocks.html").text(dashninjai2p + "/blocks.html");
+      $('a[name=dashninjai2purl]').attr("href", "http://" + dashninjai2p + "/blocks.html");
       $('span[name=dashninjai2pdisplay]').show();
   }
 
@@ -343,7 +343,7 @@ $(document).ready(function(){
         $('#blockstableLR').text( n + ' ' + time );
       } );
    tableBlocks = $('#blockstable').dataTable( {
-        ajax: { url: "/api/blocks?testnet="+dashninjatestnet,
+        ajax: { url: "/data/blocks24h-"+dashninjatestnet+".json",
                 dataSrc: 'data.blocks' },
         lengthMenu: [ [20, 70, 136, 272, -1], ["20 (~1h)", "70 (~3h)", "136 (~6h)", "272 (~12h)", "All (24h)"] ],
         pageLength: 20,
@@ -428,6 +428,12 @@ $(document).ready(function(){
             } }
         ],
         createdRow: function ( row, data, index ) {
+            if (data.BlockVersion == 0x20000002) {
+                $('td',row).eq(1).css({"background-color": "#8FFF8F"});
+            }
+            else {
+                $('td',row).eq(1).css({"background-color": ''});
+            }
           if (data.IsSuperBlock) {
               $('td',row).eq(5).css({"background-color": "#FFCB8F"});
               $('td',row).eq(6).css({"background-color": "#FFCB8F"});

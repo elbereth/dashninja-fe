@@ -24,6 +24,12 @@
 // Path to the cache folder (files will be created in there, best if outside www access)
 DEFINE('CACHEFOLDER',"/home/dashninja/cache/");
 
+// Path to the data folder (must be accessible by the website)
+DEFINE('DATAFOLDER',"/home/dash-mnwww/www/main/data/");
+
+// Semaphore for the cron script of masternodefulllist
+DEFINE('DMN_CRON_MNFL_SEMAPHORE','/home/dash-mnwww/dash-mnwww-cron-mnfl.pid');
+
 // Indicate here all MySQL configuration to connect to Dash Ninja Database
 DEFINE('MYSQLUSER',"dashninja-api");
 DEFINE('MYSQLPASS',"anyrandompassword");

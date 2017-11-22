@@ -25,9 +25,10 @@ along with Dash Ninja.  If not, see <http://www.gnu.org/licenses/>.
 
     <link rel="icon" href="/static/dashninja-favicon.ico" />
     <link rel="icon" type="image/png" href="/static/dashninja-favicon.png" />
-    <link href="/static/bootstrap-3.3.6/css/bootstrap.min.css" rel="stylesheet">
-    <link href="/static/dashninja-template.css" rel="stylesheet">
+    <link href="/static/bootstrap-3.3.7/css/bootstrap.min.css" rel="stylesheet">
+    <link href="/static/dashninja-template-2.0.css" rel="stylesheet">
     <link href="/static/datatables/datatables.min.css" rel="stylesheet">
+    <link href="/static/font-awesome-4.7.0/css/font-awesome.min.css" rel="stylesheet">
 
     <!-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries -->
     <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
@@ -38,73 +39,78 @@ along with Dash Ninja.  If not, see <http://www.gnu.org/licenses/>.
 
   </head>
   <body>
-    <div class="navbar navbar-default navbar-fixed-top" role="navigation">
-      <div class="container">
-        <div class="navbar-header">
-            <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
-              <span class="sr-only">Toggle navigation</span>
-              <span class="icon-bar"></span>
-              <span class="icon-bar"></span>
-              <span class="icon-bar"></span>
-            </button>
-          <a class="navbar-brand" href="/"><img style="margin-top: -13px;" src="/static/dashninja-logo48x48.png" width="48" height="48" border="0"></a>
-        </div>
-        <div class="collapse navbar-collapse">
-          <ul class="nav navbar-nav">
-            <li><a href="/blocks.html">Blocks Masternodes Payee</a></li>
-            <li><a href="/masternodes.html">Masternodes Monitoring</a></li>
-            <li class="active"><a href="/governance.html">Governance Monitoring</a></li>
-            <li><a name="menuitemexplorer" href="https://explorer.dashninja.pl">Block Explorer</a></li>
-            <li class="dropdown">
-             <a href="#" class="dropdown-toggle" data-toggle="dropdown">Other Tools <span class="caret"></span></a>
-               <ul class="dropdown-menu" role="menu">
-                 <li class="dropdown-header">Official Pages</li>
-                   <li><a href="http://www.dash.org/">Dash Homepage</a></li>
-                   <li><a href="https://github.com/dashpay/dash">Dash Github Sources</a></li>
-                   <li><a href="https://www.dash.org/downloads/">Dash Binaries</a></li>
-                 <li class="divider"></li>
-                 <li class="dropdown-header">Forums / Wiki</li>
-                 <li><a href="https://dashpay.atlassian.net/wiki/">Official Dash Wiki</a></li>
-                 <li><a href="https://dash.org/forum">Official Dash Forum</a></li>
-                 <li><a href="https://bitcointalk.org/index.php?topic=421615">BitcoinTalk (BTC) - Dash ANN</a></li>
-               </ul>
-            </li>
-          </ul>
-        </div><!--/.nav-collapse -->
-      </div>
-    </div>
-    <div class="container-fluid">
 
-      <div class="row">
-        <div class="col-sm-3 col-md-2 sidebar">
-          <ul class="nav nav-sidebar">
-            <li><a href="#">Global Statistics</a></li>
-          </ul>
-          <ul class="nav nav-sidebar">
-              <li><a href="#budgetinfo">Budget Info</a></li>
-              <li><a href="#proposalsdetail">Budget Proposals Detail</a></li>
-          </ul>
-            <ul class="nav nav-sidebar">
-                <li><a href="#triggersdetail">Expected Super Block (Triggers)</a></li>
-                <li><a href="#superblocks">Super Blocks History</a></li>
-            </ul>
-        </div>
-        <div class="col-sm-9 col-sm-offset-3 col-md-10 col-md-offset-2 main">
-        <div class="page-header">
-          <h1>DASH Ninja - Governance Objects Monitoring</h1>
-        <p>Page is dynamically refreshed (JavaScript required). All dates/times are using your system locale.<br>
-<span name="dashninjatordisplay" style="display: none;">Available on Tor via <a name="dashninjatorurl" href="#">?</a><br></span>
-<span name="dashninjai2pdisplay" style="display: none;">Available on I2P via <a name="dashninjai2purl" href="#">?</a><br></span>
-Old budgets (v0.12.0 or older) are available on <a href="/budgets.html">this page</a>.<br>
-Versions: <i>HTML v1.0.3 / JS v<span id="dashninjajsversion">?.?.?</span></i> (hint: might need to Ctrl+F5 to update JS)</p>
-        </div>
-    <div id="testnetalert" class="alert alert-danger" style="display: none">
-      <h2>THIS IS TESTNET!</h2>
-    </div>
-    <div class="alert alert-info">
-<p>If this page is useful to you, spare some coin: <a href="http://chainz.cryptoid.info/dash/address.dws?Xbon36F261wXDL4p1CEZAX28t8U4ayR9uu.htm">Xbon36F261wXDL4p1CEZAX28t8U4ayR9uu</a><br>
-Brought to you by <a href="https://www.dash.org/forum/members/elbereth.175/">elberethzone</a> (<a href="https://keybase.io/elbereth/key.asc">GPG</a>).</p>
-    </div>
+  <div id="wrapper">
+      <nav class="navbar navbar-default navbar-static-top" role="navigation" style="margin-bottom: 0">
+          <div class="navbar-header">
+              <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
+                  <span class="sr-only">Toggle navigation</span>
+                  <span class="icon-bar"></span>
+                  <span class="icon-bar"></span>
+                  <span class="icon-bar"></span>
+              </button>
+              <a class="navbar-brand" href="/"><img style="margin-top: -13px; border-top: 0px; border-bottom: 0px; margin-right: 10px;" src="/static/dashninja-logo48x48.png" width="48" height="48" align="left"> DASH Ninja</a>
+          </div>
+          <div class="collapse navbar-collapse navbar-collapse" role="navigation">
+              <ul class="nav navbar-nav navbar-right">
+                  <li><a href="/blocks.html"><i class="fa fa-link fa-fw" aria-hidden="true"></i> Blockhain</a></li>
+                  <li><a href="/masternodes.html"><i class="fa fa-server fa-fw" aria-hidden="true"></i> Masternodes</a></li>
+                  <li class="active"><a href="/governance.html"><i class="fa fa-balance-scale fa-fw" aria-hidden="true"></i> Governance</a></li>
+                  <li><a name="menuitemexplorer" href="https://explorer.dashninja.pl"><i class="fa fa-search fa-fw" aria-hidden="true"></i> Explorer</a></li>
+                  <li class="dropdown">
+                      <a href="#" class="dropdown-toggle" data-toggle="dropdown"><i class="fa fa-wrench fa-fw" aria-hidden="true"></i> Other Tools <span class="caret"></span></a>
+                      <ul class="dropdown-menu" role="menu">
+                          <li class="dropdown-header">Official Pages</li>
+                          <li><a href="http://www.dash.org/">Dash Homepage</a></li>
+                          <li><a href="https://github.com/dashpay/dash">Dash Github Sources</a></li>
+                          <li><a href="https://www.dash.org/downloads/">Dash Binaries</a></li>
+                          <li class="divider"></li>
+                          <li class="dropdown-header">Forums / Wiki</li>
+                          <li><a href="https://dashpay.atlassian.net/wiki/">Official Dash Wiki</a></li>
+                          <li><a href="https://dash.org/forum">Official Dash Forum</a></li>
+                          <li><a href="https://bitcointalk.org/index.php?topic=421615">BitcoinTalk (BTC) - Dash ANN</a></li>
+                      </ul>
+                  </li>
+              </ul>
+          </div>
+          <!--/.nav-collapse -->
+          <div class="navbar-default sidebar" role="navigation">
+              <div class="nav-sidebar sidebar-nav">
+                  <ul class="nav" id="side-menu">
+                      <li><a href="#">Global Statistics</a></li>
+                      <li><a href="#budgetinfo">Budget Info</a></li>
+                      <li><a href="#proposalsdetail">Budget Proposals Detail</a></li>
+                      <li><a href="#superblocksexpected">Expected Super Block (Triggers)</a></li>
+                      <li><a href="#superblocks">Super Blocks History</a></li>
+                  </ul>
+              </div>
+          </div>
+      </nav>
+
+      <div id="page-wrapper">
+          <div class="row">
+              <div class="col-lg-12">
+                  <h1 class="page-header"><i class="fa fa-balance-scale" aria-hidden="true"></i> Governance Objects Monitoring <span class="badge badge-secondary">Links: <a href="/governance.html"><i class="fa fa-link"></i></a><span name="dashninjatordisplay" style="display: none;"> - <a name="dashninjatorurl" href="#">Tor</a></span><span name="dashninjai2pdisplay" style="display: none;"> - <a name="dashninjai2purl" href="#">I2P</a></span></span> <span class="badge badge-danger" id="testnetalert" class="alert alert-danger" style="display: none">THIS IS TESTNET!</span></h1>
+              </div>
+          </div>
+          <div class="row">
+              <div class="col-lg-4 col-md-8">
+                  <div class="panel panel-info">
+                      <div class="panel-heading">
+                          Dash Ninja info
+                      </div>
+                      <div class="panel-body">
+                          By <a class="badge badge-primary" href="https://keybase.io/elbereth/">elberethzone</a> / Time <span class="label label-info">GMT/UTC</span> / HTML <span class="label label-info">1.5.0</span> / JavaScript <span class="label label-danger" id="dashninjajsversion">required</span>
+                      </div>
+                      <div class="panel-footer">
+                          <span class="pull-left">Donations:</span>
+                          <span class="pull-right"><a href="http://chainz.cryptoid.info/dash/address.dws?Xbon36F261wXDL4p1CEZAX28t8U4ayR9uu.htm">Xbon36F261wXDL4p1CEZAX28t8U4ayR9uu</a></span>
+                          <div class="clearfix"></div>
+                      </div>
+                  </div>
+              </div>
+          </div>
+          <div class="row">
         <h2>Global Statistics</h2>
         <p>There are <span id="globalvalidbudget" style="font-weight: bold;">???</span> valid budgets proposal of which <span id="globalestablishedbudget" style="font-weight: bold;">???</span> are funded (total funded payment: <span id="globalestablishedbudgetamount" style="font-weight: bold;">????.???????? DASH</span>).</p>
         <p>Next super-block will be <span id="globalnextsuperblockid" style="font-weight: bold;">???</span> on <span id="globalnextsuperblockdate" style="font-weight: bold;">??/??/????</span> (<span id="globalnextsuperblockremaining" style="font-weight: bold;">???</span>) and will provide <span id="globalnextsuperblockamount" style="font-weight: bold;">????.???????? DASH</span> for budgets.</p>
@@ -145,7 +151,10 @@ Brought to you by <a href="https://www.dash.org/forum/members/elbereth.175/">elb
     Last refresh: <span id="proposalsdetailtableLR" style="font-decoration: italic;">Never</span><br>
 </div>
             <hr/>
-            <h2 id="superblocksexpected">Expected Super Block (Triggers)</h2>
+          </div>
+          <div class="row">
+
+          <h2 id="superblocksexpected">Expected Super Block (Triggers)</h2>
             <div class="table-responsive">
                 <table id="superblocksexpectedtable" class="table table-striped table-condensed table-responsive text-nowrap">
                     <thead>
@@ -166,7 +175,10 @@ Brought to you by <a href="https://www.dash.org/forum/members/elbereth.175/">elb
                 Last refresh: <span id="superblocksexpectedtableLR" style="font-decoration: italic;">Never</span><br>
             </div>
             <hr/>
-            <h2 id="superblocks">Super Blocks History</h2>
+          </div>
+          <div class="row">
+
+          <h2 id="superblocks">Super Blocks History</h2>
             <div class="table-responsive">
                 <table id="superblockstable" class="table table-striped table-condensed table-responsive text-nowrap">
                     <thead>
@@ -188,16 +200,17 @@ Brought to you by <a href="https://www.dash.org/forum/members/elbereth.175/">elb
                 Last refresh: <span id="superblockstableLR" style="font-decoration: italic;">Never</span><br>
             </div>
             <hr/>
-        </div>
-</div>
-</div>
+          </div>
 <div id="footer">
   <div class="container">
       <p style="font-size:small;" align=right>Brought to you by <a href="https://www.dash.org/forum/members/elbereth.175/">elberethzone</a>. If this page is useful to you, spare some coin: <a href="http://chainz.cryptoid.info/dash/address.dws?Xbon36F261wXDL4p1CEZAX28t8U4ayR9uu.htm">Xbon36F261wXDL4p1CEZAX28t8U4ayR9uu</a><br>Contact me securely via <a href="https://keybase.io/elbereth">Keybase</a>. Check source (<a href="/LICENSE">GPLv3</a>) on: <a href="https://github.com/elbereth/dashninja-fe">GitHub</a>.</p>
   </div>
 </div>
-    <script src="/static/jquery-2.2.4.min.js"></script>
-    <script src="/static/bootstrap-3.3.6/js/bootstrap.min.js"></script>
+      </div>
+  </div>
+
+  <script src="/static/jquery-3.2.1.min.js"></script>
+    <script src="/static/bootstrap-3.3.7/js/bootstrap.min.js"></script>
     <script src="/static/highcharts.js"></script>
     <script src="/static/highcharts-more.js"></script>
     <script src="/static/datatables/datatables.min.js"></script>

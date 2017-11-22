@@ -20,7 +20,7 @@
 // Dash Ninja Front-End (dashninja-fe) - Masternode Detail
 // By elberethzone / https://dashtalk.org/members/elbereth.175/
 
-var dashninjaversion = '3.0.0';
+var dashninjaversion = '3.1.0';
 var tablePayments = null;
 var tableExStatus = null;
 var dataProtocolDesc = [];
@@ -388,7 +388,7 @@ function mndetailsRefresh(useVin){
 
 $(document).ready(function(){
 
-  $('#dashninjajsversion').text( dashninjaversion );
+  $('#dashninjajsversion').text( dashninjaversion ).addClass("label-info").removeClass("label-danger");
 
   if (dashninjatestnet == 1) {
     $('#testnetalert').show();
