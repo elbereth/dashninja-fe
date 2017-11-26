@@ -20,7 +20,7 @@
 // Dash Ninja Front-End (dashninja-fe) - Governance
 // By elberethzone / https://www.dash.org/forum/members/elbereth.175/
 
-var dashninjaversion = '1.5.0';
+var dashninjaversion = '1.6.0';
 var tableGovernance = null;
 var tableBudgetsProjection = null;
 var tableSuperBlocks = null;
@@ -120,10 +120,10 @@ $(document).ready(function(){
         $('#globalvalidbudget').text(json.data.stats.valid);
         $('#globalestablishedbudget').text(json.data.stats.funded);
         $('#globalestablishedbudgetamount').text(addCommas(Math.round(totalamount*100)/100)+' '+dashninjacoin[dashninjatestnet]);
+        var cls = "panel-red";
         if ((json.data.stats.nextsuperblock.blockheight-1662)<=json.data.stats.latestblock.BlockId) {
             $('#globalnextvotelimitdate').text( "Current month vote is over!" );
             $('#globalnextvotelimitremaining').text("Too late...");
-            $('#votedeadline').css('color', '');
         }
         else {
             var nextvotelimitdatetimestamp = json.data.stats.latestblock.BlockTime+(((json.data.stats.nextsuperblock.blockheight-1662-json.data.stats.latestblock.BlockId)/553.85)*86400);
@@ -131,18 +131,24 @@ $(document).ready(function(){
             $('#globalnextvotelimitdate').text(datevotelimit.toLocaleString());
             $('#globalnextvotelimitremaining').text(deltaTimeStampHRlong(nextvotelimitdatetimestamp,currenttimestamp()));
             if ((nextvotelimitdatetimestamp - currenttimestamp()) <= 86400) {
-                $('#votedeadline').css('color', 'red');
+                cls = "panel-yellow";
             }
             else {
-                $('#votedeadline').css('color', 'green');
+                cls = "panel-green";
             }
         }
+        $('#votedeadline').removeClass("panel-green").removeClass("panel-red").removeClass("panel-yellow").addClass(cls);
         var datesuperblock = new Date(nextsuperblockdatetimestamp*1000);
         $('#globalnextsuperblockdate').text(datesuperblock.toLocaleString());
         $('#globalnextsuperblockremaining').text(deltaTimeStampHRlong(nextsuperblockdatetimestamp,currenttimestamp()));
         $('#globalnextsuperblockid').text(json.data.stats.nextsuperblock.blockheight);
+        var unallocper = Math.round((json.data.stats.nextsuperblock.estimatedbudgetamount-totalamount)/json.data.stats.nextsuperblock.estimatedbudgetamount*100);
+        var allocper = 100-unallocper;
         $('#globalnextsuperblockamount').text(addCommas(Math.round(json.data.stats.nextsuperblock.estimatedbudgetamount*100)/100)+' '+dashninjacoin[dashninjatestnet]);
         $('#globalnextsuperblockunallocated').text(addCommas(Math.round((json.data.stats.nextsuperblock.estimatedbudgetamount-totalamount)*100)/100)+' '+dashninjacoin[dashninjatestnet]);
+        $('#budgetallocatedper').css({'width':allocper+'%'}).text("Allocated ("+allocper+"%)");
+        $('#budgetleftper').css({'width':unallocper+'%'}).text("Left ("+unallocper+"%)");
+
 
 
         // Store information for future use
@@ -156,7 +162,7 @@ $(document).ready(function(){
         else {
             tableSuperBlocksExpected = $('#superblocksexpectedtable').dataTable({
                 ajax: {
-                    url: "/api/governancetriggers?testnet=" + dashninjatestnet + "&onlyvalid=1&afterblockheight=" + latestblock.BlockId,
+                    url: "/data/governancetriggers-" + dashninjatestnet + ".json",
                     dataSrc: 'data.governancetriggers'
                 },
                 paging: false,
@@ -205,13 +211,14 @@ $(document).ready(function(){
         }
 
         // Change the last refresh date
-        var date = new Date();
+        var date = new Date(json.data.cache.time*1000);
         var n = date.toLocaleDateString();
         var time = date.toLocaleTimeString();
         $('#proposalsdetailtableLR').text( n + ' ' + time );
+        $('#proposalsdetailtableLRHR').text(deltaTimeStampHRlong(json.data.cache.time, currenttimestamp()));
     } );
     tableGovernance = $('#proposalsdetailtable').dataTable( {
-        ajax: { url: "/api/governanceproposals?testnet="+dashninjatestnet,
+        ajax: { url: "/data/governanceproposals-"+dashninjatestnet+".json",
             dataSrc: 'data.governanceproposals' },
         paging: true,
         lengthMenu: [ [20, 50, 100, 200, -1], [20, 50, 100, 200, "All"] ],
@@ -238,40 +245,6 @@ $(document).ready(function(){
                 return outtxt;
             } },
             { data: null, render: function ( data, type, row ) {
-                if (type == 'sort') {
-                    return data.Hash;
-                }
-                else {
-                    return '<span data-toggle="tooltip" title="'+data.Hash+'">'+data.Hash.substring(0,7)+'</span>';
-                }
-
-            } },
-            { data: null, render: function ( data, type, row ) {
-                var outtxt = "";
-                if (type == 'sort') {
-                    outtxt = data.CollateralHash;
-                }
-                else {
-
-                    if (dashninjatxexplorer[dashninjatestnet].length > 0) {
-                        var ix = 0;
-                        for ( var i=0, ien=dashninjatxexplorer[dashninjatestnet].length ; i<ien ; i++ ) {
-                            if (ix == 0) {
-                                outtxt += '<a href="'+dashninjatxexplorer[dashninjatestnet][0][0].replace('%%a%%',data.CollateralHash)+'">'+data.CollateralHash.substring(0,7)+'</a>';
-                            }
-                            else {
-                                outtxt += '<a href="'+dashninjatxexplorer[dashninjatestnet][i][0].replace('%%a%%',data.CollateralHash)+'">['+ix+']</a>';
-                            }
-                            ix++;
-                        }
-                    }
-                    else {
-                        outtxt = data.CollateralHash.substring(0,7);
-                    }
-                }
-                return outtxt;
-            } },
-            { data: null, render: function ( data, type, row ) {
                 var blockdatetimestamp = data.EpochStart;
                 return (new Date(blockdatetimestamp*1000)).toLocaleDateString();
             } },
@@ -284,33 +257,9 @@ $(document).ready(function(){
                     return data.PaymentAmount;
                 }
                 else {
-                    return addCommas(data.PaymentAmount.toFixed(2))+' '+dashninjacoin[dashninjatestnet];
+                    return addCommas(data.PaymentAmount.toFixed(2))+'&nbsp;'+dashninjacoin[dashninjatestnet];
                 }
 
-            } },
-            { data: null, render: function ( data, type, row ) {
-                var outtxt = "";
-                if (type == 'sort') {
-                    outtxt = data.PaymentAddress;
-                }
-                else {
-                    if (dashninjaaddressexplorer[dashninjatestnet].length > 0) {
-                        var ix = 0;
-                        for ( var i=0, ien=dashninjaaddressexplorer[dashninjatestnet].length ; i<ien ; i++ ) {
-                            if (ix == 0) {
-                                outtxt += '<a href="'+dashninjaaddressexplorer[dashninjatestnet][0][0].replace('%%a%%',data.PaymentAddress)+'">'+data.PaymentAddress+'</a>';
-                            }
-                            else {
-                                outtxt += '<a href="'+dashninjaaddressexplorer[dashninjatestnet][i][0].replace('%%a%%',data.PaymentAddress)+'">['+ix+']</a>';
-                            }
-                            ix++;
-                        }
-                    }
-                    else {
-                        outtxt = data.PaymentAddress;
-                    }
-                }
-                return outtxt;
             } },
             { data: "Yes" },
             { data: "No" },
@@ -351,103 +300,64 @@ $(document).ready(function(){
             } },
         ],
         "createdRow": function ( row, data, index ) {
-            $('td',row).eq(6).css({"text-align": "right"});
+            $('td',row).eq(4).css({"text-align": "right"});
             var totalvotesratio = data.AbsoluteYes/totalmns;
             var isalloted = false;
             var color = '#8F8F8F';
+            var cls = 'success';
             if (data.BlockchainValidity) {
                 if (totalvotesratio < 0.1000) {
-                    color = '#FF8F8F';
+                    cls = 'danger';
                 }
                 else if (totalvotesratio <= 0.25) {
-                    color = '#ffcb8f';
                     isalloted = true;
-                }
-                else if (totalvotesratio <= 0.5) {
-                    color = '#FFFF8F';
-                    isalloted = true;
+                    cls = 'warning';
                 }
                 else {
-                    color = '#8FFF8F';
                     isalloted = true;
+                    cls = 'success';
                 }
             }
-            $('td',row).eq(11).css({"background-color":color,"text-align": "right"});
+            $('td',row).eq(8).removeClass("success").removeClass("warning").removeClass("danger").addClass(cls).css({"text-align": "right"});
+            cls = 'success';
             if (data.BlockchainValidity) {
                 if (isalloted) {
-                    color = '#8FFF8F';
+                    cls = 'success';
                 }
                 else {
-                    color = '#FFFF8F';
+                    cls = 'warning';
                 }
             }
             else {
-                color = '#8F8F8F';
+                cls = 'danger';
             }
-            $('td', row).eq(1).css({"background-color": color, "text-align": "left"});
-            // if ((currenttimestamp() - data.LastReported) > 3600) {
-            //     color = '#8F8F8F';
-            // }
-            // else {
-            //     if (isalloted) {
-            //         color = '#8FFF8F';
-            //     }
-            //     else {
-            //         if (data.IsEstablished) {
-            //             color = '#FFFF8F';
-            //         }
-            //         else {
-            //             if (data.IsValid) {
-            //                 color = '#FF8F8F';
-            //             }
-            //             else {
-            //                 color = '#ffcb8f';
-            //             }
-            //         }
-            //     }
-            // }
-            // $('td',row).eq(1).css({"background-color":color});
-            // color = '#FF8F8F';
-            // if (data.BlockStart == superblock.blockheight) {
-            //     color = '#FFFF8F';
-            // } else if (data.BlockStart > superblock.blockheight) {
-            //     color = '#8FFF8F';
-            // }
-            // $('td',row).eq(4).css({"background-color":color,"text-align": "right"});
-            // $('td',row).eq(5).css({"text-align": "center"});
-            // $('td',row).eq(6).css({"text-align": "right"});
-            // $('td',row).eq(7).css({"text-align": "center"});
-            // $('td',row).eq(8).css({"text-align": "right"});
-            // $('td',row).eq(9).css({"text-align": "right"});
-            // $('td',row).eq(10).css({"text-align": "right"});
-            // $('td',row).eq(11).css({"text-align": "right"});
-            // $('td',row).eq(13).css({"text-align": "right"});
-            // $('td',row).eq(14).css({"text-align": "right"});
+            $('td', row).eq(1).removeClass("success").removeClass("warning").removeClass("danger").addClass(cls).css({"text-align": "left"});
             if (data.BlockchainValidity) {
-                color = '#8FFF8F';
+                cls = 'success';
             }
             else {
-                color = '#FF8F8F';
+                cls = 'danger';
             }
-            $('td',row).eq(12).css({"background-color":color,"text-align": "center"});
+            $('td', row).eq(9).removeClass("success").removeClass("warning").removeClass("danger").addClass(cls).css({"text-align": "center"});
             if (data.CachedFunding) {
-                color = '#8FFF8F';
+                cls = 'success';
             }
             else {
-                color = '#FF8F8F';
+                cls = 'danger';
             }
-            $('td',row).eq(13).css({"background-color":color,"text-align": "center"});
-            $('td',row).eq(14).css({"text-align": "center"});
+            $('td', row).eq(10).removeClass("success").removeClass("warning").removeClass("danger").addClass(cls).css({"text-align": "center"});
+            $('td',row).eq(11).css({"text-align": "center"});
         }
     } );
     setTimeout(tableGovernanceRefresh, 150000);
 
     $('#superblockstable').on('xhr.dt', function ( e, settings, json ) {
         // Change the last refresh date
-        var date = new Date();
+        var date = new Date(json.data.cache.time*1000);
         var n = date.toLocaleDateString();
         var time = date.toLocaleTimeString();
         $('#superblockstableLR').text( n + ' ' + time );
+        $('#superblockstableLRHR').text(deltaTimeStampHRlong(json.data.cache.time, currenttimestamp()));
 
 /*        var monthlypayments = {};
         var tmpDate;
@@ -561,7 +471,7 @@ $(document).ready(function(){
 
     } );
     tableSuperBlocks = $('#superblockstable').dataTable( {
-        ajax: { url: "/api/blocks/superblocks?testnet="+dashninjatestnet,
+        ajax: { url: "/data/blockssuperblocks-"+dashninjatestnet+".json",
             dataSrc: 'data.superblocks' },
         paging: true,
         lengthMenu: [ [20, 50, 100, 200, -1], [20, 50, 100, 200, "All"] ],
@@ -642,8 +552,10 @@ $(document).ready(function(){
 
     $('#superblocksexpectedtable').on('xhr.dt', function ( e, settings, json ) {
         // Change the last refresh date
-        var date = new Date();
+        var date = new Date(json.data.cache.time*1000);
         $('#superblocksexpectedtableLR').text( date.toLocaleString() );
+        $('#superblocksexpectedtableLRHR').text(deltaTimeStampHRlong(json.data.cache.time, currenttimestamp()));
+
     } );
 
 });

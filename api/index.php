@@ -126,14 +126,14 @@ $app->get('/api/blocks', function() use ($app,&$mysqli) {
       $cachetime = 900;
     } catch (Exception $e) {
       $errmsg[] = 'Wrong interval parameter';
-      $interval = new DateInterval('P1D');
-      $cacheinterval = "P1D";
+      $interval = new DateInterval('PT1S');
+      $cacheinterval = "PT1S";
       $cachetime = 150;
     }
   }
   else {
-    $interval = new DateInterval('P1D');
-    $cacheinterval = "P1D";
+    $interval = new DateInterval('PT1S');
+    $cacheinterval = "PT1S";
     $cachetime = 150;
   }
   if ($onlysuperblocks == 1) {
@@ -178,6 +178,14 @@ $app->get('/api/blocks', function() use ($app,&$mysqli) {
   }
   else {
     $budgetids = array();
+  }
+
+  $finalcount = count($mnpubkeys)+count($budgetids);
+  if ($finalcount == 0) {
+      $errmsg[] = "To use this API you must select at least 1 pubkey or budgetname. If you need a full 24h blocks list, try: /data/blocks24h-".$testnet.".json";
+  }
+  elseif ($finalcount > 50) {
+      $errmsg[] = "To use this API you must select at most 50 pubkeys and/or budgetnames. If you need a full 24h blocks list, try: /data/blocks24h-".$testnet.".json";
   }
 
   if (count($errmsg) > 0) {
@@ -2427,7 +2435,15 @@ $app->get('/api/masternodes', function() use ($app,&$mysqli) {
     }
   }
 
-  // Retrieve the optional info parameters (status, balance and portcheck)
+  $finalcount = count($mnips)+count($mnvins)+count($mnpubkeys);
+  if ($finalcount == 0) {
+    $errmsg[] = "To use this API you must select at least 1 masternode by IP, vin or pubkey. If you need a full list, try: /data/masternodeslistfull-".$testnet.".json";
+  }
+  elseif ($finalcount > 50) {
+    $errmsg[] = "To use this API you must select at most 50 masternodes by IP, vin or pubkey. If you need a full list, try: /data/masternodeslistfull-".$testnet.".json";
+  }
+
+    // Retrieve the optional info parameters (status, balance and portcheck)
   $withbalance = ($request->hasQuery('balance') && ($request->getQuery('balance') == 1));
   $withportcheck = ($request->hasQuery('portcheck') && ($request->getQuery('portcheck') == 1));
   $withlastpaid = ($request->hasQuery('lastpaid') && ($request->getQuery('lastpaid') == 1));

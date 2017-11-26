@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License
 along with Dash Ninja.  If not, see <http://www.gnu.org/licenses/>.
 -->
 <html>
-  <head>
+<head>
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -25,39 +25,40 @@ along with Dash Ninja.  If not, see <http://www.gnu.org/licenses/>.
 
     <link rel="icon" href="/static/dashninja-favicon.ico" />
     <link rel="icon" type="image/png" href="/static/dashninja-favicon.png" />
-    <link href="/static/bootstrap-3.3.6/css/bootstrap.min.css" rel="stylesheet">
-    <link href="/static/dashninja-template.css" rel="stylesheet">
+    <link href="/static/bootstrap-3.3.7/css/bootstrap.min.css" rel="stylesheet">
+    <link href="/static/dashninja-template-2.0.css" rel="stylesheet">
     <link href="/static/datatables/datatables.min.css" rel="stylesheet">
-    <link href="/static/font-awesome-4.6.3/css/font-awesome.min.css" rel="stylesheet">
+    <link href="/static/font-awesome-4.7.0/css/font-awesome.min.css" rel="stylesheet">
 
     <!-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries -->
     <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
     <!--[if lt IE 9]>
-      <script src="/static/html5shiv.min.js"></script>
-      <script src="/static/respond.min.js"></script>
+    <script src="/static/html5shiv.min.js"></script>
+    <script src="/static/respond.min.js"></script>
     <![endif]-->
 
-  </head>
-  <body>
-    <div class="navbar navbar-default navbar-fixed-top" role="navigation">
-      <div class="container">
+</head>
+<body>
+
+<div id="wrapper">
+    <nav class="navbar navbar-default navbar-static-top" role="navigation" style="margin-bottom: 0">
         <div class="navbar-header">
             <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
-              <span class="sr-only">Toggle navigation</span>
-              <span class="icon-bar"></span>
-              <span class="icon-bar"></span>
-              <span class="icon-bar"></span>
+                <span class="sr-only">Toggle navigation</span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
             </button>
-          <a class="navbar-brand" href="/"><img style="margin-top: -13px;" src="/static/dashninja-logo48x48.png" width="48" height="48" border="0"></a>
+            <a class="navbar-brand" href="/"><img style="margin-top: -13px; border-top: 0px; border-bottom: 0px; margin-right: 10px;" src="/static/dashninja-logo48x48.png" width="48" height="48" align="left"> DASH Ninja</a>
         </div>
-        <div class="collapse navbar-collapse">
-            <ul class="nav navbar-nav">
-                <li><a href="/blocks.html">Blocks Masternodes Payee</a></li>
-                <li><a href="/masternodes.html">Masternodes Monitoring</a></li>
-                <li><a href="/governance.html">Governance Monitoring</a></li>
-                <li><a name="menuitemexplorer" href="https://explorer.dashninja.pl">Block Explorer</a></li>
+        <div class="collapse navbar-collapse navbar-collapse" role="navigation">
+            <ul class="nav navbar-nav navbar-right">
+                <li><a href="/blocks.html"><i class="fa fa-link fa-fw" aria-hidden="true"></i> Blockhain</a></li>
+                <li><a href="/masternodes.html"><i class="fa fa-server fa-fw" aria-hidden="true"></i> Masternodes</a></li>
+                <li><a href="/governance.html"><i class="fa fa-balance-scale fa-fw" aria-hidden="true"></i> Governance</a></li>
+                <li><a name="menuitemexplorer" href="https://explorer.dashninja.pl"><i class="fa fa-search fa-fw" aria-hidden="true"></i> Explorer</a></li>
                 <li class="dropdown">
-                    <a href="#" class="dropdown-toggle" data-toggle="dropdown">Other Tools <span class="caret"></span></a>
+                    <a href="#" class="dropdown-toggle" data-toggle="dropdown"><i class="fa fa-wrench fa-fw" aria-hidden="true"></i> Other Tools <span class="caret"></span></a>
                     <ul class="dropdown-menu" role="menu">
                         <li class="dropdown-header">Official Pages</li>
                         <li><a href="http://www.dash.org/">Dash Homepage</a></li>
@@ -71,188 +72,259 @@ along with Dash Ninja.  If not, see <http://www.gnu.org/licenses/>.
                     </ul>
                 </li>
             </ul>
-        </div><!--/.nav-collapse -->
-      </div>
-    </div>
-    <div class="container-fluid">
-
-      <div class="row">
-        <div class="col-sm-3 col-md-2 sidebar">
-          <ul class="nav nav-sidebar">
-            <li><a href="#">Budget information</a></li>
-            <li><a href="#get2vote">How to vote for this budget</a></li>
-          </ul>
-          <ul class="nav nav-sidebar">
-            <li><a href="#votes">Votes list</a></li>
-          </ul>
-            <ul class="nav nav-sidebar">
-                <li><a href="#superblocks">Super-block Payments</a></li>
-            </ul>
         </div>
-      <div class="col-sm-9 col-sm-offset-3 col-md-10 col-md-offset-2 main">
-      <div class="page-header">
-        <h1>DASH Ninja - Governance Proposal Details</h1>
-        <p>Page is dynamically refreshed (JavaScript required). All times are in GMT/UTC.<br/>
-Versions: <i>HTML v1.0.0 / JS v<span id="dashninjajsversion">?.?.?</span></i> (hint: might need to Ctrl+F5 to update JS)</p>
-      </div>
-    <div id="testnetalert" class="alert alert-danger" style="display: none">
-      <h2>THIS IS TESTNET!</h2>
-    </div>
-    <div class="alert alert-info">
-<p>If this page is useful to you, spare some coin: <a href="http://chainz.cryptoid.info/dash/address.dws?Xbon36F261wXDL4p1CEZAX28t8U4ayR9uu.htm">Xbon36F261wXDL4p1CEZAX28t8U4ayR9uu</a><br>
-Brought to you by <a href="https://www.dash.org/forum/members/elbereth.175/">elberethzone</a> (<a href="https://keybase.io/elbereth/key.asc">GPG</a>).</p>
-    </div>
-<h2>Budget information:</h2>
-<table id="budgetinfo" class="table table-striped table-condensed table-responsive text-nowrap">
-  <tbody>
-  <tr>
-      <td><i class="fa fa-tag"></i></td>
-      <th>Proposal Name</th>
-      <td id="budgetid">???</td>
-  </tr>
-    <tr>
-      <td><i class="fa fa-sign-in"></i></td>
-      <th>Proposal Hash</th>
-      <td id="budgethash">???</td>
-    </tr>
-  <tr>
-      <td><i class="fa fa-link"></i></td>
-      <th>Proposal URL</th>
-      <td id="budgeturl">???</td>
-  </tr>
-  <tr>
-      <td><i class="fa fa-sign-out"></i></td>
-      <th>Proposal Fee Transaction</th>
-      <td id="budgetfee">???</td>
-  </tr>
-    <tr>
-      <td><i class="fa fa-hourglass-start"></i></td>
-      <th>Proposal Start</th>
-      <td id="budgetblockstart">???</td>
-    </tr>
-    <tr>
-      <td><i class="fa fa-hourglass-end"></i></td>
-      <th>Proposal End</th>
-      <td id="budgetblockend">???</td>
-    </tr>
-    <tr>
-      <td><i class="fa fa-money"></i></td>
-      <th>Monthly Amount</th>
-      <td id="budgetmonthlyamount">???</td>
-    </tr>
-    <tr>
-      <td><i class="fa fa-money"></i></td>
-      <th>Remaining Amount</th>
-      <td id="budgettotalamount">???</td>
-    </tr>
-    <tr>
-      <td><i class="fa fa-clock-o"></i></td>
-      <th>Remaining Payments</th>
-      <td id="budgetremainingpayments">???</td>
-    </tr>
-    <tr>
-      <td><i class="fa fa-clock-o"></i></td>
-      <th>Total Payments</th>
-      <td id="budgettotalpayments">???</td>
-    </tr>
-    <tr>
-      <td><i class="fa fa-key"></i></td>
-      <th>Payment Address</th>
-      <td id="budgetpubkey">???</td>
-    </tr>
-    <tr>
-      <td><i class="fa fa-heartbeat"></i></td>
-      <th>Budget Status</th>
-      <td id="budgetstatus">???</td>
-    </tr>
-    <tr>
-      <td><i class="fa fa-clock-o"></i></td>
-      <th>Last Paid</th>
-      <td id="budgetlastpaid">???</td>
-    </tr>
-    <tr>
-      <td><i class="fa fa-plus-square"></i></td>
-      <th>Votes YES</th>
-      <td id="budgetyes">???</td>
-    </tr>
-    <tr>
-      <td><i class="fa fa-minus-square"></i></td>
-      <th>Votes NO</th>
-      <td id="budgetno">???</td>
-    </tr>
-  <tr>
-      <td><i class="fa fa-square"></i></td>
-      <th>Votes ABSTAIN</th>
-      <td id="budgetabstain">???</td>
-  </tr>
-    <tr>
-      <td><i class="fa fa-check-square"></i></td>
-      <th>Votes YES still needed</th>
-      <td id="budgetyesremaining">???</td>
-    </tr>
-    <tr>
-      <td><i class="fa fa-clock-o"></i></td>
-      <th>Last Seen</th>
-      <td id="budgetlastseen">???</td>
-    </tr>
-    <tr>
-      <td><i class="fa fa-play-circle-o"></i></td>
-      <th>First Seen</th>
-      <td id="budgetfirstseen">???</td>
-    </tr>
-  </tbody>
-</table>
-<p>(Last refresh: <span id="budgetinfoLR">Never</span>)<br>
-(Using <span id="fiatDASHBTCval">???</span> BTC/DASH value from <span id="fiatDASHBTCwho">???</span> [<span id="fiatDASHBTCwhen">???</span>] and <span id="fiatUSDBTCval">???</span> USD/BTC value from <span id="fiatUSDBTCwho">???</span> [<span id="fiatUSDBTCwhen">???</span>])<br>
-(Also using <span id="fiatEURBTCval">???</span> EUR/BTC value from <span id="fiatEURBTCwho">???</span> [<span id="fiatEURBTCwhen">???</span>])</p>
-          <hr/>
-          <h2 id="get2vote">Vote for this budget:</h2>
-          <div id="voteisover" class="panel panel-info" style="display: none;">
-              <div class="panel-heading">Vote is over</div>
-              <div class="panel-body">
-                  <p>You cannot vote for this project anymore.<br>It was unlisted on <span id="budgetlastseen2">???</span>.</p>
-              </div>
-          </div>
-          <div id="voteisover2" class="panel panel-info" style="display: none;">
-              <div class="panel-heading">Vote is over</div>
-              <div class="panel-body">
-                  <p>You don't need to vote for this project anymore.<br>It was fully paid with last payment on <span id="budgetlastpaid2">???</span>.</p>
-              </div>
-          </div>
-          <div id="voteyes" class="panel panel-success">
-              <div class="panel-heading"><i class="fa fa-plus-square"></i> Vote YES</div>
-              <div class="panel-body">
-                  <p>From your masternode cold wallet (the one having your 1000 DASH vins and where the revenue arrives).</p>
-                  <p>To vote from dash-qt (graphical wallet), go to Tools > Debug console and type:</p>
-                  <pre>gobject vote-many <span id="budgethash1">???</span> funding yes</pre>
-                  <p>To vote from dash-cli (command line, dashd must be running), type:</p>
-                  <pre>dash-cli gobject vote-many <span id="budgethash2">???</span> funding yes</pre>
-              </div>
-          </div>
-          <div id="voteno" class="panel panel-danger">
-              <div class="panel-heading"><i class="fa fa-minus-square"></i> Vote NO</div>
-              <div class="panel-body">
-                  <p>From your masternode cold wallet (the one having your 1000 DASH vins and where the revenue arrives).</p>
-                  <p>To vote from dash-qt (graphical wallet), go to Tools > Debug console and type:</p>
-                  <pre>gobject vote-many <span id="budgethash3">???</span> funding no</pre>
-                  <p>To vote from dash-cli (command line, dashd must be running), type:</p>
-                  <pre>dash-cli gobject vote-many <span id="budgethash4">???</span> funding no</pre>
-              </div>
-          </div>
-          <div id="voteabstain" class="panel panel-warning">
-              <div class="panel-heading"><i class="fa fa-square"></i> Vote ABSTAIN (when you want to cancel a YES or NO vote)</div>
-              <div class="panel-body">
-                  <p>From your masternode cold wallet (the one having your 1000 DASH vins and where the revenue arrives).</p>
-                  <p>To vote from dash-qt (graphical wallet), go to Tools > Debug console and type:</p>
-                  <pre>gobject vote-many <span id="budgethash5">???</span> funding abstain</pre>
-                  <p>To vote from dash-cli (command line, dashd must be running), type:</p>
-                  <pre>dash-cli gobject vote-many <span id="budgethash6">???</span> funding abstain</pre>
-              </div>
-          </div>
-          <hr/>
-<h2 id="votes">Masternodes votes</h2>
-<div class="table-responsive">
-<table id="votestable" class="table table-striped table-condensed table-responsive text-nowrap">
+        <!--/.nav-collapse -->
+        <div class="navbar-default sidebar" role="navigation">
+            <div class="nav-sidebar sidebar-nav">
+                <ul class="nav" id="side-menu">
+                    <li><a href="#">Proposal information</a></li>
+                    <li><a href="#get2vote">How to vode for this proposal</a></li>
+                    <li><a href="#votes">Votes list</a></li>
+                    <li><a href="#superblocks">Super Blocks History</a></li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div id="page-wrapper">
+        <div class="row">
+            <div class="col-lg-12 col-md-12">
+                <h1 class="page-header"><i class="fa fa-tag" aria-hidden="true"></i> <span id="budgetid">???</span> proposal</h1>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-lg-8 col-md-8">
+                <div class="panel panel-primary">
+                    <div class="panel-heading">
+                        Proposal details
+                    </div>
+                    <div class="panel-body">
+                        <table width="100%" id="proposaldetails" class="table table-striped table-bordered table-condensed table-responsive table-hover">
+                        <tbody>
+                        <tr>
+                            <td><i class="fa fa-link"></i></td>
+                            <th>Proposal URL</th>
+                            <td id="budgeturl">???</td>
+                        </tr>
+                        <tr>
+                            <td><i class="fa fa-heartbeat"></i></td>
+                            <th>Budget Status</th>
+                            <td id="budgetstatus">???</td>
+                        </tr>
+                        <tr>
+                            <td><i class="fa fa-sign-in"></i></td>
+                            <th>Proposal Hash</th>
+                            <td id="budgethash">???</td>
+                        </tr>
+                        <tr>
+                            <td><i class="fa fa-sign-out"></i></td>
+                            <th>Proposal Fee Transaction</th>
+                            <td id="budgetfee">???</td>
+                        </tr>
+                        <tr>
+                            <td><i class="fa fa-clock-o"></i></td>
+                            <th>Last Seen</th>
+                            <td id="budgetlastseen">???</td>
+                        </tr>
+                        <tr>
+                            <td><i class="fa fa-play-circle-o"></i></td>
+                            <th>First Seen</th>
+                            <td id="budgetfirstseen">???</td>
+                        </tr>
+                        </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-4 col-md-4">
+                <div class="panel panel-info">
+                    <div class="panel-heading">
+                        Dash Ninja info
+                    </div>
+                    <div class="panel-body">
+                        By <a class="badge badge-primary" href="https://keybase.io/elbereth/">elberethzone</a> / Time <span class="label label-info">GMT/UTC</span> / HTML <span class="label label-info">1.5.0</span> / JavaScript <span class="label label-danger" id="dashninjajsversion">required</span><br>
+                        <hr>
+                        <span class="pull-left">Using BTC/DASH</span>
+                        <span class="pull-right"><span id="fiatDASHBTCval" class="label label-primary">???</span> <span id="fiatDASHBTCwhen" class="label label-info">???</span> <span id="fiatDASHBTCwho" class="label label-default">???</span></span><br>
+                        <span class="pull-left">Using USD/BTC</span>
+                        <span class="pull-right"><span id="fiatUSDBTCval" class="label label-primary">???</span> <span id="fiatUSDBTCwhen" class="label label-info">???</span> <span id="fiatUSDBTCwho" class="label label-default">???</span></span><br>
+                        <span class="pull-left">Using EUR/BTC</span>
+                        <span class="pull-right"><span id="fiatEURBTCval" class="label label-primary">???</span> <span id="fiatEURBTCwhen" class="label label-info">???</span> <span id="fiatEURBTCwho" class="label label-default">???</span></span><br>
+                        <div class="clearfix"></div>
+                    </div>
+                    <div class="panel-footer">
+                        <span class="pull-left">Donations:</span>
+                        <span class="pull-right"><a href="http://chainz.cryptoid.info/dash/address.dws?Xbon36F261wXDL4p1CEZAX28t8U4ayR9uu.htm">Xbon36F261wXDL4p1CEZAX28t8U4ayR9uu</a></span>
+                        <div class="clearfix"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-lg-6 col-md-6">
+                <div class="panel panel-primary">
+                    <div class="panel-heading">
+                        Proposal payments
+                    </div>
+                    <div class="panel-body">
+                        <table width="100%" id="proposalpayments" class="table table-striped table-bordered table-condensed table-responsive table-hover text-nowrap">
+                            <tbody>
+                            <tr>
+                                <td><i class="fa fa-key"></i></td>
+                                <th>Payment Address</th>
+                                <td colspan="3" id="budgetpubkey">???</td>
+                            </tr>
+                            <tr>
+                                <td><i class="fa fa-hourglass-start"></i></td>
+                                <th>Proposal Time-Span</th>
+                                <td id="budgetblockstart">???</td>
+                                <td colspan="2" id="budgetblockend">???</td>
+                            </tr>
+                            <tr>
+                                <td><i class="fa fa-money"></i></td>
+                                <th>Monthly Amount</th>
+                                <td id="budgetmonthlyamount">???</td>
+                                <td id="budgetmonthlyamountusd">???</td>
+                                <td id="budgetmonthlyamounteur">???</td>
+                            </tr>
+                            <tr>
+                                <td><i class="fa fa-money"></i></td>
+                                <th>Remaining Amount</th>
+                                <td id="budgettotalamount">???</td>
+                                <td id="budgettotalamountusd">???</td>
+                                <td id="budgettotalamounteur">???</td>
+                            </tr>
+                            <tr>
+                                <td><i class="fa fa-clock-o"></i></td>
+                                <th>Remaining Payments</th>
+                                <td id="budgetremainingpayments">???</td>
+                                <td id="budgetremainingpaymentsnext">???</td>
+                                <td id="budgetremainingpaymentsdate">???</td>
+                            </tr>
+                            <tr>
+                                <td><i class="fa fa-clock-o"></i></td>
+                                <th>Total Payments</th>
+                                <td id="budgettotalpayments">???</td>
+                                <td colspan="2" id="budgettotalpaymentsdash">???</td>
+                            </tr>
+                            <tr>
+                                <td><i class="fa fa-clock-o"></i></td>
+                                <th>Last Paid</th>
+                                <td colspan="3" id="budgetlastpaid">???</td>
+                            </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-6 col-md-6">
+                <div class="panel panel-primary">
+                    <div class="panel-heading">
+                        Proposal votes
+                    </div>
+                    <div class="panel-body">
+                        <table width="100%" id="proposalvotes" class="table table-striped table-bordered table-condensed table-responsive table-hover text-nowrap">
+                            <tbody>
+                            <tr>
+                                <td><i class="fa fa-plus-square"></i></td>
+                                <th>Votes YES</th>
+                                <td id="budgetyes" class="success">???</td>
+                            </tr>
+                            <tr>
+                                <td><i class="fa fa-minus-square"></i></td>
+                                <th>Votes NO</th>
+                                <td id="budgetno" class="danger">???</td>
+                            </tr>
+                            <tr>
+                                <td><i class="fa fa-square"></i></td>
+                                <th>Votes ABSTAIN</th>
+                                <td id="budgetabstain">???</td>
+                            </tr>
+                            <tr>
+                                <td><i class="fa fa-check-square"></i></td>
+                                <th>Votes YES still needed</th>
+                                <td id="budgetyesremaining">???</td>
+                            </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="panel-footer">
+                        <span class="pull-left">Last data refresh:</span>
+                        <span class="pull-right"><span id="budgetinfoLR">Never</span><br><span id="budgetinfoLRHR"></span></span>
+                        <div class="clearfix"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="row">
+            <div id="get2vote" class="col-lg-12 col-md-12">
+                <div id="voteisover" class="panel panel-info" style="display: none;">
+                    <div class="panel-heading">Vote is over</div>
+                    <div class="panel-body">
+                        <p>You cannot vote for this project anymore.<br>It was unlisted on <span id="budgetlastseen2">???</span>.</p>
+                    </div>
+                </div>
+                <div id="voteisover2" class="panel panel-info" style="display: none;">
+                    <div class="panel-heading">Vote is over</div>
+                    <div class="panel-body">
+                        <p>You don't need to vote for this project anymore.<br>It was fully paid with last payment on <span id="budgetlastpaid2">???</span>.</p>
+                    </div>
+                </div>
+                <div class="panel panel-primary" id="voteisrunning">
+                    <div class="panel-heading">
+                        Vote for this budget
+                    </div>
+                    <div class="panel-body">
+            <!-- Nav tabs -->
+            <ul class="nav nav-tabs">
+                <li class="active"><a href="#voteyes" data-toggle="tab"><i class="fa fa-plus-square"></i> Vote YES</a>
+                </li>
+                <li><a href="#voteno" data-toggle="tab"><i class="fa fa-minus-square"></i> Vote NO</a>
+                </li>
+                <li><a href="#voteabstain" data-toggle="tab"><i class="fa fa-square"></i> Vote ABSTAIN</a>
+                </li>
+            </ul>
+
+            <!-- Tab panes -->
+            <div class="tab-content">
+                <div class="tab-pane fade in active" id="voteyes">
+                    <h4 class="text-success">Vote YES</h4>
+                    <p>From your masternode cold wallet (the one having your 1000 DASH vins and where the revenue arrives).</p>
+                    <p>To vote from dash-qt (graphical wallet), go to Tools > Debug console and type:</p>
+                    <pre>gobject vote-many <span id="budgethash1">???</span> funding yes</pre>
+                    <p>To vote from dash-cli (command line, dashd must be running), type:</p>
+                    <pre>dash-cli gobject vote-many <span id="budgethash2">???</span> funding yes</pre>
+                </div>
+                <div class="tab-pane fade" id="voteno">
+                    <h4 class="text-danger">Vote NO</h4>
+                    <p>From your masternode cold wallet (the one having your 1000 DASH vins and where the revenue arrives).</p>
+                    <p>To vote from dash-qt (graphical wallet), go to Tools > Debug console and type:</p>
+                    <pre>gobject vote-many <span id="budgethash3">???</span> funding no</pre>
+                    <p>To vote from dash-cli (command line, dashd must be running), type:</p>
+                    <pre>dash-cli gobject vote-many <span id="budgethash4">???</span> funding no</pre>
+                </div>
+                <div class="tab-pane fade" id="voteabstain">
+                    <h4>Vote ABSTAIN (when you want to cancel a YES or NO vote)</h4>
+                    <p>From your masternode cold wallet (the one having your 1000 DASH vins and where the revenue arrives).</p>
+                    <p>To vote from dash-qt (graphical wallet), go to Tools > Debug console and type:</p>
+                    <pre>gobject vote-many <span id="budgethash5">???</span> funding abstain</pre>
+                    <p>To vote from dash-cli (command line, dashd must be running), type:</p>
+                    <pre>dash-cli gobject vote-many <span id="budgethash6">???</span> funding abstain</pre>
+                </div>
+            </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-lg-12 col-md-12">
+                <div class="panel panel-primary">
+                    <div id="votes" class="panel-heading">
+                        Masternodes votes
+                    </div>
+                    <!-- /.panel-heading -->
+                    <div class="panel-body">
+                        <table width="100%" id="votestable" class="table table-striped table-bordered table-condensed table-responsive table-hover">
  <thead>
   <tr>
     <th>Date</th>
@@ -267,12 +339,25 @@ Brought to you by <a href="https://www.dash.org/forum/members/elbereth.175/">elb
   </tr>
  </tbody>
 </table>
-<p>(Last refresh: <span id="votestableLR">Never</span>)</p>
-</div>
-<hr/>
-          <h2 id="superblocks">Super-block Payments</h2>
-          <div class="table-responsive">
-              <table id="superblockstable" class="table table-striped table-condensed table-responsive text-nowrap">
+                    </div>
+                    <div class="panel-footer">
+                        <span class="pull-left">Last data refresh:</span>
+                        <span class="pull-right"><span id="votestableLR">Never</span><br><span id="votestableLRHR"></span></span>
+                        <div class="clearfix"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-lg-12 col-md-12">
+                <div class="panel panel-primary">
+                    <div id="superblocks" class="panel-heading">
+                        Super-block Payments
+                    </div>
+                    <!-- /.panel-heading -->
+                    <div class="panel-body">
+                        <table width="100%" id="superblockstable" class="table table-striped table-bordered table-condensed table-responsive table-hover">
                   <thead>
                   <tr>
                       <th>Date&nbsp;Found</th>
@@ -287,10 +372,16 @@ Brought to you by <a href="https://www.dash.org/forum/members/elbereth.175/">elb
                   </tr>
                   </tbody>
               </table>
-              <p>(Last refresh: <span id="superblockstableLR">Never</span>)</p>
-          </div>
+                    </div>
+                    <div class="panel-footer">
+                        <span class="pull-left">Last data refresh:</span>
+                        <span class="pull-right"><span id="superblockstableLR">Never</span><br><span id="superblockstableLRHR"></span></span>
+                        <div class="clearfix"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
           <hr/>
-</div>
 </div>
 </div>
 <div id="footer">

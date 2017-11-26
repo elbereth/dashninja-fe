@@ -20,12 +20,12 @@
 // Dash Ninja Front-End (dashninja-fe) - Masternode List (v2)
 // By elberethzone / https://www.dash.org/forum/members/elbereth.175/
 
-var dashninjaversion = '2.5.1';
+var dashninjaversion = '2.5.2';
 var tableLocalNodes = null;
 var tableBlockConsensus = null;
 var tableMNList = null;
 var chartMNVersions = null;
-var dashversiondefault = "0.12.1.5";
+var dashversiondefault = "0.12.2.1";
 var dashversion = dashversiondefault;
 var dashversioncheck = dashversion;
 var dashversionsemaphore = false;
@@ -182,8 +182,8 @@ function getLatestdashVersion() {
 };
 
 function getVoteLimit() {
-    $.getJSON("/api/governanceproposals/votelimit?testnet=" + dashninjatestnet, function (data) {
-        var cls = "panel-re";
+    $.getJSON("/data/votelimit-" + dashninjatestnet+".json", function (data) {
+        var cls = "panel-red";
         if (data.data.votelimit.nextvote.BlockTime == 0) {
             var datevotelimit = new Date(data.data.votelimit.nextsuperblock.BlockTime * 1000);
             $('#nextvotelimithr').text( "Too late! Superblock on "+datevotelimit.toLocaleString());
@@ -247,17 +247,19 @@ $(document).ready(function() {
     $("#pubkeyurllist").html(pkutxt);
 
     $('#localnodes').on('xhr.dt', function (e, settings, json) {
-        var date = new Date();
+        var date = new Date(json.data.cache.time*1000);
         var n = date.toDateString();
         var time = date.toLocaleTimeString();
         $('#localnodesLR').text(n + ' ' + time);
         $('#localnodes').DataTable().column(1).search('^(?:(?!Disabled).)*$', true, false).draw();
+        $('#localnodesLRHR').text( deltaTimeStampHRlong(json.data.cache.time, currenttimestamp())+" ago");
     });
     tableLocalNodes = $('#localnodes').dataTable({
         responsive: true,
         searching: false,
         dom: "Tfrtp",
-        ajax: "/api/nodes?testnet=" + dashninjatestnet,
+        ajax: { url: "/data/nodesstatus-"+dashninjatestnet+".json",
+            dataSrc: 'data.nodes' },
         "paging": false,
         columns: [
             {data: "NodeName"},
@@ -340,16 +342,18 @@ $(document).ready(function() {
     setTimeout(tableLocalNodesRefresh, 60000);
 
     $('#blockconsensus').on('xhr.dt', function (e, settings, json) {
-        var date = new Date();
+        var date = new Date(json.data.cache.time*1000);
         var n = date.toDateString();
         var time = date.toLocaleTimeString();
         $('#blockconsensusLR').text(n + ' ' + time);
+        $('#blockconsensusLRHR').text( deltaTimeStampHRlong(json.data.cache.time, currenttimestamp())+" ago");
     });
     tableBlockConsensus = $('#blockconsensus').dataTable({
         dom: "Trtp",
         responsive: true,
         searching: false,
-        ajax: "/api/blocks/consensus?testnet=" + dashninjatestnet,
+        ajax: { url: "/data/blocksconsensus-"+dashninjatestnet+".json",
+            dataSrc: 'data.blocksconsensus' },
         "paging": false,
         "order": [[0, "desc"]],
         columns: [
