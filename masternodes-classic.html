@@ -21,7 +21,7 @@ along with Dash Ninja.  If not, see <http://www.gnu.org/licenses/>.
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>DASH Ninja - Masternodes Monitoring</title>
+    <title>DASH Ninja - Masternodes Monitoring Classic</title>
 
     <link rel="icon" href="/static/dashninja-favicon.ico" />
     <link rel="icon" type="image/png" href="/static/dashninja-favicon.png" />
@@ -88,7 +88,7 @@ along with Dash Ninja.  If not, see <http://www.gnu.org/licenses/>.
     <div id="page-wrapper">
         <div class="row">
             <div class="col-lg-12">
-                <h1 class="page-header"><i class="fa fa-server" aria-hidden="true"></i> Masternodes Monitoring <span class="badge badge-secondary">Links: <a href="/masternodes.html"><i class="fa fa-link"></i></a><span name="dashninjatordisplay" style="display: none;"> - <a name="dashninjatorurl" href="#">Tor</a></span><span name="dashninjai2pdisplay" style="display: none;"> - <a name="dashninjai2purl" href="#">I2P</a></span></span> <span class="badge badge-danger" id="testnetalert" class="alert alert-danger" style="display: none">THIS IS TESTNET!</span></h1>
+                <h1 class="page-header"><i class="fa fa-server" aria-hidden="true"></i> Masternodes Monitoring Classic <span class="badge badge-secondary">Links: <a href="/masternodes-classic.html"><i class="fa fa-link"></i></a><span name="dashninjatordisplay" style="display: none;"> - <a name="dashninjatorurl" href="#">Tor</a></span><span name="dashninjai2pdisplay" style="display: none;"> - <a name="dashninjai2purl" href="#">I2P</a></span></span> <span class="badge badge-danger" id="testnetalert" class="alert alert-danger" style="display: none">THIS IS TESTNET!</span></h1>
             </div>
         </div>
         <div class="row">
@@ -98,7 +98,7 @@ along with Dash Ninja.  If not, see <http://www.gnu.org/licenses/>.
                         Dash Ninja info
                     </div>
                     <div class="panel-body">
-                        By <a class="badge badge-primary" href="https://keybase.io/elbereth/">elberethzone</a> / Time <span class="label label-info">GMT/UTC</span> / HTML <span class="label label-info">2.5.3</span> / JavaScript <span class="label label-danger" id="dashninjajsversion">required</span>
+                        By <a class="badge badge-primary" href="https://keybase.io/elbereth/">elberethzone</a> / Time <span class="label label-info">GMT/UTC</span> / HTML <span class="label label-info">1.0.0</span> / JavaScript <span class="label label-danger" id="dashninjajsversion">required</span>
                     </div>
                     <div class="panel-footer">
                         <span class="pull-left">Donations:</span>
@@ -313,40 +313,30 @@ along with Dash Ninja.  If not, see <http://www.gnu.org/licenses/>.
             </div>
         </div>
         <div class="row">
-            <div class="col-lg-12 col-md-12">
-                <div class="panel panel-primary">
-                    <div id="mnlistdetail" class="panel-heading">
-                        Masternodes List:
-                    </div>
-                    <!-- /.panel-heading -->
-                    <div class="panel-body">
-                        <p style="font-weight: bold; text-align: right">Regexp search: <input type="text" class="global_filter" id="mnregexp"></p>
-                    </div>
-                        <table width="100%" id="mnlist" class="table table-striped table-bordered table-condensed table-responsive table-hover text-nowrap">
+            <h2>Masternodes List:</h2>
+            <p style="font-weight: bold; text-align: right">Regexp search: <input type="text" class="global_filter" id="mnregexp"></p>
+                        <table id="mnlist" class="table table-striped table-bordered table-condensed table-hover text-nowrap">
                 <thead>
                 <tr>
-                    <th data-priority="1"></th>
-                    <th data-priority="12">Vin (Hash-Index)</th>
-                    <th data-priority="11">Pubkey</th>
-                    <th data-priority="4">IP:Port</th>
-                    <th data-priority="2">Status<br>(Active Score)</th>
-                    <th data-priority="3">Port Check<br>(Next check)</th>
-                    <th data-priority="5">Version</th>
-                    <th data-priority="6">Protocol</th>
-                    <th data-priority="7">Balance</th>
-                    <th data-priority="8">Last Paid</th>
-                    <th data-priority="9">Active Duration</th>
-                    <th data-priority="10">Last Seen</th>
+                    <th>Vin (Hash-Index)</th>
+                    <th>Pubkey</th>
+                    <th>IP:Port</th>
+                    <th>Status<br>(Active Score)</th>
+                    <th>Port Check<br>(Next check)</th>
+                    <th>Version</th>
+                    <th>Protocol</th>
+                    <th>Balance</th>
+                    <th>Last Paid</th>
+                    <th>Active Duration</th>
+                    <th>Last Seen</th>
                 </tr>
                 </thead>
                 <tbody>
                 <tr>
-                    <td colspan="12">Please wait while loading... (JavaScript needed)</td>
+                    <td colspan="11">Please wait while loading... (JavaScript needed)</td>
                 </tr>
                 </tbody>
             </table>
-                </div>
-            </div>
         </div>
         <hr/>
         <div id="footer">
@@ -364,7 +354,7 @@ along with Dash Ninja.  If not, see <http://www.gnu.org/licenses/>.
     <script src="/static/datatables/datatables.min.js"></script>
     <script src="dashninja-config.js"></script>
     <script src="dashninja-common.js"></script>
-    <script src="dashninja-masternodes.js"></script>
+    <script src="dashninja-masternodes-classic.js"></script>
 </body>
 </html>
 

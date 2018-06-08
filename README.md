@@ -1,12 +1,14 @@
 # Dash Ninja Front-End (dashninja-fe)
 By Alexandre (aka elbereth) Devilliers
 
-Check the running live website at https://www.dashninja.pl
+Check the running live website at [https://www.dashninja.pl]
 
 This is part of what makes the Dash Ninja monitoring application.
 It contains:
 - Public REST API (using PHP and Phalcon framework)
 - Public web pages (using static HTML5/CSS/Javascript)
+
+Feel free to donate to : XkfkHqMnhvQovo7kXQjvnNiFnQhRNZYCsz
 
 ## Requirement:
 * You will need a running website, official at https://dashninja.pl uses nginx

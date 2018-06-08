@@ -1956,6 +1956,14 @@ $app->get('/api/governanceproposals/votes', function() use ($app,&$mysqli) {
         $debug = false;
     }
 
+    // Retrieve the 'onlyvalid' parameter
+    if ($request->hasQuery('onlyvalid')) {
+        $onlyvalid = (intval($request->getQuery('onlyvalid')) == 1);
+    }
+    else {
+        $onlyvalid = false;
+    }
+
     // Retrieve the 'proposalhash' parameter
     if ($request->hasQuery('proposalhash')) {
         $budgetid = $request->getQuery('proposalhash');
@@ -2560,94 +2568,93 @@ $app->get('/api/masternodes', function() use ($app,&$mysqli) {
     // Retrieve masternodes list
     $nodes = dmn_masternodes2_get($mysqli, $testnet, $protocol, $mnpubkeys, $mnips, $mnvins);
     if (is_array($nodes)) {
-      // Generate the final list of IP:port (resulting from the query)
-      $mnipstrue = array();
-      $mnpubkeystrue = array();
-      $mnvinstrue = array();
-      foreach($nodes as $node) {
-        $tmpvin = $node["MasternodeOutputHash"]."-".$node["MasternodeOutputIndex"];
-        if (!in_array($tmpvin,$mnvinstrue)) {
-            $mnvinstrue[] = $tmpvin;
-        }
-        if ($node["MasternodeTor"] != "") {
-          $mnip = $node['MasternodeTor'].".onion";
-        }
-        else {
-          $mnip = $node['MasternodeIP'];
-        }
-        $tmpip = $mnip."-".$node['MasternodePort'];
-        if (!in_array($tmpip,$mnipstrue)) {
-          $mnipstrue[] = $tmpip;
-        }
-        $mnpubkeystrue[] = $node['MasternodePubkey'];
-      }
-
-      // If we need the portcheck info, let's retrieve it
-      if ($withportcheck) {
-        $portcheck = dmn_masternodes_portcheck_get($mysqli, $mnipstrue, $testnet);
-        if ($portcheck === false) {
-          $response->setStatusCode(503, "Service Unavailable");
-          $response->setJsonContent(array('status' => 'ERROR', 'messages' => array($mysqli->errno.': '.$mysqli->error)));
-        }
-        else {
-          foreach($nodes as $key => $node) {
-            if ($node["MasternodeTor"] != "") {
-              $mnip = $node['MasternodeTor'].".onion";
-            }
-            else {
-              $mnip = $node['MasternodeIP'];
-            }
-            if (array_key_exists($mnip."-".$node['MasternodePort'],$portcheck)) {
-              $nodes[$key]['Portcheck'] = $portcheck[$mnip."-".$node['MasternodePort']];
-            }
-            else {
-              $nodes[$key]['Portcheck'] = false;
-            }
+      if  (count($nodes) > 0) {
+          // Generate the final list of IP:port (resulting from the query)
+          $mnipstrue = array();
+          $mnpubkeystrue = array();
+          $mnvinstrue = array();
+          foreach ($nodes as $node) {
+              $tmpvin = $node["MasternodeOutputHash"] . "-" . $node["MasternodeOutputIndex"];
+              if (!in_array($tmpvin, $mnvinstrue)) {
+                  $mnvinstrue[] = $tmpvin;
+              }
+              if ($node["MasternodeTor"] != "") {
+                  $mnip = $node['MasternodeTor'] . ".onion";
+              } else {
+                  $mnip = $node['MasternodeIP'];
+              }
+              $tmpip = $mnip . "-" . $node['MasternodePort'];
+              if (!in_array($tmpip, $mnipstrue)) {
+                  $mnipstrue[] = $tmpip;
+              }
+              $mnpubkeystrue[] = $node['MasternodePubkey'];
           }
-        }
-      }
 
-      // If we need the balance info, let's retrieve it
-      if ($withbalance) {
-        $balances = dmn_masternodes_balance_get($mysqli, $mnpubkeystrue, $testnet);
-        if ($balances === false) {
-          $response->setStatusCode(503, "Service Unavailable");
-          $response->setJsonContent(array('status' => 'ERROR', 'messages' => array($mysqli->errno.': '.$mysqli->error)));
-        }
-        else {
-          foreach($nodes as $key => $node) {
-            if (array_key_exists($node['MasternodePubkey'],$balances)) {
-              $nodes[$key]['Balance'] = $balances[$node['MasternodePubkey']];
-            }
-            else {
-              $nodes[$key]['Balance'] = false;
-            }
+          // If we need the portcheck info, let's retrieve it
+          if ($withportcheck) {
+              $portcheck = dmn_masternodes_portcheck_get($mysqli, $mnipstrue, $testnet);
+              if ($portcheck === false) {
+                  $response->setStatusCode(503, "Service Unavailable");
+                  $response->setJsonContent(array('status' => 'ERROR', 'messages' => array($mysqli->errno . ': ' . $mysqli->error)));
+              } else {
+                  foreach ($nodes as $key => $node) {
+                      if ($node["MasternodeTor"] != "") {
+                          $mnip = $node['MasternodeTor'] . ".onion";
+                      } else {
+                          $mnip = $node['MasternodeIP'];
+                      }
+                      if (array_key_exists($mnip . "-" . $node['MasternodePort'], $portcheck)) {
+                          $nodes[$key]['Portcheck'] = $portcheck[$mnip . "-" . $node['MasternodePort']];
+                      } else {
+                          $nodes[$key]['Portcheck'] = false;
+                      }
+                  }
+              }
           }
-        }
+
+          // If we need the balance info, let's retrieve it
+          if ($withbalance) {
+              $balances = dmn_masternodes_balance_get($mysqli, $mnpubkeystrue, $testnet);
+              if ($balances === false) {
+                  $response->setStatusCode(503, "Service Unavailable");
+                  $response->setJsonContent(array('status' => 'ERROR', 'messages' => array($mysqli->errno . ': ' . $mysqli->error)));
+              } else {
+                  foreach ($nodes as $key => $node) {
+                      if (array_key_exists($node['MasternodePubkey'], $balances)) {
+                          $nodes[$key]['Balance'] = $balances[$node['MasternodePubkey']];
+                      } else {
+                          $nodes[$key]['Balance'] = false;
+                      }
+                  }
+              }
+          }
+
+          // If we need the extended status info, let's retrieve it
+          if ($withexstatus) {
+              $exstatus = dmn_masternodes_exstatus_get($mysqli, $mnvinstrue, $testnet);
+              if ($portcheck === false) {
+                  $response->setStatusCode(503, "Service Unavailable");
+                  $response->setJsonContent(array('status' => 'ERROR', 'messages' => array($mysqli->errno . ': ' . $mysqli->error)));
+              } else {
+                  foreach ($nodes as $key => $node) {
+                      if (array_key_exists($node["MasternodeOutputHash"] . "-" . $node['MasternodeOutputIndex'], $exstatus)) {
+                          $nodes[$key]['ExStatus'] = $exstatus[$node["MasternodeOutputHash"] . "-" . $node['MasternodeOutputIndex']];
+                      } else {
+                          $nodes[$key]['ExStatus'] = false;
+                      }
+                  }
+              }
+          }
+
+          //Change the HTTP status
+          $response->setStatusCode(200, "OK");
+          $response->setJsonContent(array('status' => 'OK', 'data' => $nodes));
       }
-
-        // If we need the extended status info, let's retrieve it
-        if ($withexstatus) {
-            $exstatus = dmn_masternodes_exstatus_get($mysqli, $mnvinstrue, $testnet);
-            if ($portcheck === false) {
-                $response->setStatusCode(503, "Service Unavailable");
-                $response->setJsonContent(array('status' => 'ERROR', 'messages' => array($mysqli->errno.': '.$mysqli->error)));
-            }
-            else {
-                foreach($nodes as $key => $node) {
-                    if (array_key_exists($node["MasternodeOutputHash"]."-".$node['MasternodeOutputIndex'],$exstatus)) {
-                        $nodes[$key]['ExStatus'] = $exstatus[$node["MasternodeOutputHash"]."-".$node['MasternodeOutputIndex']];
-                    }
-                    else {
-                        $nodes[$key]['ExStatus'] = false;
-                    }
-                }
-            }
-        }
-
-      //Change the HTTP status
-      $response->setStatusCode(200, "OK");
-      $response->setJsonContent(array('status' => 'OK', 'data' => $nodes));
+      else {
+          //Change the HTTP status
+          $response->setStatusCode(200, "OK");
+          $response->setJsonContent(array('status' => 'OK', 'data' => $nodes));
+      }
     }
     else {
       $response->setStatusCode(503, "Service Unavailable");
@@ -2904,17 +2911,17 @@ $app->get('/api/masternodes/stats', function() use ($app,&$mysqli) {
                                "TotalBlocks" => 0);
       // Group the result by masternode ip:port (status is per protocolversion and nodename)
       while($row = $result->fetch_assoc()){
-        $supplyinfo[$row['Protocol']] = array("TotalMNValue" => $row['TotalMNValue'],
-                                              "TotalSupply" => $row['TotalSupply'],
-                                              "TotalMNPayed" => $row['TotalMNPayed'],
-                                              "TotalBlocks" => $row['TotalBlocks'],
+        $supplyinfo[$row['Protocol']] = array("TotalMNValue" => floatval($row['TotalMNValue']),
+                                              "TotalSupply" => floatval($row['TotalSupply']),
+                                              "TotalMNPayed" => intval($row['TotalMNPayed']),
+                                              "TotalBlocks" => intval($row['TotalBlocks']),
                                               "RatioPayed" => 0);
         $totalsupplyinfo['TotalMNValue'] += $row['TotalMNValue'];
         $totalsupplyinfo['TotalSupply'] += $row['TotalSupply'];
         $totalsupplyinfo['TotalMNPayed'] += $row['TotalMNPayed'];
         $totalsupplyinfo['TotalBlocks'] += $row['TotalBlocks'];
       }
-      $totalsupplyinfo['RatioPayed'] = $totalsupplyinfo['TotalMNPayed'] / $totalsupplyinfo['TotalBlocks'];
+      $totalsupplyinfo['RatioPayed'] = floatval($totalsupplyinfo['TotalMNPayed'] / $totalsupplyinfo['TotalBlocks']);
     }
     else {
       $response->setStatusCode(503, "Service Unavailable");
@@ -2938,7 +2945,7 @@ $app->get('/api/masternodes/stats', function() use ($app,&$mysqli) {
       $finalinfo[$protocol] = $info;
       if (array_key_exists($protocol,$mninfo)) {
         $finalinfo[$protocol]['ActiveMasternodesCount'] = $mninfo[$protocol]['ActiveMasternodesCount'];
-        $finalinfo[$protocol]['ActiveMasternodesUniqueIPs'] = $mninfo[$protocol]['ActiveMasternodesCount'];
+        $finalinfo[$protocol]['ActiveMasternodesUniqueIPs'] = $mninfo[$protocol]['ActiveMasternodesUniqueIPs'];
         $finalinfo[$protocol]['MasternodeExpectedPayment'] = $info['TotalMNValue'] / $finalinfo[$protocol]['ActiveMasternodesCount'];
       }
       else {

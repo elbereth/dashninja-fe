@@ -1,0 +1,6 @@
+{
+  "status": "ERROR",
+  "messages": [
+    "Too many connections (max is 5 per IP) or API unavailable."
+  ]
+}

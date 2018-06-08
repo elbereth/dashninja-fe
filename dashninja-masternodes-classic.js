@@ -17,10 +17,10 @@
 
  */
 
-// Dash Ninja Front-End (dashninja-fe) - Masternode List (v2)
+// Dash Ninja Front-End (dashninja-fe) - Masternode List Classic (v2)
 // By elberethzone / https://www.dash.org/forum/members/elbereth.175/
 
-var dashninjaversion = '2.5.3';
+var dashninjaversion = '1.0.0';
 var tableLocalNodes = null;
 var tableBlockConsensus = null;
 var tableMNList = null;
@@ -211,12 +211,12 @@ $(document).ready(function() {
     }
 
     if (typeof dashninjator !== 'undefined') {
-        $('a[name=dashninjatorurl]').attr("href", "http://" + dashninjator + "/masternodes.html");
+        $('a[name=dashninjatorurl]').attr("href", "http://" + dashninjator + "/masternodes-classic.html");
         $('span[name=dashninjatordisplay]').show();
     }
 
     if (typeof dashninjai2p !== 'undefined') {
-        $('a[name=dashninjai2purl]').attr("href", "http://" + dashninjai2p + "/masternodes.html");
+        $('a[name=dashninjai2purl]').attr("href", "http://" + dashninjai2p + "/masternodes-classic.html");
         $('span[name=dashninjai2pdisplay]').show();
     }
 
@@ -521,12 +521,8 @@ $(document).ready(function() {
             cache: true },
         lengthMenu: [ [50, 100, 250, 500, -1], [50, 100, 250, 500, "All"] ],
         processing: true,
-        responsive: true,
         pageLength: 50,
         columns: [
-            { data: null, orderable: false, render: function ( data, type, row ) {
-                    return ''
-                } },
             { data: null, render: function ( data, type, row ) {
                 var outtxt = '';
                 if (type != 'sort') {
@@ -534,7 +530,7 @@ $(document).ready(function() {
                         var ix = 0;
                         for ( var i=0, ien=dashninjamndetailvin[dashninjatestnet].length ; i<ien ; i++ ) {
                             if (ix == 0) {
-                                outtxt += '<a href="'+dashninjamndetailvin[dashninjatestnet][0][0].replace('%%a%%',data.MasternodeOutputHash+'-'+data.MasternodeOutputIndex)+'" data-toggle="tooltip" data-placement="left" title="'+data.MasternodeOutputHash+'-'+data.MasternodeOutputIndex+'">'+data.MasternodeOutputHash.substring(0,8)+'<i class="fa fa-ellipsis-h" aria-hidden="true"></i>\n-'+data.MasternodeOutputIndex+'</a>';
+                                outtxt += '<a href="'+dashninjamndetailvin[dashninjatestnet][0][0].replace('%%a%%',data.MasternodeOutputHash+'-'+data.MasternodeOutputIndex)+'" data-toggle="tooltip" data-placement="left" title="'+data.MasternodeOutputHash+'-'+data.MasternodeOutputIndex+'">'+data.MasternodeOutputHash+'-'+data.MasternodeOutputIndex+'</a>';
                             }
                             else {
                                 outtxt += '<a href="'+dashninjamndetailvin[dashninjatestnet][i][0].replace('%%a%%',data.MasternodeOutputHash+'-'+data.MasternodeOutputIndex)+'">['+ix+']</a>';
@@ -543,7 +539,7 @@ $(document).ready(function() {
                         }
                         for ( var i=0, ien=dashninjatxexplorer[dashninjatestnet].length ; i<ien ; i++ ) {
                             if (ix == 0) {
-                                outtxt += '<a href="'+dashninjatxexplorer[dashninjatestnet][0][0].replace('%%a%%',data.MasternodeOutputHash)+'" data-toggle="tooltip" data-placement="left" title="'+data.MasternodeOutputHash+'-'+data.MasternodeOutputIndex+'">'+data.MasternodeOutputHash.substring(0,8)+'...-'+data.MasternodeOutputIndex+'</a>';
+                                outtxt += '<a href="'+dashninjatxexplorer[dashninjatestnet][0][0].replace('%%a%%',data.MasternodeOutputHash)+'" data-toggle="tooltip" data-placement="left" title="'+data.MasternodeOutputHash+'-'+data.MasternodeOutputIndex+'">'+data.MasternodeOutputHash+'-'+data.MasternodeOutputIndex+'</a>';
                             }
                             else {
                                 outtxt += '<a href="'+dashninjatxexplorer[dashninjatestnet][i][0].replace('%%a%%',data.MasternodeOutputHash)+'">['+ix+']</a>';
@@ -735,7 +731,7 @@ $(document).ready(function() {
             } else {
                 color = 'warning';
             }
-            $('td',row).eq(4).removeClass("danger").removeClass("success").removeClass("warning").addClass(color).css({"text-align": "center"});
+            $('td',row).eq(3).removeClass("danger").removeClass("success").removeClass("warning").addClass(color).css({"text-align": "center"});
             var color = 'danger';
             if ( data.Portcheck == false ) {
                 color = 'warning';
@@ -747,12 +743,12 @@ $(document).ready(function() {
                     color = 'warning';
                 }
             }
-            $('td',row).eq(5).removeClass("danger").removeClass("success").removeClass("warning").addClass(color).css({"text-align": "center"});
+            $('td',row).eq(4).removeClass("danger").removeClass("success").removeClass("warning").addClass(color).css({"text-align": "center"});
             color = 'success';
             if ( data.Balance.Value < 1000 ) {
                 color = 'danger';
             }
-            $('td',row).eq(8).removeClass("danger").removeClass("success").addClass(color).css({"text-align": "right"});
+            $('td',row).eq(7).removeClass("danger").removeClass("success").addClass(color).css({"text-align": "right"});
             var versioninfo = "Unknown";
             if ((data.Portcheck != false) && data.Portcheck.hasOwnProperty("SubVer")) {
                 if ((data.Portcheck.SubVer.length > 10) && (data.Portcheck.SubVer.substring(0, 9) == '/Satoshi:') && (data.Portcheck.SubVer.substring(data.Portcheck.SubVer.length - 1) == '/')) {
@@ -777,7 +773,7 @@ $(document).ready(function() {
             else {
                 color = 'danger';
             }
-            $('td',row).eq(6).removeClass("danger").removeClass("success").removeClass("warning").removeClass("active").addClass(color);
+            $('td',row).eq(5).removeClass("danger").removeClass("success").removeClass("warning").removeClass("active").addClass(color);
             var curprotocol = parseInt(data.MasternodeProtocol);
             if ( curprotocol < 70206 ) {
                 color = 'danger';
@@ -788,7 +784,7 @@ $(document).ready(function() {
             else {
                 color = 'warning';
             }
-            $('td',row).eq(7).removeClass("danger").removeClass("success").addClass(color).css({"text-align": "right"});
+            $('td',row).eq(6).removeClass("danger").removeClass("success").addClass(color).css({"text-align": "right"});
         }
     } );
     var mnlistsize = getParameter("mnlistsize");

@@ -20,7 +20,7 @@
 // Dash Ninja Front-End (dashninja-fe) - Governance
 // By elberethzone / https://www.dash.org/forum/members/elbereth.175/
 
-var dashninjaversion = '1.6.0';
+var dashninjaversion = '1.6.1';
 var tableGovernance = null;
 var tableBudgetsProjection = null;
 var tableSuperBlocks = null;
@@ -163,7 +163,8 @@ $(document).ready(function(){
             tableSuperBlocksExpected = $('#superblocksexpectedtable').dataTable({
                 ajax: {
                     url: "/data/governancetriggers-" + dashninjatestnet + ".json",
-                    dataSrc: 'data.governancetriggers'
+                    dataSrc: 'data.governancetriggers',
+                    cache: true
                 },
                 paging: false,
                 order: [[0, "desc"]],
@@ -219,7 +220,8 @@ $(document).ready(function(){
     } );
     tableGovernance = $('#proposalsdetailtable').dataTable( {
         ajax: { url: "/data/governanceproposals-"+dashninjatestnet+".json",
-            dataSrc: 'data.governanceproposals' },
+            dataSrc: 'data.governanceproposals',
+            cache: true },
         paging: true,
         lengthMenu: [ [20, 50, 100, 200, -1], [20, 50, 100, 200, "All"] ],
         pageLength: 20,
@@ -472,7 +474,8 @@ $(document).ready(function(){
     } );
     tableSuperBlocks = $('#superblockstable').dataTable( {
         ajax: { url: "/data/blockssuperblocks-"+dashninjatestnet+".json",
-            dataSrc: 'data.superblocks' },
+            dataSrc: 'data.superblocks',
+            cache: true },
         paging: true,
         lengthMenu: [ [20, 50, 100, 200, -1], [20, 50, 100, 200, "All"] ],
         pageLength: 20,

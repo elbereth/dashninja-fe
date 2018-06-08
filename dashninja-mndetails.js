@@ -20,7 +20,7 @@
 // Dash Ninja Front-End (dashninja-fe) - Masternode Detail
 // By elberethzone / https://dashtalk.org/members/elbereth.175/
 
-var dashninjaversion = '3.1.0';
+var dashninjaversion = '3.2.1';
 var tablePayments = null;
 var tableExStatus = null;
 var dataProtocolDesc = [];
@@ -86,8 +86,9 @@ function mndetailsRefresh(useVin){
     $('#mnoutput').text(result+" ("+mnvin+")");
     $('#mnpubkey').text(result+" ("+mnpubkey+")");      
     $('#mnipport').text(result);      
-    $('#mncountry').text(result);      
+    $('#mncountry').text(result);
     $('#mnstatus').text(result).removeClass("danger").removeClass("warning").removeClass("success");
+    $('#mnstatuspanel').removeClass("panel-primary").removeClass("panel-yellow").removeClass("panel-green").removeClass("panel-red").addClass("panel-primary");
     $('#mnactiveduration').text(result);
     $('#mnlastseen').text(result);
     $('#mnbalance').text(result).removeClass("danger").removeClass("success");
@@ -119,19 +120,20 @@ function mndetailsRefresh(useVin){
     var cls = "";
     if ( ratio == 1 ) {
       result = 'Active';
-      cls = "success";
+      cls = "panel-green";
     } else if ( ratio == 0 ) {
       result = 'Inactive';
-      cls = "danger";
+      cls = "panel-red";
     } else if ( unlistedcount > 0 ) {
       result = 'Partially Unlisted';
-      cls = "warning";
+      cls = "panel-yellow";
     } else {
       result = 'Partially Inactive';
-      cls = "warning";
+      cls = "panel-yellow";
     }
     result += ' ('+Math.round(ratio*100)+'%)';
-    $('#mnstatus').text(result).removeClass("danger").removeClass("warning").removeClass("success").addClass(cls);
+    $('#mnstatus').text(result);
+    $('#mnstatuspanel').removeClass("panel-primary").removeClass("panel-yellow").removeClass("panel-green").removeClass("panel-red").addClass(cls);
     if (data.data[0].MasternodeActiveSeconds < 0) {
       result = 'Inactive';
     }
@@ -198,15 +200,16 @@ function mndetailsRefresh(useVin){
     cls = "";
     if ((data.data[0].Portcheck.Result == 'closed') || (data.data[0].Portcheck.Result == 'timeout')) {
       txt = "Closed ("+data.data[0].Portcheck.ErrorMessage+")";
-      cls = "danger";
+      cls = "panel-red";
     } else if (data.data[0].Portcheck.Result == 'unknown') {
       txt = "Pending";
-      cls = "info";
+      cls = "panel-primary";
     } else if ((data.data[0].Portcheck.Result == 'open') || (data.data[0].Portcheck.Result == 'rogue')) {
       txt = "Open";
-      cls = "success";
+      cls = "panel-green";
     }
-    $('#mnportcheck').text(txt).removeClass("danger").removeClass("info").removeClass("success").addClass(cls);
+    $('#mnportcheck').text(txt);
+    $('#mnportcheckpanel').removeClass("panel-red").removeClass("panel-primary").removeClass("panel-green").addClass(cls);
     if (data.data[0].Portcheck.NextCheck < currenttimestamp()) {
       if (txt != "Pending") {
         $('#mnportchecknext').text('Re-check pending');
@@ -215,7 +218,12 @@ function mndetailsRefresh(useVin){
     else {
       $('#mnportchecknext').text(deltaTimeStampHRlong(data.data[0].Portcheck.NextCheck,currenttimestamp()));
     }
-    var versioninfo = '<i>Unknown</i>';
+    var date = new Date(data.data[0].Portcheck.NextCheck*1000);
+    var n = date.toDateString();
+    var time = date.toLocaleTimeString();
+       $('#mnportchecknextdate').text(n+' '+time);
+
+       var versioninfo = '<i>Unknown</i>';
     if ((data.data[0].hasOwnProperty("Portcheck")) && (data.data[0].Portcheck != false)) {
         if ((data.data[0].Portcheck.SubVer.length > 10) && (data.data[0].Portcheck.SubVer.substring(0, 9) == '/Satoshi:') && (data.data[0].Portcheck.SubVer.substring(data.data[0].Portcheck.SubVer.length - 1) == '/')) {
             versioninfo = data.data[0].Portcheck.SubVer.substring(9, data.data[0].Portcheck.SubVer.indexOf('/', 10));
@@ -231,12 +239,17 @@ function mndetailsRefresh(useVin){
         versioninfo = "Unknown";
     }
     $('#mnversion').html( versioninfo+" (Protocol="+data.data[0].MasternodeProtocol+")" );
+       $('#mnversionraw').html( data.data[0].Portcheck.SubVer );
+       $('#mnportcheckerror').html( data.data[0].Portcheck.ErrorMessage );
    }
    $('#mninfosLR').text( n + ' ' + time );
 
       tablePayments = $('#paymentstable').dataTable( {
+        responsive: true,
+        searching: false,
         ajax: { url: '/api/blocks?testnet='+dashninjatestnet+'&pubkeys=["'+data.data[0].MasternodePubkey+'"]&interval=P1M',
-                dataSrc: 'data.blocks' },
+                dataSrc: 'data.blocks',
+                cache: true },
         paging: false,
         order: [[ 0, "desc" ]],
         columns: [
@@ -298,85 +311,86 @@ function mndetailsRefresh(useVin){
         ],
         createdRow: function ( row, data, index ) {
           if (data.BlockMNPayeeExpected == mnpubkey) {
-            $('td',row).eq(5).css({"background-color": "#8FFF8F"});
+            $('td',row).eq(5).removeClass("danger").removeClass("success").addClass("success");
           }
           else {
-            $('td',row).eq(5).css({"background-color": "#FF8F8F"});
+            $('td',row).eq(5).removeClass("danger").removeClass("success").addClass("danger");
           }
           if (data.BlockMNPayee == mnpubkey) {
-            $('td',row).eq(6).css({"background-color": "#8FFF8F"});
+            $('td',row).eq(6).removeClass("danger").removeClass("success").addClass("success");
           }
           else {
-            $('td',row).eq(6).css({"background-color": "#FF8F8F"});
+              $('td',row).eq(6).removeClass("danger").removeClass("success").addClass("danger");
           }
         }
    } );
       tableExStatus = $('#exstatustable').dataTable( {
+          responsive: true,
+          searching: false,
           data: data.data[0].ExStatus,
           paging: false,
           order: [[ 0, "asc" ]],
           columns: [
               { data: "NodeName" },
-              { data: "NodeVersion" },
-              { data: "NodeProtocol" },
               { data: null, render: function ( data, type, row ) {
-                  if (type == "sort") {
-                      return data.Status;
-                  } else if (data.Status == "active") {
-                      return '<i class="fa fa-play"> Active';
-                  } else if (data.Status == "inactive") {
-                      return '<i class="fa fa-pause"> Inactive';
-                  } else if (data.Status == "unlisted") {
-                      return '<i class="fa fa-stop"> Unlisted';
-                  }
-              } },
-              { data: null, render: function ( data, type, row ) {
-                  var outtxt = '';
-                  if (type != "sort") {
-                      if (data.StatusEx == "ENABLED") {
-                          outtxt = '<i class="fa fa-thumbs-up"> ';
-                      } else if (data.StatusEx == "PRE_ENABLED") {
-                          outtxt = '<i class="fa fa-thumbs-o-up"> ';
-                      } else if (data.StatusEx == "WATCHDOG_EXPIRED") {
-                          outtxt = '<i class="fa fa-cogs"> ';
-                      } else if (data.StatusEx == "POS_ERROR") {
-                          outtxt = '<i class="fa fa-exclamation-triangle"> ';
-                      } else if (data.StatusEx == "REMOVE") {
-                          outtxt = '<i class="fa fa-chain-broken"> ';
-                      } else if (data.StatusEx == "EXPIRED") {
-                          outtxt = '<i class="fa fa-clock-o"> ';
-                      } else if (data.StatusEx == "VIN_SPENT") {
-                          outtxt = '<i class="fa fa-money"> ';
-                      } else if (data.StatusEx == "NEW_START_REQUIRED") {
-                          outtxt = '<i class="fa fa-wrench"> ';
-                      } else if (data.StatusEx == "UPDATE_REQUIRED") {
-                          outtxt = '<i class="fa fa-wrench"> ';
-                      } else if (data.StatusEx != '') {
-                          outtxt = '<i class="fa fa-thumbs-down"> ';
+                      var outtxt = '';
+                      if (type != "sort") {
+                          if (data.StatusEx == "ENABLED") {
+                              outtxt = '<i class="fa fa-thumbs-up"> ';
+                          } else if (data.StatusEx == "PRE_ENABLED") {
+                              outtxt = '<i class="fa fa-thumbs-o-up"> ';
+                          } else if (data.StatusEx == "WATCHDOG_EXPIRED") {
+                              outtxt = '<i class="fa fa-cogs"> ';
+                          } else if (data.StatusEx == "POS_ERROR") {
+                              outtxt = '<i class="fa fa-exclamation-triangle"> ';
+                          } else if (data.StatusEx == "REMOVE") {
+                              outtxt = '<i class="fa fa-chain-broken"> ';
+                          } else if (data.StatusEx == "EXPIRED") {
+                              outtxt = '<i class="fa fa-clock-o"> ';
+                          } else if (data.StatusEx == "VIN_SPENT") {
+                              outtxt = '<i class="fa fa-money"> ';
+                          } else if (data.StatusEx == "NEW_START_REQUIRED") {
+                              outtxt = '<i class="fa fa-wrench"> ';
+                          } else if (data.StatusEx == "UPDATE_REQUIRED") {
+                              outtxt = '<i class="fa fa-wrench"> ';
+                          } else if (data.StatusEx != '') {
+                              outtxt = '<i class="fa fa-thumbs-down"> ';
+                          }
                       }
-                  }
-                  outtxt = outtxt+data.StatusEx;
-                  return outtxt;
-              } }
+                      outtxt = outtxt+data.StatusEx;
+                      return outtxt; } },
+              { data: null, render: function ( data, type, row ) {
+                      if (type == "sort") {
+                          return data.Status;
+                      } else if (data.Status == "active") {
+                          return '<i class="fa fa-play"> Active';
+                      } else if (data.Status == "inactive") {
+                          return '<i class="fa fa-pause"> Inactive';
+                      } else if (data.Status == "unlisted") {
+                          return '<i class="fa fa-stop"> Unlisted';
+                      }
+                  } },
+              { data: "NodeVersion" },
+              { data: "NodeProtocol" }
           ],
           createdRow: function ( row, data, index ) {
               if (data.Status == "active") {
-                  $('td',row).eq(3).css({"background-color": "#dff0d8", "color": "#3c763d"});
+                  $('td',row).eq(2).css({"background-color": "#dff0d8", "color": "#3c763d"});
               }
               else if (data.Status == "inactive") {
-                  $('td',row).eq(3).css({"background-color": "#fcf8e3", "color": "#8a6d3b"});
+                  $('td',row).eq(2).css({"background-color": "#fcf8e3", "color": "#8a6d3b"});
               }
               else {
-                  $('td',row).eq(3).css({"background-color": "#f2dede", "color": "#a94442"});
+                  $('td',row).eq(2).css({"background-color": "#f2dede", "color": "#a94442"});
               }
               if (data.StatusEx == "ENABLED") {
-                  $('td',row).eq(4).css({"background-color": "#dff0d8", "color": "#3c763d"});
+                  $('td',row).eq(1).css({"background-color": "#dff0d8", "color": "#3c763d"});
               }
               else if (data.StatusEx == "PRE_ENABLED") {
-                  $('td',row).eq(4).css({"background-color": "#fcf8e3", "color": "#8a6d3b"});
+                  $('td',row).eq(1).css({"background-color": "#fcf8e3", "color": "#8a6d3b"});
               }
               else {
-                  $('td',row).eq(4).css({"background-color": "#f2dede", "color": "#a94442"});
+                  $('td',row).eq(1).css({"background-color": "#f2dede", "color": "#a94442"});
               }
           }
       } );
