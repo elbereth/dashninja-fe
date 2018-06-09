@@ -20,7 +20,7 @@
 // Dash Ninja Front-End (dashninja-fe) - Blocks (v2)
 // By elberethzone / https://dashtalk.org/members/elbereth.175/
 
-var dashninjaversion = '2.5.2';
+var dashninjaversion = '2.5.3';
 var tableBlocks = null;
 var tablePerVersion = null;
 var tablePerMiner = null;
@@ -35,10 +35,22 @@ if (typeof dashninjatestnet === 'undefined') {
 if (typeof dashninjatestnethost !== 'undefined') {
   if (window.location.hostname == dashninjatestnethost) {
     dashninjatestnet = 1;
-    $('a[name=menuitemexplorer]').attr("href", "https://"+dashninjatestnetexplorer);
   }
 }
+if (typeof dashninjatestnettor !== 'undefined') {
+    if (window.location.hostname == dashninjatestnettor) {
+        dashninjatestnet = 1;
+    }
+}
+if (typeof dashninjatestneti2p !== 'undefined') {
+    if (window.location.hostname == dashninjatestneti2p) {
+        dashninjatestnet = 1;
+    }
+}
 
+if (dashninjatestnet == 1) {
+  $('a[name=menuitemexplorer]').attr("href", "https://" + dashninjatestnetexplorer);
+}
 
 if (typeof dashninjacoin === 'undefined') {
   var dashninjacoin = ['',''];
@@ -77,14 +89,27 @@ $(document).ready(function(){
     $('#testnetalert').show();
   }
 
-  if (typeof dashninjator !== 'undefined') {
-      $('a[name=dashninjatorurl]').attr("href", "http://"+dashninjator+"/blocks.html");
-      $('span[name=dashninjatordisplay]').show();
-  }
+  if (dashninjatestnet == 1) {
+      if (typeof dashninjatestnettor !== 'undefined') {
+          $('a[name=dashninjatorurl]').attr("href", "http://"+dashninjatestnettor+"/blocks.html");
+          $('span[name=dashninjatordisplay]').show();
+      }
 
-  if (typeof dashninjai2p !== 'undefined') {
-      $('a[name=dashninjai2purl]').attr("href", "http://" + dashninjai2p + "/blocks.html");
-      $('span[name=dashninjai2pdisplay]').show();
+      if (typeof dashninjatestneti2p !== 'undefined') {
+          $('a[name=dashninjai2purl]').attr("href", "http://" + dashninjatestneti2p + "/blocks.html");
+          $('span[name=dashninjai2pdisplay]').show();
+      }
+  }
+  else {
+        if (typeof dashninjator !== 'undefined') {
+            $('a[name=dashninjatorurl]').attr("href", "http://"+dashninjator+"/blocks.html");
+            $('span[name=dashninjatordisplay]').show();
+        }
+
+        if (typeof dashninjai2p !== 'undefined') {
+            $('a[name=dashninjai2purl]').attr("href", "http://" + dashninjai2p + "/blocks.html");
+            $('span[name=dashninjai2pdisplay]').show();
+        }
   }
 
    tablePerVersion = $('#perversiontable').dataTable( {
