@@ -27,11 +27,15 @@ DEFINE('CACHEFOLDER',"/home/dashninja/cache/");
 // Path to the data folder (must be accessible by the website)
 DEFINE('DATAFOLDER',"/home/dashninja/www/data/");
 
-// Semaphore for the cron script of masternodefulllist
-DEFINE('DMN_CRON_MNFL_SEMAPHORE','/home/dashninja/dash-mnwww-cron-mnfl.pid');
-
-// Semaphore for the cron script of block24h
-DEFINE('DMN_CRON_BK24_SEMAPHORE','/home/dashninja/dash-mnwww-cron-bk24.pid');
+// Semaphores
+DEFINE('DMN_CRON_MNFL_SEMAPHORE','/var/run/dash-www-cron-mnfl.pid');
+DEFINE('DMN_CRON_BK24_SEMAPHORE','/var/run/dash-www-cron-bk24.pid');
+DEFINE('DMN_CRON_MNST_SEMAPHORE','/var/run/dash-www-cron-mnst.pid');
+DEFINE('DMN_CRON_BKCS_SEMAPHORE','/var/run/dash-www-cron-bkcs.pid');
+DEFINE('DMN_CRON_GOVL_SEMAPHORE','/var/run/dash-www-cron-govl.pid');
+DEFINE('DMN_CRON_GOPR_SEMAPHORE','/var/run/dash-www-cron-gopr.pid');
+DEFINE('DMN_CRON_GOTR_SEMAPHORE','/var/run/dash-www-cron-gotr.pid');
+DEFINE('DMN_CRON_BKSB_SEMAPHORE','/var/run/dash-www-cron-bksb.pid');
 
 // Indicate here all MySQL configuration to connect to Dash Ninja Database
 DEFINE('MYSQLUSER',"dashninja-api");
