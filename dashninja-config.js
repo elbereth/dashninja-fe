@@ -37,8 +37,7 @@ var dashninjacoin = ['DASH','tDASH'];
 // ["https://explorer.dashninja.pl/block/%%b%%","elberethzone's Dash Blockchain Explorer"]
 var dashninjablockexplorer = [[["http://chainz.cryptoid.info/dash/block.dws?%%b%%.htm","cryptoID Dash Blockchain Explorer"]],
                           [["https://test.explorer.dashninja.pl/block/%%b%%","Dash Ninja Testnet Blockchain Explorer"],
-                           ["http://test.explorer.darkcoin.qa/block/%%b%%","Official Testnet Dash Blockchain Explorer"],
-                           ["http://test.insight.masternode.io:3001/block/%%b%%","coingun's Testnet Dash Blockchain Explorer"]]];
+                           ["https://test.insight.dash.siampm.com/block/%%b%%","Alternate Testnet Dash Blockchain Explorer"]]];
 
 // Address info
 var dashninjamndetail = [[["/mndetails.html?mnpubkey=%%a%%","Dash Ninja Masternode Detail"],
@@ -50,12 +49,11 @@ var dashninjamndetailvin = [[["/mndetails.html?mnoutput=%%a%%","Dash Ninja Maste
 // ["https://explorer.dashninja.pl/address/%%a%%","elberethzone's Dash Blockchain Explorer"],
 var dashninjaaddressexplorer = [[["https://chainz.cryptoid.info/dash/address.dws?%%a%%.htm","cryptoID Dash Blockchain Explorer"]],
                                 [["https://test.explorer.dashninja.pl/address/%%a%%","Dash Ninja Testnet Blockchain Explorer"],
-                                 ["http://test.explorer.darkcoin.qa/address/%%a%%","Official Testnet Dash Blockchain Explorer"],
-                                 ["http://test.insight.masternode.io:3001/address/%%a%%","coingun's Testnet Dash Blockchain Explorer"]]];
+                                 ["https://test.insight.dash.siampm.com/address/%%a%%","Alternate Testnet Dash Blockchain Explorer"]]];
 // ["http://explorer.dashninja.pl/tx/%%a%%","elberethzone's Dash Blockchain Explorer"],
 var dashninjatxexplorer = [[["https://chainz.cryptoid.info/dash/tx.dws?%%a%%.htm","cryptoID Dash Blockchain Explorer"]],
                            [["http://test.explorer.dashninja.pl/tx/%%a%%","Dash Ninja Testnet Blockchain Explorer"],
-                            ["http://test.explorer.darkcoin.qa/tx/%%a%%","Official Testnet Dash Blockchain Explorer"]]];
+                            ["https://test.insight.dash.siampm.com/tx/%%a%%","Alternate Testnet Dash Blockchain Explorer"]]];
 
 // Search query
 // ["https://explorer.dashninja.pl/search?q=%%q%%","elberethzone's Dash Blockchain Explorer"],
