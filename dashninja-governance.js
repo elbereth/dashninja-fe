@@ -20,7 +20,7 @@
 // Dash Ninja Front-End (dashninja-fe) - Governance
 // By elberethzone / https://www.dash.org/forum/members/elbereth.175/
 
-var dashninjaversion = '1.6.1';
+var dashninjaversion = '1.6.2';
 var tableGovernance = null;
 var tableBudgetsProjection = null;
 var tableSuperBlocks = null;
@@ -36,13 +36,21 @@ var arrayMonthlyPayments = [];
 
 $.fn.dataTable.ext.errMode = 'throw';
 
-if (typeof dashninjatestnet === 'undefined') {
-    var dashninjatestnet = 0;
-}
+var dashninjatestnet = 0;
+
 if (typeof dashninjatestnethost !== 'undefined') {
     if (window.location.hostname == dashninjatestnethost) {
         dashninjatestnet = 1;
-        $('a[name=menuitemexplorer]').attr("href", "https://"+dashninjatestnetexplorer);
+    }
+}
+if (typeof dashninjatestnettor !== 'undefined') {
+    if (window.location.hostname == dashninjatestnettor) {
+        dashninjatestnet = 1;
+    }
+}
+if (typeof dashninjatestneti2p !== 'undefined') {
+    if (window.location.hostname == dashninjatestneti2p) {
+        dashninjatestnet = 1;
     }
 }
 
@@ -93,15 +101,27 @@ $(document).ready(function(){
 
     if (dashninjatestnet == 1) {
         $('#testnetalert').show();
-    }
+        $('a[name=menuitemexplorer]').attr("href", "https://" + dashninjatestnetexplorer);
+        if (typeof dashninjatestnettor !== 'undefined') {
+            $('a[name=dashninjatorurl]').attr("href", "http://"+dashninjatestnettor+"/governance.html");
+            $('span[name=dashninjatordisplay]').show();
+        }
 
-    if (typeof dashninjator !== 'undefined') {
-        $('a[name=dashninjatorurl]').attr("href", "http://"+dashninjator+"/governance.html");
-        $('span[name=dashninjatordisplay]').show();
+        if (typeof dashninjatestneti2p !== 'undefined') {
+            $('a[name=dashninjai2purl]').attr("href", "http://" + dashninjatestneti2p + "/governance.html");
+            $('span[name=dashninjai2pdisplay]').show();
+        }
     }
-    if (typeof dashninjai2p !== 'undefined') {
-        $('a[name=dashninjai2purl]').attr("href", "http://" + dashninjai2p + "/governance.html");
-        $('span[name=dashninjai2pdisplay]').show();
+    else {
+        if (typeof dashninjator !== 'undefined') {
+            $('a[name=dashninjatorurl]').attr("href", "http://"+dashninjator+"/governance.html");
+            $('span[name=dashninjatordisplay]').show();
+        }
+
+        if (typeof dashninjai2p !== 'undefined') {
+            $('a[name=dashninjai2purl]').attr("href", "http://" + dashninjai2p + "/governance.html");
+            $('span[name=dashninjai2pdisplay]').show();
+        }
     }
 
     $('#proposalsdetailtable').on('xhr.dt', function ( e, settings, json ) {

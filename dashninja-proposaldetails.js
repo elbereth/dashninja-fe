@@ -20,7 +20,7 @@
 // Dash Ninja Front-End (dashninja-fe) - Proposal Details
 // By elberethzone / https://www.dash.org/forum/members/elbereth.175/
 
-var dashninjaversion = '1.5.1';
+var dashninjaversion = '1.5.2';
 var tableVotes = null;
 var tableSuperBlocks = null;
 var dashoutputregexp = /^[a-z0-9]{64}$/;
@@ -34,14 +34,22 @@ var currentstats = null;
 
 $.fn.dataTable.ext.errMode = 'throw';
 
-if (typeof dashninjatestnet === 'undefined') {
-  var dashninjatestnet = 0;
-}
+var dashninjatestnet = 0;
+
 if (typeof dashninjatestnethost !== 'undefined') {
-  if (window.location.hostname == dashninjatestnethost) {
-    dashninjatestnet = 1;
-    $('a[name=menuitemexplorer]').attr("href", "https://"+dashninjatestnetexplorer);
-  }
+    if (window.location.hostname == dashninjatestnethost) {
+        dashninjatestnet = 1;
+    }
+}
+if (typeof dashninjatestnettor !== 'undefined') {
+    if (window.location.hostname == dashninjatestnettor) {
+        dashninjatestnet = 1;
+    }
+}
+if (typeof dashninjatestneti2p !== 'undefined') {
+    if (window.location.hostname == dashninjatestneti2p) {
+        dashninjatestnet = 1;
+    }
 }
 
 if (typeof dashninjacoin === 'undefined') {
@@ -521,6 +529,7 @@ $(document).ready(function(){
 
   if (dashninjatestnet == 1) {
       $('#testnetalert').show();
+      $('a[name=menuitemexplorer]').attr("href", "https://"+dashninjatestnetexplorer);
   }
 
   proposalname = getParameter("proposalname");

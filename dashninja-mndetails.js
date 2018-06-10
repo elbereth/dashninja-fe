@@ -20,7 +20,7 @@
 // Dash Ninja Front-End (dashninja-fe) - Masternode Detail
 // By elberethzone / https://dashtalk.org/members/elbereth.175/
 
-var dashninjaversion = '3.2.1';
+var dashninjaversion = '3.2.2';
 var tablePayments = null;
 var tableExStatus = null;
 var dataProtocolDesc = [];
@@ -33,14 +33,22 @@ var mnvin = '';
 
 $.fn.dataTable.ext.errMode = 'throw';
 
-if (typeof dashninjatestnet === 'undefined') {
-  var dashninjatestnet = 0;
-}
+var dashninjatestnet = 0;
+
 if (typeof dashninjatestnethost !== 'undefined') {
-  if (window.location.hostname == dashninjatestnethost) {
-    dashninjatestnet = 1;
-    $('a[name=menuitemexplorer]').attr("href", "https://"+dashninjatestnetexplorer);
-  }
+    if (window.location.hostname == dashninjatestnethost) {
+        dashninjatestnet = 1;
+    }
+}
+if (typeof dashninjatestnettor !== 'undefined') {
+    if (window.location.hostname == dashninjatestnettor) {
+        dashninjatestnet = 1;
+    }
+}
+if (typeof dashninjatestneti2p !== 'undefined') {
+    if (window.location.hostname == dashninjatestneti2p) {
+        dashninjatestnet = 1;
+    }
 }
 
 if (typeof dashninjacoin === 'undefined') {
@@ -406,6 +414,7 @@ $(document).ready(function(){
 
   if (dashninjatestnet == 1) {
     $('#testnetalert').show();
+    $('a[name=menuitemexplorer]').attr("href", "https://"+dashninjatestnetexplorer);
   }
 
   mnpubkey = getParameter("mnpubkey");

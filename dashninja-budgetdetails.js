@@ -20,7 +20,7 @@
 // Dash Ninja Front-End (dashninja-fe) - Budget Details
 // By elberethzone / https://dashtalk.org/members/elbereth.175/
 
-var dashninjaversion = '1.2.3';
+var dashninjaversion = '1.2.4';
 var tableVotes = null;
 var tableSuperBlocks = null;
 var dashoutputregexp = /^[a-z0-9]{64}-[0-9]+$/;
@@ -40,8 +40,25 @@ if (typeof dashninjatestnet === 'undefined') {
 if (typeof dashninjatestnethost !== 'undefined') {
   if (window.location.hostname == dashninjatestnethost) {
     dashninjatestnet = 1;
-    $('a[name=menuitemexplorer]').attr("href", "https://"+dashninjatestnetexplorer);
   }
+}
+
+var dashninjatestnet = 0;
+
+if (typeof dashninjatestnethost !== 'undefined') {
+    if (window.location.hostname == dashninjatestnethost) {
+        dashninjatestnet = 1;
+    }
+}
+if (typeof dashninjatestnettor !== 'undefined') {
+    if (window.location.hostname == dashninjatestnettor) {
+        dashninjatestnet = 1;
+    }
+}
+if (typeof dashninjatestneti2p !== 'undefined') {
+    if (window.location.hostname == dashninjatestneti2p) {
+        dashninjatestnet = 1;
+    }
 }
 
 if (typeof dashninjacoin === 'undefined') {
@@ -515,6 +532,7 @@ $(document).ready(function(){
   $('#dashninjajsversion').text( dashninjaversion );
 
   if (dashninjatestnet == 1) {
+      $('a[name=menuitemexplorer]').attr("href", "https://"+dashninjatestnetexplorer);
       $('#testnetalert').show();
   }
 

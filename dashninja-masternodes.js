@@ -20,16 +20,16 @@
 // Dash Ninja Front-End (dashninja-fe) - Masternode List (v2)
 // By elberethzone / https://www.dash.org/forum/members/elbereth.175/
 
-var dashninjaversion = '2.5.3';
+var dashninjaversion = '2.5.4';
 var tableLocalNodes = null;
 var tableBlockConsensus = null;
 var tableMNList = null;
 var chartMNVersions = null;
-var dashversiondefault = "0.12.2.1";
+var dashversiondefault = "0.12.3.0";
 var dashversion = dashversiondefault;
 var dashversioncheck = dashversion;
 var dashversionsemaphore = false;
-var sentinelversiondefault = "1.0";
+var sentinelversiondefault = "1.1.0";
 var sentinelversion = sentinelversiondefault;
 var dashmaxprotocol = 0;
 
@@ -41,13 +41,21 @@ if(typeof(Storage) !== "undefined") {
     }
 }
 
-if (typeof dashninjatestnet === 'undefined') {
-    var dashninjatestnet = 0;
-}
+var dashninjatestnet = 0;
+
 if (typeof dashninjatestnethost !== 'undefined') {
     if (window.location.hostname == dashninjatestnethost) {
         dashninjatestnet = 1;
-        $('a[name=menuitemexplorer]').attr("href", "https://"+dashninjatestnetexplorer);
+    }
+}
+if (typeof dashninjatestnettor !== 'undefined') {
+    if (window.location.hostname == dashninjatestnettor) {
+        dashninjatestnet = 1;
+    }
+}
+if (typeof dashninjatestneti2p !== 'undefined') {
+    if (window.location.hostname == dashninjatestneti2p) {
+        dashninjatestnet = 1;
     }
 }
 
@@ -208,16 +216,27 @@ $(document).ready(function() {
 
     if (dashninjatestnet == 1) {
         $('#testnetalert').show();
-    }
+        $('a[name=menuitemexplorer]').attr("href", "https://" + dashninjatestnetexplorer);
+        if (typeof dashninjatestnettor !== 'undefined') {
+            $('a[name=dashninjatorurl]').attr("href", "http://"+dashninjatestnettor+"/masternodes.html");
+            $('span[name=dashninjatordisplay]').show();
+        }
 
-    if (typeof dashninjator !== 'undefined') {
-        $('a[name=dashninjatorurl]').attr("href", "http://" + dashninjator + "/masternodes.html");
-        $('span[name=dashninjatordisplay]').show();
+        if (typeof dashninjatestneti2p !== 'undefined') {
+            $('a[name=dashninjai2purl]').attr("href", "http://" + dashninjatestneti2p + "/masternodes.html");
+            $('span[name=dashninjai2pdisplay]').show();
+        }
     }
+    else {
+        if (typeof dashninjator !== 'undefined') {
+            $('a[name=dashninjatorurl]').attr("href", "http://"+dashninjator+"/masternodes.html");
+            $('span[name=dashninjatordisplay]').show();
+        }
 
-    if (typeof dashninjai2p !== 'undefined') {
-        $('a[name=dashninjai2purl]').attr("href", "http://" + dashninjai2p + "/masternodes.html");
-        $('span[name=dashninjai2pdisplay]').show();
+        if (typeof dashninjai2p !== 'undefined') {
+            $('a[name=dashninjai2purl]').attr("href", "http://" + dashninjai2p + "/masternodes.html");
+            $('span[name=dashninjai2pdisplay]').show();
+        }
     }
 
     getLatestdashVersion();
