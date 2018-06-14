@@ -20,7 +20,7 @@
 // Dash Ninja Front-End (dashninja-fe) - Masternode List (v2)
 // By elberethzone / https://www.dash.org/forum/members/elbereth.175/
 
-var dashninjaversion = '2.5.4';
+var dashninjaversion = '2.5.5';
 var tableLocalNodes = null;
 var tableBlockConsensus = null;
 var tableMNList = null;
@@ -216,6 +216,7 @@ $(document).ready(function() {
 
     if (dashninjatestnet == 1) {
         $('#testnetalert').show();
+        $('#testnettitle').show();
         $('a[name=menuitemexplorer]').attr("href", "https://" + dashninjatestnetexplorer);
         if (typeof dashninjatestnettor !== 'undefined') {
             $('a[name=dashninjatorurl]').attr("href", "http://"+dashninjatestnettor+"/masternodes.html");
