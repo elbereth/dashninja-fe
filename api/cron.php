@@ -218,7 +218,7 @@ function generate_masternodeslistfull_json_files($mysqli, $testnet = 0) {
         'data' => array('masternodes' => $nodes,
             'cache' => array('time' => time(),
                 'fromcache' => true),
-            'api' => array('version' => 3,
+            'api' => array('version' => 4,
                 'compat' => 3,
                 'bev' => 'mnfl='.DASHNINJA_BEV.'.'.DASHNINJA_CRONVERSION)
         ));

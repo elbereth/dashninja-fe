@@ -20,7 +20,7 @@
 // Dash Ninja Front-End (dashninja-fe) - Masternode Detail
 // By elberethzone / https://dashtalk.org/members/elbereth.175/
 
-var dashninjaversion = '3.2.2';
+var dashninjaversion = '3.3.0';
 var tablePayments = null;
 var tableExStatus = null;
 var dataProtocolDesc = [];
@@ -97,6 +97,10 @@ function mndetailsRefresh(useVin){
     $('#mncountry').text(result);
     $('#mnstatus').text(result).removeClass("danger").removeClass("warning").removeClass("success");
     $('#mnstatuspanel').removeClass("panel-primary").removeClass("panel-yellow").removeClass("panel-green").removeClass("panel-red").addClass("panel-primary");
+    $('#mnsentinelpanel').removeClass("panel-primary").removeClass("panel-green").removeClass("panel-red").addClass("panel-primary");
+    $('#mnsentinelcheck').text('???');
+    $('#mnlistsentinelversion').text(result);
+    $('#mnlistdaemonversion').text(result);
     $('#mnactiveduration').text(result);
     $('#mnlastseen').text(result);
     $('#mnbalance').text(result).removeClass("danger").removeClass("success");
@@ -157,6 +161,15 @@ function mndetailsRefresh(useVin){
       result = 'Just now ('+data.data[0].MasternodeLastSeen+')';
     }
     $('#mnlastseen').text ( result);
+
+    var cls = "panel-green";
+    if (data.data[0].MasternodeSentinelState != 'current') {
+      cls = "panel-red";
+    }
+    $('#mnsentinelcheck').text(data.data[0].MasternodeSentinelState);
+    $('#mnsentinelpanel').removeClass("panel-primary").removeClass("panel-green").removeClass("panel-red").addClass(cls);
+    $('#mnlistsentinelversion').text(data.data[0].MasternodeSentinelVersion);
+    $('#mnlistdaemonversion').text(data.data[0].MasternodeDaemonVersion);
 
     // Balance data
     var num = Math.round( data.data[0].Balance.Value * 1000 ) / 1000;
@@ -414,6 +427,7 @@ $(document).ready(function(){
 
   if (dashninjatestnet == 1) {
     $('#testnetalert').show();
+    $('#testnettitle').show();
     $('a[name=menuitemexplorer]').attr("href", "https://"+dashninjatestnetexplorer);
   }
 

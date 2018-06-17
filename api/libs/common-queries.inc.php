@@ -264,7 +264,11 @@ SELECT
     UnlistedCount,
     cimlp.MNLastPaidBlock MasternodeLastPaidBlockHeight,
     cib.BlockTime MasternodeLastPaidBlockTime,
-    cib.BlockMNValue MasternodeLastPaidBlockAmount
+    cib.BlockMNValue MasternodeLastPaidBlockAmount,
+    cim.MasternodeLastPaidBlock MasternodeLastPaidBlock,
+    cim.MasternodeDaemonVersion MasternodeDaemonVersion,
+    cim.MasternodeSentinelVersion MasternodeSentinelVersion,
+    cim.MasternodeSentinelState MasternodeSentinelState
 FROM
     (cmd_info_masternode2 cim,
     cmd_info_masternode_active cima)
