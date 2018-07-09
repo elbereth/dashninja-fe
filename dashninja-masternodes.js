@@ -20,12 +20,12 @@
 // Dash Ninja Front-End (dashninja-fe) - Masternode List (v2)
 // By elberethzone / https://www.dash.org/forum/members/elbereth.175/
 
-var dashninjaversion = '2.5.5';
+var dashninjaversion = '2.5.6';
 var tableLocalNodes = null;
 var tableBlockConsensus = null;
 var tableMNList = null;
 var chartMNVersions = null;
-var dashversiondefault = "0.12.3";
+var dashversiondefault = "0.12.3.2";
 var dashversion = dashversiondefault;
 var dashversioncheck = dashversion;
 var dashversionsemaphore = false;
@@ -478,6 +478,7 @@ $(document).ready(function() {
         $('#mnlistLRHR').text( deltaTimeStampHRlong(json.data.cache.time, currenttimestamp())+" ago");
         var versioninfo = 'Unknown';
         var dataVersionCount = [];
+        var dataProtocolCount = [];
         var mnregexp = $('#mnregexp').val();
         for ( var i=0, ien=json.data.masternodes.length ; i<ien ; i++ ) {
             if (parseInt(json.data.masternodes[i].MasternodeProtocol) > dashmaxprotocol) {
@@ -513,6 +514,12 @@ $(document).ready(function() {
             else {
                 dataVersionCount[versioninfo] = 1;
             }
+            if (dataProtocolCount.hasOwnProperty(parseInt(json.data.masternodes[i].MasternodeProtocol))) {
+                dataProtocolCount[parseInt(json.data.masternodes[i].MasternodeProtocol)]++;
+            }
+            else {
+                dataProtocolCount[parseInt(json.data.masternodes[i].MasternodeProtocol)] = 1;
+            }
         }
 
         var dataSet = [];
@@ -530,6 +537,20 @@ $(document).ready(function() {
         $('#mninactive').text( inactiveCount );
         $('#mntotal').text( json.data.masternodes.length );
         $('#uniquemnips').text( uniqueIPs.length );
+        $('#mnlatestprotocol').text( dashmaxprotocol );
+        var ratiolatest = (dataProtocolCount[dashmaxprotocol]/json.data.masternodes.length);
+        var clscolor = "label-danger";
+        if (ratiolatest < 0.5) {
+            clscolor = "label-danger";
+        }
+        else if (ratiolatest < 0.75) {
+            clscolor = "label-warning";
+        }
+        else {
+            clscolor = "label-success";
+        }
+        $('#mnlatestprotocolpercent').text( Math.round((ratiolatest*10000)/100));
+        $('#mnactivelatest').text( dataProtocolCount[dashmaxprotocol] ).removeClass("label-success").removeClass("label-warning").removeClass("label-danger").addClass(clscolor);
 
         if (mnregexp != "") {
             $('#mnlist').DataTable().search(mnregexp, true, false).draw();
