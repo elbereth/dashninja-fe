@@ -20,7 +20,7 @@
 // Dash Ninja Front-End (dashninja-fe) - Governance
 // By elberethzone / https://www.dash.org/forum/members/elbereth.175/
 
-var dashninjaversion = '1.6.2';
+var dashninjaversion = '1.6.3';
 var tableGovernance = null;
 var tableBudgetsProjection = null;
 var tableSuperBlocks = null;
@@ -131,7 +131,7 @@ $(document).ready(function(){
          // Calculate the established project total amounts
          var totalamount = 0.0;
          for (var bix in json.data.governanceproposals){
-             if ((json.data.governanceproposals[bix].CachedFunding) && (json.data.governanceproposals[bix].EpochEnd > currenttimestamp()) && (json.data.governanceproposals[bix].EpochStart <= nextsuperblockdatetimestamp) && ((currenttimestamp() - json.data.governanceproposals[bix].LastReported) <= 3600)) {
+             if ((json.data.governanceproposals[bix].FundedSB) && (json.data.governanceproposals[bix].EpochEnd > currenttimestamp()) && (json.data.governanceproposals[bix].EpochStart <= nextsuperblockdatetimestamp) && ((currenttimestamp() - json.data.governanceproposals[bix].LastReported) <= 3600)) {
                  totalamount+=json.data.governanceproposals[bix].PaymentAmount;
              }
          }
@@ -305,7 +305,7 @@ $(document).ready(function(){
                 }
             } },
             { data: null, render: function ( data, type, row ) {
-                if (data.CachedFunding) {
+                if (data.FundedSB) {
                     return "Yes";
                 }
                 else {
@@ -361,7 +361,7 @@ $(document).ready(function(){
                 cls = 'danger';
             }
             $('td', row).eq(9).removeClass("success").removeClass("warning").removeClass("danger").addClass(cls).css({"text-align": "center"});
-            if (data.CachedFunding) {
+            if (data.FundedSB) {
                 cls = 'success';
             }
             else {
