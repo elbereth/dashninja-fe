@@ -20,12 +20,14 @@
 // Dash Ninja Front-End (dashninja-fe) - Blocks (v2)
 // By elberethzone / https://dashtalk.org/members/elbereth.175/
 
-var dashninjaversion = '2.5.6';
+var dashninjaversion = '2.5.8';
 var tableBlocks = null;
 var tablePerVersion = null;
 var tablePerMiner = null;
 var dataProtocolDesc = [];
 var maxProtocol = -1;
+var maxblockversion = -1;
+var maxblockversiondesc = '';
 
 $.fn.dataTable.ext.errMode = 'throw';
 
@@ -110,7 +112,7 @@ $(document).ready(function(){
         paging: false,
         columns: [
             { data: null, render: function ( data, type, row ) {
-              return data.ProtocolDesc;
+              return data.BlockVersionDesc;
             } },
             { data: null, render: function ( data, type, row ) {
               return data.Blocks;
@@ -149,24 +151,6 @@ $(document).ready(function(){
               } else {
                 return (Math.round( data.RatioBlocksPayedCorrectRatio * 10000 ) / 100).toFixed(2) + '%';
               }
-            } },
-            { data: null, render: function ( data, type, row ) {
-              if ((data.MasternodesPopulation == 0) && (type != 'sort')) {
-                return '<i>Unknown</i>';
-              } else {
-                return data.MasternodesPopulation;
-              }
-            } },
-            { data: null, render: function ( data, type, row ) {
-              if (type == 'sort') {
-                return data.EstimatedMNDailyEarnings;
-              } else {
-                if (data.EstimatedMNDailyEarnings == 0) {
-                  return "<i>Cannot Estimate</i>";
-                } else {
-                  return data.EstimatedMNDailyEarnings.toFixed(6);
-                }
-              }
             } }
         ],
         createdRow: function ( row, data, index ) {
@@ -175,7 +159,8 @@ $(document).ready(function(){
             $('td',row).eq(3).css({"text-align": "right"});
             $('td',row).eq(4).css({"text-align": "right"});
             $('td',row).eq(5).css({"text-align": "right"});
-            if (data.ProtocolDesc == dataProtocolDesc[maxProtocol]) {
+            console.log(data.BlockVersionDesc+' == '.maxblockversiondesc);
+            if (data.BlockVersionDesc == maxblockversiondesc) {
               var color = '#8FFF8F';
               if (data.RatioBlocksPayedCorrectRatio < 0.25) {
                 color = '#FF8F8F';
@@ -189,8 +174,6 @@ $(document).ready(function(){
             else {
               $('td',row).eq(6).css({"text-align": "right"});
             }
-            $('td',row).eq(7).css({"text-align": "right"});
-            $('td',row).eq(8).css({"text-align": "right"});
         }
     } );
 
@@ -329,18 +312,25 @@ $(document).ready(function(){
         $('#globalcurrentmnratio').text( (Math.round( json.data.blocks[0].BlockMNValueRatioExpected * 1000 ) / 10) );
 
         // Fill per version stats table
-        for (var protocol in json.data.stats.perversion){
-          if(!json.data.stats.perversion.hasOwnProperty(protocol)) {continue;}
-          dataProtocolDesc[protocol] = json.data.stats.perversion[protocol].ProtocolDesc;
-          if (protocol > maxProtocol) {
-            maxProtocol = protocol;
+        for (var protocol in json.data.stats.protocoldesc){
+          if(!json.data.stats.protocoldesc.hasOwnProperty(protocol)) {continue;}
+          dataProtocolDesc[protocol] = json.data.stats.protocoldesc[protocol];
+        }
+        maxProtocol = json.data.stats.global.maxprotocol;
+
+        tablePerVersion.api().clear();
+        maxblockversion = -1;
+        for (var blockversion in json.data.stats.perversion){
+          if (blockversion > maxblockversion) {
+              maxblockversion = blockversion;
           }
         }
-        tablePerVersion.api().clear();
-        for (var protocol in json.data.stats.perversion){
-          if(!json.data.stats.perversion.hasOwnProperty(protocol)) {continue;}
-          tablePerVersion.api().row.add( json.data.stats.perversion[protocol] );
-        } 
+        maxblockversiondesc = json.data.stats.perversion[maxblockversion].BlockVersionDesc;
+
+        for (var blockversion in json.data.stats.perversion){
+           if(!json.data.stats.perversion.hasOwnProperty(blockversion)) {continue;}
+           tablePerVersion.api().row.add( json.data.stats.perversion[blockversion] );
+        }
         tablePerVersion.api().draw();
 
         // Fill per miner stats table
@@ -479,7 +469,7 @@ $(document).ready(function(){
               $('td',row).eq(5).css({"background-color": "#ffcb8f"});
               $('td',row).eq(6).css({"background-color": "#ffcb8f"});
             }
-            if (data.BlockMNProtocol == maxProtocol) {
+            if (data.BlockMNProtocol == 70210) {
               $('td',row).eq(8).css({"background-color": "#8FFF8F"});
             }
             else if (data.BlockMNProtocol < 70102) {

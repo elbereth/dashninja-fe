@@ -28,7 +28,8 @@ along with Dash Ninja.  If not, see <http://www.gnu.org/licenses/>.
     <link href="/static/bootstrap-3.3.7/css/bootstrap.min.css" rel="stylesheet">
     <link href="/static/dashninja-template-2.0.css" rel="stylesheet">
     <link href="/static/datatables/datatables.min.css" rel="stylesheet">
-    <link href="/static/font-awesome-4.7.0/css/font-awesome.min.css" rel="stylesheet">
+    <link href="/static/fontawesome-free-5.1.0-web/css/all.css" rel="stylesheet">
+    <link href="/static/fontawesome-free-5.1.0-web/css/v4-shims.css" rel="stylesheet">
 
     <!-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries -->
     <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
@@ -99,7 +100,7 @@ along with Dash Ninja.  If not, see <http://www.gnu.org/licenses/>.
                           Dash Ninja info
                       </div>
                       <div class="panel-body">
-                          By <a class="badge badge-primary" href="https://keybase.io/elbereth/">elberethzone</a> / Time <span class="label label-info">GMT/UTC</span> / HTML <span class="label label-info">2.5.0</span> / JavaScript <span class="label label-danger" id="dashninjajsversion">required</span>
+                          By <a class="badge badge-primary" href="https://keybase.io/elbereth/">elberethzone</a> / Time <span class="label label-info">GMT/UTC</span> / HTML <span class="label label-info">2.5.1</span> / JavaScript <span class="label label-danger" id="dashninjajsversion">required</span>
                       </div>
                       <div class="panel-footer">
                           <span class="pull-left">Donations:</span>
@@ -111,7 +112,7 @@ along with Dash Ninja.  If not, see <http://www.gnu.org/licenses/>.
           </div>
           <div class="row">
         <h2>Global Statistics</h2>
-        <p>Total supply for last 24h: <span id="globalsupplyamount" style="font-weight: bold;">????.?????? DASH</span> (<span id="globalmnamount" style="font-weight: bold;">????.?????? DASH</span> for masternodes, <span id="globalpayed" style="font-weight: bold;">???%</span> blocks payed, <span id="globalcorrectlypayed" style="font-weight: bold;">???%</span> of total blocks payed correctly [<span id="globalcurrentmnratio">??</span>% and latest protocol version]).</p>
+        <p>Total supply for last 24h: <span id="globalsupplyamount" style="font-weight: bold;">????.?????? DASH</span> (<span id="globalmnamount" style="font-weight: bold;">????.?????? DASH</span> for masternodes, <span id="globalpayed" style="font-weight: bold;">???%</span> blocks payed, <span id="globalcorrectlypayed" style="font-weight: bold;">???%</span> of total blocks payed correctly [<span id="globalcurrentmnratio">??</span>% and latest protocol/block version]).</p>
           </div>
           <div class="row">
               <h2 id="perversion">Per Version Statistics (last 24h)</h2>
@@ -119,15 +120,13 @@ along with Dash Ninja.  If not, see <http://www.gnu.org/licenses/>.
 <table id="perversiontable" class="table table-striped table-condensed table-responsive text-nowrap">
  <thead>
   <tr>
-    <th>Version</th>
+    <th>Block<br>Version</th>
     <th>Blocks</th>
     <th>Amount</th>
     <th>Paid blocks</th>
     <th>All blocks</th>
     <th>Paid blocks (Incorrect ratio)</th>
     <th>Paid blocks (Correct ratio)</th>
-    <th>Population</th>
-    <th>Est.Earnings/MN/Day</th>
   </tr>
  </thead>
  <tbody>
@@ -180,7 +179,7 @@ along with Dash Ninja.  If not, see <http://www.gnu.org/licenses/>.
     <th>Total Supply</th>
     <th>MN Payment</th>
     <th>MN Payment Ratio</th>
-    <th>Payed To Current Protocol</th>
+    <th>Payed to latest version</th>
     <th>Payed Correctly</th>
   </tr>
  </thead>
@@ -223,12 +222,13 @@ along with Dash Ninja.  If not, see <http://www.gnu.org/licenses/>.
 </div>
 <div id="footer">
   <div class="container">
-      <p style="font-size:small;" align=right>Brought to you by <a href="https://www.dash.org/forum/members/elbereth.175/">elberethzone</a>. If this page is useful to you, spare some coin: <a href="http://chainz.cryptoid.info/dash/address.dws?XkfkHqMnhvQovo7kXQjvnNiFnQhRNZYCsz.htm">XkfkHqMnhvQovo7kXQjvnNiFnQhRNZYCsz</a><br>Contact me securely via <a href="https://keybase.io/elbereth">Keybase</a>. Check source (<a href="/LICENSE">GPLv3</a>) on: <a href="https://github.com/elbereth/dashninja-fe">GitHub</a>.</p>
+      <p style="font-size:small;" align=right>Brought to you by <a href="https://www.dash.org/forum/members/elbereth.175/">elberethzone</a>. If this page is useful to you, spare some coin: <a href="http://chainz.cryptoid.info/dash/address.dws?XkfkHqMnhvQovo7kXQjvnNiFnQhRNZYCsz.htm">XkfkHqMnhvQovo7kXQjvnNiFnQhRNZYCsz</a><br>Contact me securely via <a href="https://keybase.io/elbereth">Keybase</a>. Check source (<a href="/LICENSE">GPLv3</a>) on: <a href="https://github.com/elbereth/dashninja-fe">GitHub</a>.<br>
+          Special thanks to <a href="https://www.jetbrains.com/">JetBrains</a>.</p>
   </div>
 </div>
       </div>
   </div>
-    <script src="/static/jquery-3.2.1.min.js"></script>
+    <script src="/static/jquery-3.3.1.min.js"></script>
     <script src="/static/bootstrap-3.3.7/js/bootstrap.min.js"></script>
     <script src="/static/highcharts.js"></script>
     <script src="/static/highcharts-more.js"></script>

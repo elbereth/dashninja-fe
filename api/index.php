@@ -409,7 +409,8 @@ $app->get('/api/blocks', function() use ($app,&$mysqli) {
             $perversion[$block['BlockMNProtocol']]['BlocksPayedIncorrectRatio']++;
             $correctpayment = false;
           }
-          if ($block['BlockMNProtocol'] == $maxprotocol) {
+          //if ($block['BlockMNProtocol'] == $maxprotocol) {
+          if ($block['BlockVersion'] == 0x20000004) {
             $perminer[$minerkey]['BlocksPayedToCurrentProtocol'] += $block['BlockMNPayed'];
             if ($correctpayment) {
               $perminer[$minerkey]['BlocksPayedCorrectly']++;

@@ -10,6 +10,8 @@ It contains:
 
 Feel free to donate to : XkfkHqMnhvQovo7kXQjvnNiFnQhRNZYCsz
 
+Special thanks to : [Jetbrains](https://www.jetbrains.com)
+
 ## Requirement:
 * You will need a running website, official at https://dashninja.pl uses nginx
 
