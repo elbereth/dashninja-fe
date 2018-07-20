@@ -20,7 +20,7 @@
 // Dash Ninja Front-End (dashninja-fe) - Masternode List (v2)
 // By elberethzone / https://www.dash.org/forum/members/elbereth.175/
 
-var dashninjaversion = '2.5.6';
+var dashninjaversion = '2.5.7';
 var tableLocalNodes = null;
 var tableBlockConsensus = null;
 var tableMNList = null;
@@ -29,7 +29,7 @@ var dashversiondefault = "0.12.3.2";
 var dashversion = dashversiondefault;
 var dashversioncheck = dashversion;
 var dashversionsemaphore = false;
-var sentinelversiondefault = "1.1.0";
+var sentinelversiondefault = "1.2.0";
 var sentinelversion = sentinelversiondefault;
 var dashmaxprotocol = 0;
 
@@ -809,8 +809,8 @@ $(document).ready(function() {
             if ( versioninfo == "Unknown" ) {
                 color = 'active';
             }
-            else if ( ( versioninfo.substring(0,5) == "0.10." ) || ( versioninfo.substring(0,7) == "0.11." ) ) {
-                color = 'danger';
+            else if ( versioninfo.substring(0,8) == "0.12.3.1"  ) {
+                color = 'warning';
             }
             else if ( versioninfo == dashversioncheck ) {
                 color = 'success';
@@ -820,7 +820,7 @@ $(document).ready(function() {
             }
             $('td',row).eq(6).removeClass("danger").removeClass("success").removeClass("warning").removeClass("active").addClass(color);
             var curprotocol = parseInt(data.MasternodeProtocol);
-            if ( curprotocol < 70206 ) {
+            if ( curprotocol < 70208 ) {
                 color = 'danger';
             }
             else if ( curprotocol == dashmaxprotocol ) {
