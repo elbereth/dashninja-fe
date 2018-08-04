@@ -19,7 +19,7 @@
 
  */
 
-define("DASHNINJA_CRONVERSION","2");
+define("DASHNINJA_CRONVERSION","3");
 
 // Load configuration and connect to DB
 require_once('libs/db.inc.php');
@@ -127,12 +127,20 @@ function generate_masternodeslistfull_json_files($mysqli, $testnet = 0) {
 
     xecho("--> Retrieve masternodes list: ");
 
-    $nodes = dmn_masternodes2_get($mysqli, $testnet, $protocol, array(), array(), array());
+    $cachevalid = false;
+    $nodes = dmn_masternodes2_get($mysqli, $testnet, $protocol, array(), array(), array(), $cachevalid, false);
     if (!is_array($nodes)) {
         echo "Failed!\n";
         die2(1,DMN_CRON_MNFL_SEMAPHORE);
     }
-    echo "OK (".count($nodes).")\n";
+    echo "OK";
+    if ($cachevalid) {
+        echo " [CACHED] ";
+    }
+    else {
+        echo " [DATABASE] ";
+    }
+    echo "(".count($nodes).")\n";
 
     // Generate the final list of IP:port (resulting from the query)
     xecho("--> Generating IP and pubkey list: ");
@@ -172,7 +180,8 @@ function generate_masternodeslistfull_json_files($mysqli, $testnet = 0) {
 
     // Portcheck info
     xecho("--> Retrieving portcheck info: ");
-    $portcheck = dmn_masternodes_portcheck_get($mysqli, $mnipstrue, $testnet);
+    $cachevalid = false;
+    $portcheck = dmn_masternodes_portcheck_get($mysqli, $mnipstrue, $testnet,$cachevalid, false);
     if ($portcheck === false) {
         echo "Failed!\n";
         die2(1,DMN_CRON_MNFL_SEMAPHORE);
@@ -192,11 +201,19 @@ function generate_masternodeslistfull_json_files($mysqli, $testnet = 0) {
             $nodes[$key]['Portcheck'] = false;
         }
     }
-    echo "OK (".count($portcheck)." IP:ports)\n";
+    echo "OK";
+    if ($cachevalid) {
+        echo " [CACHED] ";
+    }
+    else {
+        echo " [DATABASE] ";
+    }
+    echo "(".count($portcheck)." IP:ports)\n";
 
     // Balance info
     xecho("--> Retrieving balance info: ");
-    $balances = dmn_masternodes_balance_get($mysqli, $mnpubkeystrue, $testnet);
+    $cachevalid = false;
+    $balances = dmn_masternodes_balance_get($mysqli, $mnpubkeystrue, $testnet, $cachevalid,false);
     if ($balances === false) {
         echo "Failed!\n";
         die2(1,DMN_CRON_MNFL_SEMAPHORE);
@@ -212,7 +229,14 @@ function generate_masternodeslistfull_json_files($mysqli, $testnet = 0) {
             }
         }
     }
-    echo "OK (".count($balances)." entries)\n";
+    echo "OK";
+    if ($cachevalid) {
+        echo " [CACHED] ";
+    }
+    else {
+        echo " [DATABASE] ";
+    }
+    echo "(".count($balances)." entries)\n";
 
     $data = array('status' => 'OK',
         'data' => array('masternodes' => $nodes,

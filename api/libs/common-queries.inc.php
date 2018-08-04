@@ -191,7 +191,7 @@ EOT;
 }
 
 // Function to retrieve the masternode list
-function dmn_masternodes2_get($mysqli, $testnet = 0, $protocol = 0, $mnpubkeys = array(), $mnips = array(), $mnvins = array()) {
+function dmn_masternodes2_get($mysqli, $testnet = 0, $protocol = 0, $mnpubkeys = array(), $mnips = array(), $mnvins = array(), &$cachevalid = false, $usecache = true) {
 
     $sqlprotocol = sprintf("%d",$protocol);
     $sqltestnet = sprintf("%d",$testnet);
@@ -199,7 +199,7 @@ function dmn_masternodes2_get($mysqli, $testnet = 0, $protocol = 0, $mnpubkeys =
     $cacheserial = sha1(serialize($mnpubkeys).serialize($mnips).serialize($mnvins));
     $cachefnam = CACHEFOLDER.sprintf("dashninja_masternodes2_get_%d_%d_%d_%d_%d_%s",$testnet,$protocol,count($mnpubkeys),count($mnips),count($mnvins),$cacheserial);
     $cachefnamupdate = $cachefnam.".update";
-    $cachevalid = (is_readable($cachefnam) && (((filemtime($cachefnam)+300)>=time()) || file_exists($cachefnamupdate)));
+    $cachevalid = $usecache && (is_readable($cachefnam) && (((filemtime($cachefnam)+300)>=time()) || file_exists($cachefnamupdate)));
     if ($cachevalid) {
         $nodes = unserialize(file_get_contents($cachefnam));
     }
@@ -264,11 +264,7 @@ SELECT
     UnlistedCount,
     cimlp.MNLastPaidBlock MasternodeLastPaidBlockHeight,
     cib.BlockTime MasternodeLastPaidBlockTime,
-    cib.BlockMNValue MasternodeLastPaidBlockAmount,
-    cim.MasternodeLastPaidBlock MasternodeLastPaidBlock,
-    cim.MasternodeDaemonVersion MasternodeDaemonVersion,
-    cim.MasternodeSentinelVersion MasternodeSentinelVersion,
-    cim.MasternodeSentinelState MasternodeSentinelState
+    cib.BlockMNValue MasternodeLastPaidBlockAmount
 FROM
     (cmd_info_masternode2 cim,
     cmd_info_masternode_active cima)
@@ -433,13 +429,13 @@ function dmn_masternodes_votes_get($mysqli, $mnips = array(), $testnet) {
 }
 
 // Function to retrieve the portcheck info
-function dmn_masternodes_portcheck_get($mysqli, $mnkeys, $testnet = 0) {
+function dmn_masternodes_portcheck_get($mysqli, $mnkeys, $testnet = 0, &$cachevalid = false, $usecache = true) {
 
 //    $cacheserial = sha1(serialize($mnkeys));
 //    $cachefnam = CACHEFOLDER.sprintf("dashninja_masternodes_portcheck_get_%d_%d_%s",$testnet,count($mnkeys),$cacheserial);
     $cachefnam = CACHEFOLDER.sprintf("dashninja_masternodes_portcheck_get_%d",$testnet);
     $cachefnamupdate = $cachefnam.".update";
-    $cachevalid = (is_readable($cachefnam) && (((filemtime($cachefnam)+300)>=time()) || file_exists($cachefnamupdate)));
+    $cachevalid = $usecache && (is_readable($cachefnam) && (((filemtime($cachefnam)+300)>=time()) || file_exists($cachefnamupdate)));
     if ($cachevalid) {
         $portcheck = unserialize(file_get_contents($cachefnam));
     }
@@ -574,15 +570,16 @@ function dmn_masternodes_donations_get($mysqli, $testnet = 0) {
 }
 
 // Function to retrieve the balance info
-function dmn_masternodes_balance_get($mysqli, $mnkeys, $testnet = 0) {
+function dmn_masternodes_balance_get($mysqli, $mnkeys, $testnet = 0, &$cachevalid = false, $usecache = true) {
 
     // Only add a selection is there is less than 100 keys, it will just make the query slower and not use the cache otherwise
     if (count($mnkeys) > 100) {
         $mnkeys = array();
     }
+    
     $cacheserial = sha1(serialize($mnkeys));
     $cachefnam = CACHEFOLDER.sprintf("dashninja_masternodes_balance_get_%d_%d_%s",$testnet,count($mnkeys),$cacheserial);
-    $cachevalid = (is_readable($cachefnam) && ((filemtime($cachefnam)+300)>=time()));
+    $cachevalid = $usecache && (is_readable($cachefnam) && ((filemtime($cachefnam)+300)>=time()));
     if ($cachevalid) {
         $balances = unserialize(file_get_contents($cachefnam));
     }
