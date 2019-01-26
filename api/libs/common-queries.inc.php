@@ -35,7 +35,7 @@ function dmn_masternodes_get($mysqli, $testnet = 0, $protocol = 0, $mnpubkeys = 
     $cacheserial = sha1(serialize($mnpubkeys).serialize($mnips));
     $cachefnam = CACHEFOLDER.sprintf("dashninja_masternodes_get_%d_%d_%d_%d_%d_%s",$testnet,$protocol,count($mnpubkeys),count($mnips),$lastpaidnum,$cacheserial);
     $cachevalid = (is_readable($cachefnam) && ((filemtime($cachefnam)+300)>=time()));
-    if ($cachevalid) {
+    if (DMN_USE_CACHE && $cachevalid) {
         $nodes = unserialize(file_get_contents($cachefnam));
     }
     else {
@@ -191,7 +191,7 @@ EOT;
 }
 
 // Function to retrieve the masternode list
-function dmn_masternodes2_get($mysqli, $testnet = 0, $protocol = 0, $mnpubkeys = array(), $mnips = array(), $mnvins = array(), &$cachevalid = false, $usecache = true) {
+function dmn_masternodes2_get($mysqli, $testnet = 0, $protocol = 0, $mnpubkeys = array(), $mnips = array(), $mnvins = array()) {
 
     $sqlprotocol = sprintf("%d",$protocol);
     $sqltestnet = sprintf("%d",$testnet);
@@ -199,8 +199,8 @@ function dmn_masternodes2_get($mysqli, $testnet = 0, $protocol = 0, $mnpubkeys =
     $cacheserial = sha1(serialize($mnpubkeys).serialize($mnips).serialize($mnvins));
     $cachefnam = CACHEFOLDER.sprintf("dashninja_masternodes2_get_%d_%d_%d_%d_%d_%s",$testnet,$protocol,count($mnpubkeys),count($mnips),count($mnvins),$cacheserial);
     $cachefnamupdate = $cachefnam.".update";
-    $cachevalid = $usecache && (is_readable($cachefnam) && (((filemtime($cachefnam)+300)>=time()) || file_exists($cachefnamupdate)));
-    if ($cachevalid) {
+    $cachevalid = (is_readable($cachefnam) && (((filemtime($cachefnam)+300)>=time()) || file_exists($cachefnamupdate)));
+    if (DMN_USE_CACHE && $cachevalid) {
         $nodes = unserialize(file_get_contents($cachefnam));
     }
     else {
@@ -264,7 +264,11 @@ SELECT
     UnlistedCount,
     cimlp.MNLastPaidBlock MasternodeLastPaidBlockHeight,
     cib.BlockTime MasternodeLastPaidBlockTime,
-    cib.BlockMNValue MasternodeLastPaidBlockAmount
+    cib.BlockMNValue MasternodeLastPaidBlockAmount,
+    cim.MasternodeLastPaidBlock MasternodeLastPaidBlock,
+    cim.MasternodeDaemonVersion MasternodeDaemonVersion,
+    cim.MasternodeSentinelVersion MasternodeSentinelVersion,
+    cim.MasternodeSentinelState MasternodeSentinelState
 FROM
     (cmd_info_masternode2 cim,
     cmd_info_masternode_active cima)
@@ -338,13 +342,177 @@ EOT;
     return $nodes;
 }
 
+ // Function to retrieve the deterministic masternode list
+function dmn_protx_get($mysqli, $testnet = 0, $protxhashes= array(), $protxips= array(), $collaterals= array(), &$cachevalid = false, $withstatepernode = false) {
+
+    $sqltestnet = sprintf("%d",$testnet);
+
+    $cacheserial = sha1(serialize($protxhashes).serialize($protxips).serialize($collaterals));
+    $cachefnam = CACHEFOLDER.sprintf("dashninja_protx_get_%d_%d_%d_%d_%s",$testnet,count($protxhashes),count($protxips),count($collaterals),$cacheserial);
+    $cachefnamupdate = $cachefnam.".update";
+    $cachevalid = (is_readable($cachefnam) && (((filemtime($cachefnam)+300)>=time()) || file_exists($cachefnamupdate)));
+    if (DMN_USE_CACHE && $cachevalid) {
+        $nodes = unserialize(file_get_contents($cachefnam));
+    }
+    else {
+        // Semaphore that we are currently updating
+        touch($cachefnamupdate);
+
+        // Add selection by Output-Index
+        $sqlvins = "";
+        if (count($collaterals) > 0) {
+            $sqls = '';
+            foreach($collaterals as $collateral) {
+                $mnoutput = explode('-',$collateral);
+                if (strlen($sqls)>0) {
+                    $sqls .= ' OR ';
+                }
+                $sqls .= sprintf("(cp.collateralHash = '%s' AND cp.collateralIndex = %d)",$mysqli->real_escape_string($mnoutput[0]),$mnoutput[1]);
+            }
+            $sqlvins = " AND (".$sqls.")";
+        }
+
+        $sql = <<<EOT
+SELECT
+    cp.proTxHash proTxHash,
+    cp.collateralHash collateralHash,
+    cp.collateralIndex collateralIndex,
+    cp.operatorReward operatorReward,
+    cp.confirmations confirmations,
+    UNIX_TIMESTAMP(cp.LastSeen) lastSeen, 
+    cn.NodeName nodename,
+    cps.registeredHeight registeredHeight,
+    cps.lastPaidHeight lastPaidHeight,
+    cps.PoSePenalty PoSePenalty,
+    cps.PoSeRevivedHeight PoSeRevivedHeight,
+    cps.PoSeBanHeight PoSeBanHeight,
+    cps.revocationReason revocationReason,
+    cps.keyIDOwner keyIDOwner,
+    cps.pubKeyOperator pubKeyOperator,
+    cps.keyIDVoting keyIDVoting,
+    inet6_ntoa(cps.addrIP) addrIP,
+    cps.addrPort addrPort,
+    cps.payoutAddress payoutAddress,
+    cps.operatorRewardAddress operatorRewardAddress,
+    UNIX_TIMESTAMP(cps.StateDate) StateDate
+FROM
+    cmd_protx cp
+LEFT JOIN cmd_protx_state cps USING (proTxTestNet, proTxHash)
+LEFT JOIN cmd_nodes cn USING (NodeID)
+WHERE
+    cp.proTxTestNet = $sqltestnet AND (UNIX_TIMESTAMP()-UNIX_TIMESTAMP(cp.LastSeen) <= 3600)$sqlvins
+ORDER BY proTxHash;
+EOT;
+
+        // Execute the query
+        $numnodes = 0;
+        if ($result = $mysqli->query($sql)) {
+            $nodestmp = array();
+            while($row = $result->fetch_assoc()){
+                if (!array_key_exists($row["proTxHash"],$nodestmp)) {
+                  if ((time() - intval($row["lastSeen"])) > 300) {
+                    $active = 0;
+                  }
+                  else {
+                    $active = 1;
+                  }
+                  $nodestmp[$row["proTxHash"]] = array(
+                        "proTxHash" => $row["proTxHash"],
+                        "collateralHash" => $row["collateralHash"],
+                        "collateralIndex" => intval($row["collateralIndex"]),
+                        "operatorReward" => floatval($row["operatorReward"]),
+                        "confirmations" => intval($row["confirmations"]),
+                        "listedLast5Min" => $active,
+                        "state" => array()
+                    );
+                    if ($withstatepernode) {
+                      $nodestmp[$row["proTxHash"]]["statepernode"] = array();
+                    }
+                    $numnodes++;
+                }
+                if ($withstatepernode) {
+                  $nodestmp[$row["proTxHash"]]["state"][$row["nodename"]] = array(
+                        "fromuname" => $row["nodename"],
+                        "registeredHeight" => intval($row["registeredHeight"]),
+                        "lastPaidHeight" => intval($row["lastPaidHeight"]),
+                        "PoSePenalty" => intval($row["PoSePenalty"]),
+                        "PoSeRevivedHeight" => intval($row["PoSeRevivedHeight"]),
+                        "PoSeBanHeight" => intval($row["PoSeBanHeight"]),
+                        "revocationReason" => intval($row["revocationReason"]),
+                        "keyIDOwner" => $row["keyIDOwner"],
+                        "pubKeyOperator" => $row["pubKeyOperator"],
+                        "keyIDVoting" => $row["keyIDVoting"],
+                        "addrIP" => $row["addrIP"],
+                        "addrPort" => intval($row["addrPort"]),
+                        "payoutAddress" => $row["payoutAddress"],
+                        "operatorRewardAddress" => $row["operatorRewardAddress"],
+                        "StateDate" => intval($row["StateDate"])
+                    );
+                }
+                else{
+                  if ((time() - intval($row["StateDate"])) > 300) {
+                    $activestate = 0;
+                  }
+                  else {
+                    $activestate = 1;
+                  }
+                  $inactivestate = 1 - $activestate;
+                  if ((count($nodestmp[$row["proTxHash"]]["state"]) == 0) || ($nodestmp[$row["proTxHash"]]["state"]["StateDate"] < $row["StateDate"])) {
+                    $nodestmp[$row["proTxHash"]]["state"] = array(
+                      "fromuname" => $row["nodename"],
+                      "registeredHeight" => intval($row["registeredHeight"]),
+                      "lastPaidHeight" => intval($row["lastPaidHeight"]),
+                      "PoSePenalty" => intval($row["PoSePenalty"]),
+                      "PoSeRevivedHeight" => intval($row["PoSeRevivedHeight"]),
+                      "PoSeBanHeight" => intval($row["PoSeBanHeight"]),
+                      "revocationReason" => intval($row["revocationReason"]),
+                      "keyIDOwner" => $row["keyIDOwner"],
+                      "pubKeyOperator" => $row["pubKeyOperator"],
+                      "keyIDVoting" => $row["keyIDVoting"],
+                      "addrIP" => $row["addrIP"],
+                      "addrPort" => intval($row["addrPort"]),
+                      "payoutAddress" => $row["payoutAddress"],
+                      "operatorRewardAddress" => $row["operatorRewardAddress"],
+                      "StateDate" => intval($row["StateDate"]),
+                      "activeCount" => $activestate,
+                      "inactiveCount" => $inactivestate
+                    );
+                  }
+                  else {
+                    $nodestmp[$row["proTxHash"]]["state"]["activeCount"] += $activestate;
+                    $nodestmp[$row["proTxHash"]]["state"]["inactiveCount"] += $inactivestate;
+                  }
+                }
+            }
+            $nodes = array();
+            $activecount = 0;
+            foreach($nodestmp as $node) {
+              $nodes[] = $node;
+              $activecount += $node["listedLast5Min"];
+            }
+        }
+        else {
+            $nodes = false;
+        }
+        if ($nodes !== false) {
+            file_put_contents($cachefnam . ".new", serialize($nodes), LOCK_EX);
+            rename($cachefnam . ".new", $cachefnam);
+        }
+        if (file_exists($cachefnamupdate)) {
+            unlink($cachefnamupdate);
+        }
+    }
+
+    return $nodes;
+}
+
 // Function to retrieve the masternode votes
 function dmn_masternodes_votes_get($mysqli, $mnips = array(), $testnet) {
 
     $cacheserial = sha1(serialize($mnips));
     $cachefnam = CACHEFOLDER.sprintf("dashninja_masternodes_votes_get_%d_%d_%s",$testnet,count($mnips),$cacheserial);
     $cachevalid = (is_readable($cachefnam) && ((filemtime($cachefnam)+300)>=time()));
-    if ($cachevalid) {
+    if (DMN_USE_CACHE && $cachevalid) {
         $nodes = unserialize(file_get_contents($cachefnam));
     }
     else {
@@ -429,14 +597,14 @@ function dmn_masternodes_votes_get($mysqli, $mnips = array(), $testnet) {
 }
 
 // Function to retrieve the portcheck info
-function dmn_masternodes_portcheck_get($mysqli, $mnkeys, $testnet = 0, &$cachevalid = false, $usecache = true) {
+function dmn_masternodes_portcheck_get($mysqli, $mnkeys, $testnet = 0) {
 
 //    $cacheserial = sha1(serialize($mnkeys));
 //    $cachefnam = CACHEFOLDER.sprintf("dashninja_masternodes_portcheck_get_%d_%d_%s",$testnet,count($mnkeys),$cacheserial);
     $cachefnam = CACHEFOLDER.sprintf("dashninja_masternodes_portcheck_get_%d",$testnet);
     $cachefnamupdate = $cachefnam.".update";
-    $cachevalid = $usecache && (is_readable($cachefnam) && (((filemtime($cachefnam)+300)>=time()) || file_exists($cachefnamupdate)));
-    if ($cachevalid) {
+    $cachevalid = (is_readable($cachefnam) && (((filemtime($cachefnam)+300)>=time()) || file_exists($cachefnamupdate)));
+    if (DMN_USE_CACHE && $cachevalid) {
         $portcheck = unserialize(file_get_contents($cachefnam));
     }
     else {
@@ -466,7 +634,7 @@ function dmn_masternodes_portcheck_get($mysqli, $mnkeys, $testnet = 0, &$cacheva
             while($row = $result->fetch_assoc()){
                 $portcheck[$row['NodeIP'].'-'.$row['NodePort']] = array("Result" => $row['NodePortCheck'],
                     "SubVer" => $row['NodeSubVer'],
-                    "NextCheck" => $row['NextCheck'],
+                    "NextCheck" => intval($row['NextCheck']),
                     "ErrorMessage" => $row['ErrorMessage'],
                     "Country" => $row['NodeCountry'],
                     "CountryCode" => $row['NodeCountryCode']);
@@ -491,7 +659,7 @@ function dmn_masternodes_donation_get($mysqli, $mnkeys, $testnet = 0) {
     $cacheserial = sha1(serialize($mnkeys));
     $cachefnam = CACHEFOLDER.sprintf("dashninja_masternodes_donation_get_%d_%d_%s",$testnet,count($mnkeys),$cacheserial);
     $cachevalid = (is_readable($cachefnam) && ((filemtime($cachefnam)+300)>=time()));
-    if ($cachevalid) {
+    if (DMN_USE_CACHE && $cachevalid) {
         $donation = unserialize(file_get_contents($cachefnam));
     }
     else {
@@ -537,7 +705,7 @@ function dmn_masternodes_donations_get($mysqli, $testnet = 0) {
 
     $cachefnam = CACHEFOLDER.sprintf("dashninja_masternodes_donations_get_%d",$testnet);
     $cachevalid = (is_readable($cachefnam) && ((filemtime($cachefnam)+300)>=time()));
-    if ($cachevalid) {
+    if (DMN_USE_CACHE && $cachevalid) {
         $donation = unserialize(file_get_contents($cachefnam));
     }
     else {
@@ -570,17 +738,16 @@ function dmn_masternodes_donations_get($mysqli, $testnet = 0) {
 }
 
 // Function to retrieve the balance info
-function dmn_masternodes_balance_get($mysqli, $mnkeys, $testnet = 0, &$cachevalid = false, $usecache = true) {
+function dmn_masternodes_balance_get($mysqli, $mnkeys, $testnet = 0) {
 
     // Only add a selection is there is less than 100 keys, it will just make the query slower and not use the cache otherwise
     if (count($mnkeys) > 100) {
         $mnkeys = array();
     }
-    
     $cacheserial = sha1(serialize($mnkeys));
     $cachefnam = CACHEFOLDER.sprintf("dashninja_masternodes_balance_get_%d_%d_%s",$testnet,count($mnkeys),$cacheserial);
-    $cachevalid = $usecache && (is_readable($cachefnam) && ((filemtime($cachefnam)+300)>=time()));
-    if ($cachevalid) {
+    $cachevalid = (is_readable($cachefnam) && ((filemtime($cachefnam)+300)>=time()));
+    if (DMN_USE_CACHE && $cachevalid) {
         $balances = unserialize(file_get_contents($cachefnam));
     }
     else {
@@ -625,7 +792,7 @@ function dmn_masternodes_exstatus_get($mysqli, $mnkeys, $testnet = 0) {
     $cacheserial = sha1(serialize($mnkeys));
     $cachefnam = CACHEFOLDER.sprintf("dashninja_masternodes_exstatus_get_%d_%d_%s",$testnet,count($mnkeys),$cacheserial);
     $cachevalid = (is_readable($cachefnam) && ((filemtime($cachefnam)+120)>=time()));
-    if ($cachevalid) {
+    if (DMN_USE_CACHE && $cachevalid) {
         $exstatus = unserialize(file_get_contents($cachefnam));
     }
     else {
@@ -674,7 +841,7 @@ function dmn_masternodes_count($mysqli, $testnet, &$totalmncount, &$uniquemnips)
     $cachefnam = CACHEFOLDER.sprintf("dashninja_protocols_%d",$testnet);
     $cachevalid = (is_readable($cachefnam) && ((filemtime($cachefnam)+300)>=time()));
     $protocols = array();
-    if ($cachevalid) {
+    if (DMN_USE_CACHE && $cachevalid) {
         $protocols = unserialize(file_get_contents($cachefnam));
     }
     else {

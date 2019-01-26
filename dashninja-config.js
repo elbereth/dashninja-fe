@@ -46,6 +46,9 @@ var dashninjamndetail = [[["/mndetails.html?mnpubkey=%%a%%","Dash Ninja Masterno
 var dashninjamndetailvin = [[["/mndetails.html?mnoutput=%%a%%","Dash Ninja Masternode Detail"]],
                             [["/mndetails.html?mnoutput=%%a%%","Dash Ninja Testnet Masternode Detail"]]];
 
+var dashninjamndetailprotx = [[["/mndetails.html?protxhash=%%a%%","Dash Ninja Masternode Detail"]],
+                              [["/mndetails.html?protxhash=%%a%%","Dash Ninja Testnet Masternode Detail"]]];
+
 // ["https://explorer.dashninja.pl/address/%%a%%","elberethzone's Dash Blockchain Explorer"],
 var dashninjaaddressexplorer = [[["https://chainz.cryptoid.info/dash/address.dws?%%a%%.htm","cryptoID Dash Blockchain Explorer"]],
                                 [["https://test.explorer.dashninja.pl/address/%%a%%","Dash Ninja Testnet Blockchain Explorer"],

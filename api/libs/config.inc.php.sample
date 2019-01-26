@@ -36,6 +36,10 @@ DEFINE('DMN_CRON_GOVL_SEMAPHORE','/var/run/dash-www-cron-govl.pid');
 DEFINE('DMN_CRON_GOPR_SEMAPHORE','/var/run/dash-www-cron-gopr.pid');
 DEFINE('DMN_CRON_GOTR_SEMAPHORE','/var/run/dash-www-cron-gotr.pid');
 DEFINE('DMN_CRON_BKSB_SEMAPHORE','/var/run/dash-www-cron-bksb.pid');
+DEFINE('DMN_CRON_PROTX_SEMAPHORE','/var/run/dash-www-cron-protx.pid');
+
+// Global CACHE kill switch (DO NOT SET TO FALSE IN PRODUCTION)
+DEFINE('DMN_USE_CACHE',true);
 
 // Indicate here all MySQL configuration to connect to Dash Ninja Database
 DEFINE('MYSQLUSER',"dashninja-api");

@@ -19,7 +19,7 @@
 
  */
 
-define("DASHNINJA_CRONVERSION","3");
+define("DASHNINJA_CRONVERSION","2");
 
 // Load configuration and connect to DB
 require_once('libs/db.inc.php');
@@ -127,20 +127,12 @@ function generate_masternodeslistfull_json_files($mysqli, $testnet = 0) {
 
     xecho("--> Retrieve masternodes list: ");
 
-    $cachevalid = false;
-    $nodes = dmn_masternodes2_get($mysqli, $testnet, $protocol, array(), array(), array(), $cachevalid, false);
+    $nodes = dmn_masternodes2_get($mysqli, $testnet, $protocol, array(), array(), array());
     if (!is_array($nodes)) {
         echo "Failed!\n";
         die2(1,DMN_CRON_MNFL_SEMAPHORE);
     }
-    echo "OK";
-    if ($cachevalid) {
-        echo " [CACHED] ";
-    }
-    else {
-        echo " [DATABASE] ";
-    }
-    echo "(".count($nodes).")\n";
+    echo "OK (".count($nodes).")\n";
 
     // Generate the final list of IP:port (resulting from the query)
     xecho("--> Generating IP and pubkey list: ");
@@ -180,8 +172,7 @@ function generate_masternodeslistfull_json_files($mysqli, $testnet = 0) {
 
     // Portcheck info
     xecho("--> Retrieving portcheck info: ");
-    $cachevalid = false;
-    $portcheck = dmn_masternodes_portcheck_get($mysqli, $mnipstrue, $testnet,$cachevalid, false);
+    $portcheck = dmn_masternodes_portcheck_get($mysqli, $mnipstrue, $testnet);
     if ($portcheck === false) {
         echo "Failed!\n";
         die2(1,DMN_CRON_MNFL_SEMAPHORE);
@@ -201,19 +192,11 @@ function generate_masternodeslistfull_json_files($mysqli, $testnet = 0) {
             $nodes[$key]['Portcheck'] = false;
         }
     }
-    echo "OK";
-    if ($cachevalid) {
-        echo " [CACHED] ";
-    }
-    else {
-        echo " [DATABASE] ";
-    }
-    echo "(".count($portcheck)." IP:ports)\n";
+    echo "OK (".count($portcheck)." IP:ports)\n";
 
     // Balance info
     xecho("--> Retrieving balance info: ");
-    $cachevalid = false;
-    $balances = dmn_masternodes_balance_get($mysqli, $mnpubkeystrue, $testnet, $cachevalid,false);
+    $balances = dmn_masternodes_balance_get($mysqli, $mnpubkeystrue, $testnet);
     if ($balances === false) {
         echo "Failed!\n";
         die2(1,DMN_CRON_MNFL_SEMAPHORE);
@@ -229,25 +212,45 @@ function generate_masternodeslistfull_json_files($mysqli, $testnet = 0) {
             }
         }
     }
-    echo "OK";
-    if ($cachevalid) {
-        echo " [CACHED] ";
-    }
-    else {
-        echo " [DATABASE] ";
-    }
-    echo "(".count($balances)." entries)\n";
+    echo "OK (".count($balances)." entries)\n";
 
     $data = array('status' => 'OK',
         'data' => array('masternodes' => $nodes,
             'cache' => array('time' => time(),
                 'fromcache' => true),
-            'api' => array('version' => 3,
+            'api' => array('version' => 4,
                 'compat' => 3,
                 'bev' => 'mnfl='.DASHNINJA_BEV.'.'.DASHNINJA_CRONVERSION)
         ));
 
     save_json("masternodeslistfull",$data,DMN_CRON_MNFL_SEMAPHORE,$testnet);
+
+}
+
+function generate_protxfull_json_files($mysqli, $testnet = 0) {
+
+    xecho("Generating full deterministric masternodes list:\n");
+    semaphore(DMN_CRON_PROTX_SEMAPHORE);
+
+    xecho("--> Retrieve deterministric masternodes list: ");
+
+    $nodes = dmn_protx_get($mysqli, $testnet, array(), array(), array());
+    if (!is_array($nodes)) {
+        echo "Failed!\n";
+        die2(1,DMN_CRON_PROTX_SEMAPHORE);
+    }
+    echo "OK (".count($nodes).")\n";
+
+    $data = array('status' => 'OK',
+        'data' => array('protx' => $nodes,
+            'cache' => array('time' => time(),
+                'fromcache' => true),
+            'api' => array('version' => 1,
+                'compat' => 1,
+                'bev' => 'protx='.DASHNINJA_BEV.'.'.DASHNINJA_CRONVERSION)
+        ));
+
+    save_json("protxfull",$data,DMN_CRON_PROTX_SEMAPHORE,$testnet);
 
 }
 
@@ -334,7 +337,7 @@ function generate_blocks24h_json_files($mysqli, $testnet = 0) {
                     "BlockMNPayed" => intval($row["BlockMNPayed"]),
                     "BlockPoolPubKey" => $row["BlockPoolPubKey"],
                     "PoolDescription" => $row["PoolDescription"],
-                    "BlockMNProtocol" => intval($row["BlockMNProtocol"]),
+                    "BlockMNProtocol" => $row["BlockMNProtocol"],
                     "BlockTime" => intval($row["BlockTime"]),
                     "BlockDifficulty" => floatval($row["BlockDifficulty"]),
                     "BlockMNPayeeExpected" => $row["BlockMNPayeeExpected"],
@@ -389,7 +392,6 @@ function generate_blocks24h_json_files($mysqli, $testnet = 0) {
         xecho("--> Calculating per version and per miner stats: ");
         $perversion = array();
         $perminer = array();
-        $protocoldesc = array();
         foreach($blocks as $block) {
             if (!is_null($block['PoolDescription'])) {
                 $minerkey = $block['PoolDescription'];
@@ -429,23 +431,22 @@ function generate_blocks24h_json_files($mysqli, $testnet = 0) {
                 $perminer[$minerkey]['MasternodeAmount'] += $block['BlockMNValue'];
                 $perminer[$minerkey]['BlocksPayed'] += $block['BlockMNPayed'];
             }
-            if (!array_key_exists($block['BlockMNProtocol'],$protocoldesc)) {
-                if (array_key_exists($block['BlockMNProtocol'], $protocols)) {
-                    $protocoldesc[$block['BlockMNProtocol']] = $protocols[$block['BlockMNProtocol']];
-                } else {
-                    $protocoldesc[$block['BlockMNProtocol']] = $protocols[0] ;
-                }
-            }
-            if (!array_key_exists($block['BlockVersion'],$perversion)) {
+            if (!array_key_exists($block['BlockMNProtocol'],$perversion)) {
                 if (array_key_exists($block['BlockMNProtocol'],$mninfo)) {
                     $mncount = $mninfo[$block['BlockMNProtocol']]['ActiveMasternodesCount'];
-                    $mnuniqueips = $mninfo[$block['BlockMNProtocol']]['ActiveMasternodesUniqueIPs'];
+                    $mnuniqueips = $mninfo[$block['BlockMNProtocol']]['UniqueActiveMasternodesIPs'];
                 }
                 else {
                     $mncount = 0;
                     $mnuniqueips = 0;
                 }
-                $perversion[$block['BlockVersion']] = array('BlockVersionDesc' => '0x'.dechex($block['BlockVersion']),
+                if (array_key_exists($block['BlockMNProtocol'],$protocols)) {
+                    $protocoldesc = $protocols[$block['BlockMNProtocol']];
+                }
+                else {
+                    $protocoldesc = $protocols[0];
+                }
+                $perversion[$block['BlockMNProtocol']] = array('ProtocolDesc' => $protocoldesc,
                         'Blocks' => 0,
                         'BlocksPayed' => 0,
                         'Amount' => 0.0,
@@ -455,19 +456,18 @@ function generate_blocks24h_json_files($mysqli, $testnet = 0) {
                         'MasternodesUniqueIPs' => $mnuniqueips,
                         'EstimatedMNDailyEarnings' => 0.0);
             }
-            $perversion[$block['BlockVersion']]['Blocks']++;
-            $perversion[$block['BlockVersion']]['Amount'] += $block['BlockMNValue'];
-            $perversion[$block['BlockVersion']]['BlocksPayed'] += $block['BlockMNPayed'];
+            $perversion[$block['BlockMNProtocol']]['Blocks']++;
+            $perversion[$block['BlockMNProtocol']]['Amount'] += $block['BlockMNValue'];
+            $perversion[$block['BlockMNProtocol']]['BlocksPayed'] += $block['BlockMNPayed'];
             if (round($block['BlockMNValueRatio'],3) == round($block['BlockMNValueRatioExpected'],3)) {
-                $perversion[$block['BlockVersion']]['BlocksPayedCorrectRatio']++;
+                $perversion[$block['BlockMNProtocol']]['BlocksPayedCorrectRatio']++;
                 $correctpayment = true;
             }
             elseif ($block['BlockMNValueRatio'] > 0) {
-                $perversion[$block['BlockVersion']]['BlocksPayedIncorrectRatio']++;
+                $perversion[$block['BlockMNProtocol']]['BlocksPayedIncorrectRatio']++;
                 $correctpayment = false;
             }
-            //if ($block['BlockMNProtocol'] == $maxprotocol) {
-            if ($block['BlockVersion'] == 0x20000004) {
+            if ($block['BlockMNProtocol'] == $maxprotocol) {
                 $perminer[$minerkey]['BlocksPayedToCurrentProtocol'] += $block['BlockMNPayed'];
                 if ($correctpayment) {
                     $perminer[$minerkey]['BlocksPayedCorrectly']++;
@@ -501,8 +501,7 @@ function generate_blocks24h_json_files($mysqli, $testnet = 0) {
                 'BlocksPayedToCurrentProtocol' => 0,
                 'BlocksPayedCorrectly' => 0,
                 'SupplyAmount' => 0.0,
-                'MNPaymentsAmount' => 0.0,
-                'MaxProtocol' => intval($maxprotocol));
+                'MNPaymentsAmount' => 0.0);
         foreach($perminer as $miner => $info) {
             $divamount = ($perminer[$miner]['TotalAmount']-$perminer[$miner]['BudgetAmount']-$perminer[$miner]['SuperBlockPoolAmount']);
             if ($divamount == 0) {
@@ -546,16 +545,15 @@ function generate_blocks24h_json_files($mysqli, $testnet = 0) {
                         'data' => array('blocks' => $blocks,
             'stats' => array('perversion' => $perversion,
                 'perminer' => $perminer,
-                'global' => $globalstats,
-                'protocoldesc' => $protocoldesc
+                'global' => $globalstats
             ),
             'cache' => array(
                 'time' => time(),
                 'fromcache' => true
             ),
             'api' => array(
-                'version' => 4,
-                'compat' => 4,
+                'version' => 3,
+                'compat' => 1,
                 'bev' => 'bk24h='.DASHNINJA_BEV.".".DASHNINJA_CRONVERSION
             )
         ));
@@ -787,19 +785,6 @@ function generate_governancevotelimit_json_files($mysqli, $testnet = 0) {
 
 }
 
-function cmpproposals($a, $b)
-{
-    if ($a["AbsoluteYes"] == $b["AbsoluteYes"]) {
-        if ($a["Yes"] == $b["Yes"]) {
-            return 0;
-        }
-        else {
-            return ($a["Yes"] > $b["Yes"]) ? -1 : 1;
-        }
-    }
-    return ($a["AbsoluteYes"] > $b["AbsoluteYes"]) ? -1 : 1;
-}
-
 function generate_governanceproposals_json_files($mysqli, $testnet = 0) {
 
     xecho("Generating governance proposals:\n");
@@ -866,9 +851,10 @@ function generate_governanceproposals_json_files($mysqli, $testnet = 0) {
                 "LastReported" => strtotime($row["LastReported"])
             );
             $proposalsvalid += intval($row["GovernanceObjectBlockchainValidity"]);
+            if (($row['GovernanceObjectEpochStart'] <= $nextsuperblocktimestamp) && ($row['GovernanceObjectEpochEnd'] > time())) {
+                $proposalsfunded += intval($row["GovernanceObjectCachedFunding"]);
+            }
         }
-
-        usort($proposals,"cmpproposals");
 
         $totalmninfo = 0;
         $uniquemnips = 0;
@@ -903,16 +889,6 @@ function generate_governanceproposals_json_files($mysqli, $testnet = 0) {
     else {
         echo "SQL error - " . $mysqli->errno . ": " . $mysqli->error . "\n";
         die2(301, DMN_CRON_GOPR_SEMAPHORE);
-    }
-
-    $budgetleft = $estimatedbudgetamount;
-    foreach($proposals as $proposalkey => $proposal) {
-        $proposals[$proposalkey]["FundedSB"] = (($proposal['EpochStart'] <= $nextsuperblocktimestamp) && ($proposal['EpochEnd'] > time()) && ($proposal["EpochEnd"] >= $nextsuperblocktimestamp)
-            && ($proposal["PaymentAmount"] <= $budgetleft) && ($proposal["CachedFunding"]));
-        if ($proposals[$proposalkey]["FundedSB"]) {
-            $proposalsfunded++;
-            $budgetleft -= $proposal["PaymentAmount"];
-        }
     }
 
     $data = array('status' => 'OK',
@@ -1107,13 +1083,12 @@ function generate_blockssuperblocks_json_files($mysqli, $testnet = 0) {
 
 }
 
-
-
 xecho('DASH Ninja Front-End JSON Generator cron v'.DASHNINJA_BEV.'.'.DASHNINJA_CRONVERSION."\n");
 
 if ($argc != 3) {
     xecho("Usage: ".$argv[0]." main|testnet <command>\n");
     xecho("Command can be: masternodeslistfull = Generate the full masternodes list in data folder\n");
+    xecho("                protxfull = Generate the full deterministic masternodes list in data folder\n");
     xecho("                blocks24h = Generate the full last 24h blocks list in data folder\n");
     xecho("                nodesstatus = Generate monitoring nodes status in data folder\n");
     xecho("                blocksconsensus = Generate block consensus in data folder\n");
@@ -1135,6 +1110,9 @@ else {
 
 if ($argv[2] == "masternodeslistfull") {
     generate_masternodeslistfull_json_files($mysqli, $testnet);
+}
+elseif ($argv[2] == "protxfull") {
+    generate_protxfull_json_files($mysqli, $testnet);
 }
 elseif ($argv[2] == "blocks24h") {
     generate_blocks24h_json_files($mysqli, $testnet);
