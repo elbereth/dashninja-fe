@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<!--
+This file is part of Dash Ninja.
+https://github.com/elbereth/dashninja-fe
+
+Dash Ninja is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+Dash Ninja is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with Dash Ninja.  If not, see <http://www.gnu.org/licenses/>.
+-->
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>DASH Ninja - Deterministic Masternodes Monitoring</title>
+
+    <link rel="icon" href="/static/dashninja-favicon.ico" />
+    <link rel="icon" type="image/png" href="/static/dashninja-favicon.png" />
+    <link href="/static/bootstrap-3.3.7/css/bootstrap.min.css" rel="stylesheet">
+    <link href="/static/dashninja-template-2.0.css" rel="stylesheet">
+    <link href="/static/datatables/datatables.min.css" rel="stylesheet">
+    <link href="/static/font-awesome-4.7.0/css/font-awesome.min.css" rel="stylesheet">
+
+    <!-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries -->
+    <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
+    <!--[if lt IE 9]>
+    <script src="/static/html5shiv.min.js"></script>
+    <script src="/static/respond.min.js"></script>
+    <![endif]-->
+
+</head>
+<body>
+<div id="wrapper">
+    <nav class="navbar navbar-default navbar-static-top" role="navigation" style="margin-bottom: 0">
+        <div class="navbar-header">
+            <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
+                <span class="sr-only">Toggle navigation</span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+            </button>
+            <a class="navbar-brand" href="/"><img style="margin-top: -13px; border-top: 0px; border-bottom: 0px; margin-right: 10px;" src="/static/dashninja-logo48x48.png" width="48" height="48" align="left"> DASH Ninja<span id="testnettitle" style="display: none"> (TESTNET)</span></a>
+        </div>
+        <div class="collapse navbar-collapse navbar-collapse" role="navigation">
+            <ul class="nav navbar-nav navbar-right">
+                <li><a href="/blocks.html"><i class="fa fa-link fa-fw" aria-hidden="true"></i> Blockchain</a></li>
+                <li class="active"><a href="/deterministic-masternodes.html"><i class="fa fa-server fa-fw" aria-hidden="true"></i> Masternodes</a></li>
+                <li><a href="/governance.html"><i class="fa fa-balance-scale fa-fw" aria-hidden="true"></i> Governance</a></li>
+                <li><a name="menuitemexplorer" href="https://explorer.dashninja.pl"><i class="fa fa-search fa-fw" aria-hidden="true"></i> Explorer</a></li>
+                <li class="dropdown">
+                    <a href="#" class="dropdown-toggle" data-toggle="dropdown"><i class="fa fa-wrench fa-fw" aria-hidden="true"></i> Other Tools <span class="caret"></span></a>
+                    <ul class="dropdown-menu" role="menu">
+                        <li class="dropdown-header">Official Pages</li>
+                        <li><a href="http://www.dash.org/">Dash Homepage</a></li>
+                        <li><a href="https://github.com/dashpay/dash">Dash Github Sources</a></li>
+                        <li><a href="https://www.dash.org/downloads/">Dash Binaries</a></li>
+                        <li class="divider"></li>
+                        <li class="dropdown-header">Forums / Wiki</li>
+                        <li><a href="https://dashpay.atlassian.net/wiki/">Official Dash Wiki</a></li>
+                        <li><a href="https://dash.org/forum">Official Dash Forum</a></li>
+                        <li><a href="https://bitcointalk.org/index.php?topic=421615">BitcoinTalk (BTC) - Dash ANN</a></li>
+                    </ul>
+                </li>
+            </ul>
+        </div>
+        <!--/.nav-collapse -->
+        <div class="navbar-default sidebar" role="navigation">
+            <div class="nav-sidebar sidebar-nav">
+                <ul class="nav" id="side-menu">
+                    <li><a href="#">Masternodes Statistics</a></li>
+                    <li><a href="#daemonmonitoring">Daemon Monitoring</a></li>
+                    <li><a href="#payeeconsensus">Masternode voting consensus</a></li>
+                    <li><a href="#mnlistdetail">Masternodes List</a></li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div id="page-wrapper">
+        <div class="row">
+            <div class="col-lg-12">
+                <h1 class="page-header"><i class="fa fa-server" aria-hidden="true"></i> Deterministic Masternodes Monitoring <span class="badge badge-secondary">Links: <a href="/masternodes.html"><i class="fa fa-link"></i></a><span name="dashninjatordisplay" style="display: none;"> - <a name="dashninjatorurl" href="#">Tor</a></span><span name="dashninjai2pdisplay" style="display: none;"> - <a name="dashninjai2purl" href="#">I2P</a></span></span> <span class="label label-danger" id="testnetalert" style="display: none">THIS IS TESTNET!</span></h1>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-lg-4 col-md-4">
+                <div class="panel panel-info">
+                    <div class="panel-heading">
+                        Dash Ninja info
+                    </div>
+                    <div class="panel-body">
+                        By <a class="badge badge-primary" href="https://keybase.io/elbereth/">elberethzone</a> / Time <span class="label label-info">GMT/UTC</span> / HTML <span class="label label-info">0.2.0</span> / JavaScript <span class="label label-danger" id="dashninjajsversion">required</span>
+                    </div>
+                    <div class="panel-footer">
+                        <span class="pull-left">Donations:</span>
+                        <span class="pull-right"><a href="http://chainz.cryptoid.info/dash/address.dws?XkfkHqMnhvQovo7kXQjvnNiFnQhRNZYCsz.htm">XkfkHqMnhvQovo7kXQjvnNiFnQhRNZYCsz</a></span>
+                        <div class="clearfix"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-4 col-md-4">
+                <div class="panel panel-primary">
+                    <div class="panel-heading">
+                        Actual masternode version
+                    </div>
+                    <div class="panel-body">
+                        dashd v<span id="currentdashversion" style="font-weight: bold">?.?.?.?</span> / Sentinel v<span id="currentsentinelversion" style="font-weight: bold">?.?.?</span>
+                    </div>
+                    <a href="https://dashpay.atlassian.net/wiki/spaces/DOC/pages/123961419/Updating+to+12.2+-+Masternodes">
+                        <div class="panel-footer">
+                            <span class="pull-left">How to update</span>
+                            <span class="pull-right"><i class="fa fa-arrow-circle-right"></i></span>
+                            <div class="clearfix"></div>
+                        </div>
+                    </a>
+                </div>
+            </div>
+
+            <div class="col-lg-4 col-md-4">
+                <div id="nextvotepanel" class="panel panel-info">
+                    <div class="panel-heading">
+                        Governance proposals vote deadline
+                    </div>
+                    <div class="panel-body">
+                        <span id="nextvotelimithr" style="font-weight: bold">???</span>
+                    </div>
+                    <a href="/governance.html">
+                        <div class="panel-footer">
+                            <span class="pull-left">Check governance proposals</span>
+                            <span class="pull-right"><i class="fa fa-arrow-circle-right"></i></span>
+                            <div class="clearfix"></div>
+                        </div>
+                    </a>
+                </div>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-lg-4 col-md-4">
+                <div class="panel panel-primary">
+                    <div class="panel-heading">
+                        Masternodes Statistics
+                    </div>
+                    <div class="panel-body">
+                        <p class="lead"><span class="pull-left">Active:</span><span class="pull-right label label-success" id="mnactive">???</span></p><br>
+                        <span class="pull-left">Total:</span><span class="pull-right label label-info" id="mntotal">???</span><br>
+                        <span class="pull-left">Inactives:</span><span class="pull-right label label-warning" id="mninactive">???</span><br>
+                        <span class="pull-left">Unique IPs:</span><span class="pull-right label label-info" id="uniquemnips">???</span><br><br>
+                        An estimated daily payout per masternode version can be seen <a href="/blocks.html#perversion">here</a>.
+                    </div>
+                    <div class="panel-footer">
+                        <span class="pull-left">Last data refresh:</span>
+                        <span class="pull-right"><span id="mnlistLR">Never</span><br><span id="mnlistLRHR"></span></span>
+                        <div class="clearfix"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-8 col-md-8">
+                <div class="panel panel-primary">
+                    <div class="panel-heading">
+                        Masternodes Distribution per Reported Version (and Protocol)
+                    </div>
+                    <div class="panel-body">
+
+                      <div id="mnversions" style="min-width: 310px; height: 400px; max-width: 600px; margin: 0 auto"></div>
+                    </div>
+                </div>
+
+            </div>
+
+        </div>
+
+        <div class="row">
+            <div class="col-lg-6 col-md-6">
+                <div class="panel panel-info">
+                    <div class="panel-heading" id="daemonmonitoring">
+                        Daemon monitoring
+                    </div>
+            <table id="localnodes" class="table table-striped table-condensed table-responsive nowrap" width="100%">
+                <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Status</th>
+                    <th>Version</th>
+                    <th>Protocol</th>
+                    <th>Blocks</th>
+                    <th>Last block hash</th>
+                    <th>Connections</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr>
+                    <td colspan="7">Please wait while loading... (JavaScript needed)</td>
+                </tr>
+                </tbody>
+            </table>
+                    <div class="panel-footer">
+                        <span class="pull-left">Last data refresh:</span>
+                        <span class="pull-right"><span id="localnodesLR">Never</span><br><span id="localnodesLRHR"></span></span>
+                        <div class="clearfix"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-6 col-md-6">
+                <div class="panel panel-info">
+                    <div class="panel-heading" id="payeeconsensus">
+                        Payee Block Template history (Masternode voting consensus)
+                    </div>
+            <table id="blockconsensus" class="table table-striped table-condensed table-responsive nowrap" width="100%">
+                <thead>
+                <tr>
+                    <th>Height</th>
+                    <th>Consensus</th>
+                    <th>Majority</th>
+                    <th>Not in consensus</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr>
+                    <td colspan="4">Please wait while loading... (JavaScript needed)</td>
+                </tr>
+                </tbody>
+            </table>
+                    <div class="panel-footer">
+                        <span class="pull-left">Last data refresh:</span>
+                        <span class="pull-right"><span id="blockconsensusLR">Never</span><br><span id="blockconsensusLRHR"></span></span>
+                        <div class="clearfix"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="row">
+            <div id="masternodelistexplain" class="col-lg-12 col-md-12">
+                <div class="panel panel-info">
+                    <div class="panel-heading">
+                        Masternodes List explanations :
+                    </div>
+                    <div class="panel-body">
+                        <!-- Nav tabs -->
+                        <ul class="nav nav-tabs">
+                            <li class="active"><a href="#portchecking" data-toggle="tab">Port Checking</a>
+                            </li>
+                            <li><a href="#pubkeylinks" data-toggle="tab">Pubkey Links</a>
+                            </li>
+                            <li><a href="#status" data-toggle="tab">Status</a>
+                            </li>
+                            <li><a href="#balance" data-toggle="tab">Balance</a>
+                            </li>
+                            <li><a href="#jsonapi" data-toggle="tab">JSON API</a>
+                            </li>
+                        </ul>
+
+                        <!-- Tab panes -->
+                        <div class="tab-content">
+                            <div class="tab-pane fade in active" id="portchecking">
+                                <h4>Port Checking:</h4>
+                                <ul><li><b>Unknown</b>: New entry that will be checked as soon as possible (usually less than 15min)</li>
+                                    <li><b>Open</b>: Port was open during last check (time to next check in parenthesis, re-check after 1h)</li>
+                                    <li><b>Closed</b>: Port was closed during last check (time to next check in parenthesis, re-check after 1h) [Your node can be shown as closed but be working fine, the port scanner can be banned by your node for 24h]</li>
+                                </ul>
+                            </div>
+                            <div class="tab-pane fade" id="pubkeylinks">
+                                <h4>Pubkey Links:</h4>
+                                <div id="pubkeyurllist"></div>
+                            </div>
+                            <div class="tab-pane fade" id="status">
+                                <h4>Status:</h4>
+                                <table class="table table-striped table-condensed table-responsive text-nowrap table-bordered">
+                                    <thead>
+                                    <tr>
+                                        <th>Status</th>
+                                        <th>Meaning</th>
+                                    </tr>
+                                    </thead>
+                                    <tbody>
+                                    <tr>
+                                        <td class="success" style="text-align: center">Active (100%)</td>
+                                        <td>Masternode is listed and has status "1" (masternode list).<br>This is what you want for your masternode.</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="danger" style="text-align: center">Inactive (0%)</td>
+                                        <td>Masternode is listed but has status "0" (masternode list)<br/>Possible reasons:<br/><ul><li>Masternode is not responding (port 9999 must be open on your firewall, if you see Closed below, there is your problem)<li>The 1000 DASH were removed from the masternode start wallet<li>The masternode is getting banned (active on some but inactive on others):<br/>Try masternode start with a fresh/new local wallet (don't forget to send your 1000 DASH to that new wallet!!)<br/>This will force a new masternode pubkey (I fixed my dmn01 with that trick)<li>Make sure you have the <a href="http://dashpay.io/downloads/">latest daemon version</a></ul></td>
+                                    </tr>
+                                    <tr>
+                                        <td  class="warning" style="text-align: center">Partially Inactive/Unlisted</td>
+                                        <td>Masternode is not fully active (some, but not all, nodes see it as inactive [with "0" in masternode list] or unlisted [not in masternode list]).<br>The Percentage indicates how many nodes see it as active (the nearer to 100% the better).</td>
+                                    </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                            <div class="tab-pane fade" id="balance">
+                                <h4>Balance:</h4>
+                                <p>This is the balance of the pubkey, if more than 1000 DASH then it has a green background (there can be up to 15min delay with true balance).</p>
+                            </div>
+                            <div class="tab-pane fade" id="jsonapi">
+                                <h4>JSON API:</h4>
+                                <p>An API is available (some documentation can be found <a href="https://www.dash.org/forum/threads/dashninja-pl-dash-masternode-ninja-free-masternode-monitoring.2722/">there</a>) to retrieve the information below.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-lg-12 col-md-12">
+                <div class="panel panel-primary">
+                    <div id="mnlistdetail" class="panel-heading">
+                        Masternodes List:
+                    </div>
+                    <!-- /.panel-heading -->
+                    <div class="panel-body">
+                        <p style="font-weight: bold; text-align: right">Regexp search: <input type="text" class="global_filter" id="mnregexp"></p>
+                    </div>
+                        <table width="100%" id="mnlist" class="table table-striped table-bordered table-condensed table-responsive table-hover text-nowrap">
+                <thead>
+                <tr>
+                    <th data-priority="1"></th>
+                    <th data-priority="6">ProTx Hash</th>
+                    <th data-priority="13">Vin (Hash-Index)</th>
+                    <th data-priority="11">Pubkey</th>
+                    <th data-priority="4">IP:Port</th>
+                    <th data-priority="2">Status<br>(Active Score)</th>
+                    <th data-priority="3">Port Check<br>(Next check)</th>
+                    <th data-priority="5">Version</th>
+                    <th data-priority="10">Registered<br>Height</th>
+                    <th data-priority="7">Balance</th>
+                    <th data-priority="8">Last Paid Block</th>
+                    <th data-priority="9">PoSe<br>Penalty</th>
+                    <th data-priority="12">Operator</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr>
+                    <td colspan="12">Please wait while loading... (JavaScript needed)</td>
+                </tr>
+                </tbody>
+            </table>
+                </div>
+            </div>
+        </div>
+        <hr/>
+        <div id="footer">
+            <div class="container">
+                <p style="font-size:small;" align=right>Brought to you by <a href="https://www.dash.org/forum/members/elbereth.175/">elberethzone</a>. If this page is useful to you, spare some coin: <a href="http://chainz.cryptoid.info/dash/address.dws?XkfkHqMnhvQovo7kXQjvnNiFnQhRNZYCsz.htm">XkfkHqMnhvQovo7kXQjvnNiFnQhRNZYCsz</a><br>Contact me securely via <a href="https://keybase.io/elbereth">Keybase</a>. Check source (<a href="/LICENSE">GPLv3</a>) on: <a href="https://github.com/elbereth/dashninja-fe">GitHub</a>.</p>
+            </div>
+        </div>
+    </div>
+
+    <script src="/static/jquery-3.2.1.min.js"></script>
+    <script src="/static/popper.js"></script>
+    <script src="/static/bootstrap-3.3.7/js/bootstrap.min.js"></script>
+    <script src="/static/highcharts.js"></script>
+    <script src="/static/highcharts-more.js"></script>
+    <script src="/static/datatables/datatables.min.js"></script>
+    <script src="dashninja-config.js"></script>
+    <script src="dashninja-common.js"></script>
+    <script src="dashninja-deterministic-masternodes.js"></script>
+</body>
+</html>
+
