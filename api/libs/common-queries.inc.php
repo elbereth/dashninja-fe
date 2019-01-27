@@ -845,11 +845,13 @@ function dmn_masternodes_count($mysqli, $testnet, &$totalmncount, &$uniquemnips)
         $protocols = unserialize(file_get_contents($cachefnam));
     }
     else {
-        $sqlprotocols = sprintf("SELECT NodeProtocol FROM cmd_nodes cn, cmd_nodes_status cns WHERE cn.NodeId = cns.NodeId AND NodeTestnet = %d GROUP BY NodeProtocol",$testnet);
+        $sqlprotocols = sprintf("SELECT NodeProtocol FROM cmd_nodes cn, cmd_nodes_status cns WHERE cn.NodeId = cns.NodeId AND NodeTestnet = %d AND NodeEnabled = 1 GROUP BY NodeProtocol",$testnet);
         // Run the query
         $result = $mysqli->query($sqlprotocols);
         while ($row = $result->fetch_assoc()) {
+          if (!in_array(intval($row['NodeProtocol']),$protocols)) {
             $protocols[] = intval($row['NodeProtocol']);
+          }
         }
         file_put_contents($cachefnam,serialize($protocols),LOCK_EX);
     }
@@ -888,9 +890,9 @@ function dmn_masternodes_count($mysqli, $testnet, &$totalmncount, &$uniquemnips)
         $mninfo[$protocol]["ActiveMasternodesUniqueIPs"] = count($mninfo[$protocol]["ActiveMasternodesUniqueIPs"]);
     }
 
-    $uniquemnips = $mninfo[$maxprotocol]["ActiveMasternodesUniqueIPs"];
+//    $uniquemnips = $mninfo[$maxprotocol]["ActiveMasternodesUniqueIPs"];
 
-    $tmp = array("mninfo" => $mninfo, "uniquemnips" => $uniquemnips, "totalmncount" => $totalmncount);
+//    $tmp = array("mninfo" => $mninfo, "uniquemnips" => $uniquemnips, "totalmncount" => $totalmncount);
 //    file_put_contents($cachefnam,serialize($tmp),LOCK_EX);
 
     return $mninfo;

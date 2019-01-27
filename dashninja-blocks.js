@@ -470,10 +470,10 @@ $(document).ready(function(){
               $('td',row).eq(5).css({"background-color": "#ffcb8f"});
               $('td',row).eq(6).css({"background-color": "#ffcb8f"});
             }
-            if (data.BlockMNProtocol == 70210) {
+            if (data.BlockMNProtocol == 70213) {
               $('td',row).eq(8).css({"background-color": "#8FFF8F"});
             }
-            else if (data.BlockMNProtocol < 70102) {
+            else if (data.BlockMNProtocol < 70210) {
               $('td',row).eq(8).css({"background-color": "#FFCB8F"});
             }
             else {
