@@ -335,6 +335,7 @@ function generate_blocks24h_json_files($mysqli, $testnet = 0) {
     $sql = sprintf("SELECT BlockId, BlockHash, cib.BlockMNPayee BlockMNPayee, BlockMNPayeeDonation, BlockMNValue, BlockSupplyValue, BlockMNPayed, BlockPoolPubKey, PoolDescription, BlockMNProtocol, BlockTime, BlockDifficulty, BlockMNPayeeExpected, BlockMNValueRatioExpected, IsSuperblock, SuperBlockBudgetName, BlockDarkSendTXCount, MemPoolDarkSendTXCount, SuperBlockBudgetPayees, SuperBlockBudgetAmount, BlockVersion FROM cmd_info_blocks cib LEFT JOIN cmd_pools_pubkey cpp ON cib.BlockPoolPubKey = cpp.PoolPubKey AND cib.BlockTestNet = cpp.PoolTestNet WHERE cib.BlockTestNet = %d AND cib.BlockTime >= %d ORDER BY BlockId DESC",$testnet,$datefrom);
     $blocks = array();
     $maxprotocol = 0;
+    $maxversion = 0;
     $blockidlow = 9999999999;
     $blockidhigh = 0;
     $sqlwheretemplate = "BlockHeight = %d";
@@ -344,6 +345,9 @@ function generate_blocks24h_json_files($mysqli, $testnet = 0) {
         while($row = $result->fetch_assoc()){
             if ($row['BlockMNProtocol'] > $maxprotocol) {
                 $maxprotocol = $row['BlockMNProtocol'];
+            }
+            if ($row['BlockVersion'] > $maxversion) {
+                $maxversion = $row['BlockVersion'];
             }
             if ($row['BlockId'] > $blockidhigh) {
                 $blockidhigh = $row['BlockId'];
@@ -493,8 +497,7 @@ function generate_blocks24h_json_files($mysqli, $testnet = 0) {
                 $perversion[$block['BlockVersion']]['BlocksPayedIncorrectRatio']++;
                 $correctpayment = false;
             }
-            //if ($block['BlockMNProtocol'] == $maxprotocol) {
-            if ($block['BlockVersion'] == 0x20000004) {
+            if ($block['BlockVersion'] == $maxversion) {
                 $perminer[$minerkey]['BlocksPayedToCurrentProtocol'] += $block['BlockMNPayed'];
                 if ($correctpayment) {
                     $perminer[$minerkey]['BlocksPayedCorrectly']++;
@@ -529,7 +532,8 @@ function generate_blocks24h_json_files($mysqli, $testnet = 0) {
                 'BlocksPayedCorrectly' => 0,
                 'SupplyAmount' => 0.0,
                 'MNPaymentsAmount' => 0.0,
-                'MaxProtocol' => intval($maxprotocol));
+                'MaxProtocol' => intval($maxprotocol),
+                'MaxVersion' => intval($maxversion));
         foreach($perminer as $miner => $info) {
             $divamount = ($perminer[$miner]['TotalAmount']-$perminer[$miner]['BudgetAmount']-$perminer[$miner]['SuperBlockPoolAmount']);
             if ($divamount == 0) {
