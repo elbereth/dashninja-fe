@@ -265,6 +265,55 @@ function generate_protxfull_json_files($mysqli, $testnet = 0) {
     }
     echo "OK (".count($nodes).")\n";
 
+    if (is_array($nodes)) {
+
+      // Generate the final list of IP:port (resulting from the query)
+      $mnipstrue = array();
+      $mnpubkeystrue = array();
+      $mnvinstrue = array();
+      foreach ($nodes as $node) {
+        $tmpvin = $node["collateralHash"] . "-" . $node["collateralIndex"];
+        if (!in_array($tmpvin, $mnvinstrue)) {
+          $mnvinstrue[] = $tmpvin;
+        }
+        $tmpip = $node['state']['addrIP'] . "-" . $node['state']['addrPort'];
+        if (!in_array($tmpip, $mnipstrue)) {
+          $mnipstrue[] = $tmpip;
+        }
+        if (!in_array($node['state']['payoutAddress'], $mnpubkeystrue)) {
+          $mnpubkeystrue[] = $node['state']['payoutAddress'];
+        }
+      }
+
+      $portcheck = dmn_masternodes_portcheck_get($mysqli, $mnipstrue, $testnet);
+      if ($portcheck === false) {
+        echo "Failed (portcheck step)!\n";
+        die2(1, DMN_CRON_PROTX_SEMAPHORE);
+      } else {
+        foreach ($nodes as $key => $node) {
+          if (array_key_exists($node['state']['addrIP'] . "-" . $node['state']['addrPort'], $portcheck)) {
+            $nodes[$key]['Portcheck'] = $portcheck[$node['state']['addrIP'] . "-" . $node['state']['addrPort']];
+          } else {
+            $nodes[$key]['Portcheck'] = false;
+          }
+        }
+      }
+
+      $balances = dmn_masternodes_balance_get($mysqli, $mnpubkeystrue, $testnet);
+      if ($balances === false) {
+        echo "Failed (balance step)!\n";
+        die2(1, DMN_CRON_PROTX_SEMAPHORE);
+      } else {
+        foreach ($nodes as $key => $node) {
+          if (array_key_exists($node['state']['payoutAddress'], $balances)) {
+            $nodes[$key]['Balance'] = $balances[$node['state']['payoutAddress']];
+          } else {
+            $nodes[$key]['Balance'] = false;
+          }
+        }
+      }
+    }
+
     $data = array('status' => 'OK',
         'data' => array('protx' => $nodes,
             'cache' => array('time' => time(),
@@ -346,6 +395,11 @@ function generate_blocks24h_json_files($mysqli, $testnet = 0) {
             if ($row['BlockMNProtocol'] > $maxprotocol) {
                 $maxprotocol = $row['BlockMNProtocol'];
             }
+            // Hack... for antpool still signaling DIP3
+            if ($row['BlockVersion'] == 0x20000008) {
+              $row['BlockVersion'] = 0x20000000;
+            }
+            // End of hack...
             if ($row['BlockVersion'] > $maxversion) {
                 $maxversion = $row['BlockVersion'];
             }
