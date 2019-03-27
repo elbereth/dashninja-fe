@@ -20,12 +20,12 @@
 // Dash Ninja Front-End (dashninja-fe) - Deterministic Masternode List (ProTx)
 // By elberethzone / https://www.dash.org/forum/members/elbereth.175/
 
-var dashninjaversion = '0.2.1';
+var dashninjaversion = '0.2.3';
 var tableLocalNodes = null;
 var tableBlockConsensus = null;
 var tableMNList = null;
 var chartMNVersions = null;
-var dashversiondefault = "0.13.0.0";
+var dashversiondefault = "0.13.1.0";
 var dashversion = dashversiondefault;
 var dashversioncheck = dashversion;
 var dashversionsemaphore = false;
@@ -548,7 +548,7 @@ $(document).ready(function() {
         }
     } );
     tableMNList = $('#mnlist').dataTable( {
-        ajax: { url: "/api/protx?testnet="+dashninjatestnet+"?exstatus=1&portcheck=1&balance=1",
+        ajax: { url: "/data/protxfull-"+dashninjatestnet+".json",
                 dataSrc: 'data.protx',
             cache: true },
         lengthMenu: [ [50, 100, 250, 500, -1], [50, 100, 250, 500, "All"] ],
