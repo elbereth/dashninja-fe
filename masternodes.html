@@ -28,7 +28,8 @@ along with Dash Ninja.  If not, see <http://www.gnu.org/licenses/>.
     <link href="/static/bootstrap-3.3.7/css/bootstrap.min.css" rel="stylesheet">
     <link href="/static/dashninja-template-2.0.css" rel="stylesheet">
     <link href="/static/datatables/datatables.min.css" rel="stylesheet">
-    <link href="/static/font-awesome-4.7.0/css/font-awesome.min.css" rel="stylesheet">
+    <link href="/static/fontawesome-free-5.7.2-web/css/all.min.css" rel="stylesheet">
+    <link href="/static/fontawesome-free-5.7.2-web/css/v4-shims.min.css" rel="stylesheet">
 
     <!-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries -->
     <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
@@ -88,7 +89,7 @@ along with Dash Ninja.  If not, see <http://www.gnu.org/licenses/>.
     <div id="page-wrapper">
         <div class="row">
             <div class="col-lg-12">
-                <h1 class="page-header"><i class="fa fa-server" aria-hidden="true"></i> Masternodes Monitoring <span class="badge badge-secondary">Links: <a href="/masternodes.html"><i class="fa fa-link"></i></a><span name="dashninjatordisplay" style="display: none;"> - <a name="dashninjatorurl" href="#">Tor</a></span><span name="dashninjai2pdisplay" style="display: none;"> - <a name="dashninjai2purl" href="#">I2P</a></span></span> <span class="label label-danger" id="testnetalert" style="display: none">THIS IS TESTNET!</span></h1>
+                <h1 class="page-header"><i class="fa fa-server" aria-hidden="true"></i> Masternodes Monitoring <span class="badge badge-secondary">Links: <a href="/masternodes.html"><i class="fa fa-link"></i></a><span name="dashninjatordisplay" style="display: none;"> - <a name="dashninjatorurl" href="#">Tor</a></span><span name="dashninjai2pdisplay" style="display: none;"> - <a name="dashninjai2purl" href="#">I2P</a></span></span> <span class="label label-danger" id="testnetalert" style="display: none">THIS IS TESTNET!</span> <span class="label label-warning">Check the <a href="deterministic-masternodes.html">deterministic masternodes</a> list !</span></h1>
             </div>
         </div>
         <div class="row">
@@ -98,7 +99,7 @@ along with Dash Ninja.  If not, see <http://www.gnu.org/licenses/>.
                         Dash Ninja info
                     </div>
                     <div class="panel-body">
-                        By <a class="badge badge-primary" href="https://keybase.io/elbereth/">elberethzone</a> / Time <span class="label label-info">GMT/UTC</span> / HTML <span class="label label-info">2.5.4</span> / JavaScript <span class="label label-danger" id="dashninjajsversion">required</span>
+                        By <a class="badge badge-primary" href="https://keybase.io/elbereth/">elberethzone</a> / Time <span class="label label-info">GMT/UTC</span> / HTML <span class="label label-info">2.5.5</span> / JavaScript <span class="label label-danger" id="dashninjajsversion">required</span>
                     </div>
                     <div class="panel-footer">
                         <span class="pull-left">Donations:</span>
@@ -116,13 +117,10 @@ along with Dash Ninja.  If not, see <http://www.gnu.org/licenses/>.
                     <div class="panel-body">
                         dashd v<span id="currentdashversion" style="font-weight: bold">?.?.?.?</span> / Sentinel v<span id="currentsentinelversion" style="font-weight: bold">?.?.?</span>
                     </div>
-                    <a href="https://dashpay.atlassian.net/wiki/spaces/DOC/pages/123961419/Updating+to+12.2+-+Masternodes">
-                        <div class="panel-footer">
-                            <span class="pull-left">How to update</span>
-                            <span class="pull-right"><i class="fa fa-arrow-circle-right"></i></span>
-                            <div class="clearfix"></div>
-                        </div>
-                    </a>
+                    <div class="panel-footer">
+                        <span class="pull-left"><u><b>IMPORTANT:</b></u> <i class="fas fa-shield-alt" style="color: red"></i> <a href="https://shop.trezor.io/product/trezor-model-t?offer_id=14&aff_id=2360&source=mn12">Secure your DASH in hardware wallet</a></span>
+                        <div class="clearfix"></div>
+                    </div>
                 </div>
             </div>
 
