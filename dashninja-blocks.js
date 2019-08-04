@@ -20,7 +20,7 @@
 // Dash Ninja Front-End (dashninja-fe) - Blocks (v2)
 // By elberethzone / https://dashtalk.org/members/elbereth.175/
 
-var dashninjaversion = '2.5.10';
+var dashninjaversion = '2.5.11';
 var tableBlocks = null;
 var tablePerVersion = null;
 var tablePerMiner = null;
@@ -438,7 +438,7 @@ $(document).ready(function(){
             } }
         ],
         createdRow: function ( row, data, index ) {
-            if (data.BlockVersion == 0x20000008) {
+            if (data.BlockVersion == 0x20000010) {
                 $('td',row).eq(1).css({"background-color": "#8FFF8F"});
             }
             else {
@@ -470,10 +470,10 @@ $(document).ready(function(){
               $('td',row).eq(5).css({"background-color": "#ffcb8f"});
               $('td',row).eq(6).css({"background-color": "#ffcb8f"});
             }
-            if (data.BlockMNProtocol == 70213) {
+            if (data.BlockMNProtocol == 70214) {
               $('td',row).eq(8).css({"background-color": "#8FFF8F"});
             }
-            else if (data.BlockMNProtocol < 70210) {
+            else if (data.BlockMNProtocol < 70213) {
               $('td',row).eq(8).css({"background-color": "#FFCB8F"});
             }
             else {
