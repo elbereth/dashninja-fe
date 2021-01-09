@@ -343,14 +343,14 @@ EOT;
 }
 
  // Function to retrieve the deterministic masternode list
-function dmn_protx_get($mysqli, $testnet = 0, $protxhashes= array(), $protxips= array(), $collaterals= array(), &$cachevalid = false, $withstatepernode = false) {
+function dmn_protx_get($mysqli, $testnet = 0, $protxhashes= array(), $protxips= array(), $collaterals= array(), &$cachevalid = false, $withstatepernode = false, $bypasscache = false) {
 
     $sqltestnet = sprintf("%d",$testnet);
 
     $cacheserial = sha1(serialize($protxhashes).serialize($protxips).serialize($collaterals));
     $cachefnam = CACHEFOLDER.sprintf("dashninja_protx_get_%d_%d_%d_%d_%s",$testnet,count($protxhashes),count($protxips),count($collaterals),$cacheserial);
     $cachefnamupdate = $cachefnam.".update";
-    $cachevalid = (is_readable($cachefnam) && (((filemtime($cachefnam)+300)>=time()) || file_exists($cachefnamupdate)));
+    $cachevalid = !$bypasscache && (is_readable($cachefnam) && (((filemtime($cachefnam)+300)>=time()) || file_exists($cachefnamupdate)));
     if (DMN_USE_CACHE && $cachevalid) {
         $nodes = unserialize(file_get_contents($cachefnam));
     }
@@ -597,13 +597,13 @@ function dmn_masternodes_votes_get($mysqli, $mnips = array(), $testnet) {
 }
 
 // Function to retrieve the portcheck info
-function dmn_masternodes_portcheck_get($mysqli, $mnkeys, $testnet = 0) {
+function dmn_masternodes_portcheck_get($mysqli, $mnkeys, $testnet = 0, $bypasscache = false) {
 
 //    $cacheserial = sha1(serialize($mnkeys));
 //    $cachefnam = CACHEFOLDER.sprintf("dashninja_masternodes_portcheck_get_%d_%d_%s",$testnet,count($mnkeys),$cacheserial);
     $cachefnam = CACHEFOLDER.sprintf("dashninja_masternodes_portcheck_get_%d",$testnet);
     $cachefnamupdate = $cachefnam.".update";
-    $cachevalid = (is_readable($cachefnam) && (((filemtime($cachefnam)+300)>=time()) || file_exists($cachefnamupdate)));
+    $cachevalid = $bypasscache && (is_readable($cachefnam) && (((filemtime($cachefnam)+300)>=time()) || file_exists($cachefnamupdate)));
     if (DMN_USE_CACHE && $cachevalid) {
         $portcheck = unserialize(file_get_contents($cachefnam));
     }
@@ -738,7 +738,7 @@ function dmn_masternodes_donations_get($mysqli, $testnet = 0) {
 }
 
 // Function to retrieve the balance info
-function dmn_masternodes_balance_get($mysqli, $mnkeys, $testnet = 0) {
+function dmn_masternodes_balance_get($mysqli, $mnkeys, $testnet = 0, $bypasscache = false) {
 
     // Only add a selection is there is less than 100 keys, it will just make the query slower and not use the cache otherwise
     if (count($mnkeys) > 100) {
@@ -746,7 +746,7 @@ function dmn_masternodes_balance_get($mysqli, $mnkeys, $testnet = 0) {
     }
     $cacheserial = sha1(serialize($mnkeys));
     $cachefnam = CACHEFOLDER.sprintf("dashninja_masternodes_balance_get_%d_%d_%s",$testnet,count($mnkeys),$cacheserial);
-    $cachevalid = (is_readable($cachefnam) && ((filemtime($cachefnam)+300)>=time()));
+    $cachevalid = !$bypasscache && (is_readable($cachefnam) && ((filemtime($cachefnam)+300)>=time()));
     if (DMN_USE_CACHE && $cachevalid) {
         $balances = unserialize(file_get_contents($cachefnam));
     }

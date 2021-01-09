@@ -181,7 +181,7 @@ function generate_masternodeslistfull_json_files($mysqli, $testnet = 0) {
     // Portcheck info
     xecho("--> Retrieving portcheck info: ");
     $cachevalid = false;
-    $portcheck = dmn_masternodes_portcheck_get($mysqli, $mnipstrue, $testnet,$cachevalid, false);
+    $portcheck = dmn_masternodes_portcheck_get($mysqli, $mnipstrue, $testnet,$cachevalid, true);
     if ($portcheck === false) {
         echo "Failed!\n";
         die2(1,DMN_CRON_MNFL_SEMAPHORE);
@@ -258,7 +258,7 @@ function generate_protxfull_json_files($mysqli, $testnet = 0) {
 
     xecho("--> Retrieve deterministric masternodes list: ");
 
-    $nodes = dmn_protx_get($mysqli, $testnet, array(), array(), array());
+    $nodes = dmn_protx_get($mysqli, $testnet, array(), array(), array(),$iscache,false,true);
     if (!is_array($nodes)) {
         echo "Failed!\n";
         die2(1,DMN_CRON_PROTX_SEMAPHORE);
@@ -285,7 +285,7 @@ function generate_protxfull_json_files($mysqli, $testnet = 0) {
         }
       }
 
-      $portcheck = dmn_masternodes_portcheck_get($mysqli, $mnipstrue, $testnet);
+      $portcheck = dmn_masternodes_portcheck_get($mysqli, $mnipstrue, $testnet, true);
       if ($portcheck === false) {
         echo "Failed (portcheck step)!\n";
         die2(1, DMN_CRON_PROTX_SEMAPHORE);
@@ -299,7 +299,7 @@ function generate_protxfull_json_files($mysqli, $testnet = 0) {
         }
       }
 
-      $balances = dmn_masternodes_balance_get($mysqli, $mnpubkeystrue, $testnet);
+      $balances = dmn_masternodes_balance_get($mysqli, $mnpubkeystrue, $testnet, true);
       if ($balances === false) {
         echo "Failed (balance step)!\n";
         die2(1, DMN_CRON_PROTX_SEMAPHORE);
