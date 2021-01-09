@@ -17,6 +17,32 @@
 
  */
 
+function diffHRshort(diff) {
+
+    var s = Math.round( diff % 60 );
+    var m = Math.round( diff / 60 % 60 );
+    var h = Math.round( diff / 3600 % 24 );
+    var d = Math.round( diff / 86400 % 7 );
+    var w = Math.round( diff / 604800 );
+    var rtxt = '';
+    if (w > 0) {
+        rtxt += w+'w';
+    }
+    else if (d > 0) {
+        rtxt += d+'d';
+    }
+    else if (h > 0) {
+        rtxt += h+'h';
+    }
+    else if (m > 0) {
+        rtxt += m+'m';
+    }
+    else if (s > 0) {
+        rtxt += s+'s';
+    }
+    return rtxt.trim();
+}
+
 function diffHR(diff) {
 
   var s = Math.floor( diff % 60 );
@@ -88,6 +114,12 @@ function diffHRlong(diff) {
   }
   return rtxt.trim();
 }
+
+function deltaTimeStampHRshort(ts1,ts2) {
+    var diff = Math.abs( ts2 - ts1 );
+    return diffHRshort(diff);
+}
+
 
 function deltaTimeStampHR(ts1,ts2) {
   var diff = Math.abs( ts2 - ts1 );

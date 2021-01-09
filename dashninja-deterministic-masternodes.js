@@ -20,16 +20,16 @@
 // Dash Ninja Front-End (dashninja-fe) - Deterministic Masternode List (ProTx)
 // By elberethzone / https://www.dash.org/forum/members/elbereth.175/
 
-var dashninjaversion = '0.2.4';
+var dashninjaversion = '0.2.8';
 var tableLocalNodes = null;
 var tableBlockConsensus = null;
 var tableMNList = null;
 var chartMNVersions = null;
-var dashversiondefault = "0.13.3.0";
+var dashversiondefault = "0.16.1.1";
 var dashversion = dashversiondefault;
 var dashversioncheck = dashversion;
 var dashversionsemaphore = false;
-var sentinelversiondefault = "1.3.0";
+var sentinelversiondefault = "1.5.0";
 var sentinelversion = sentinelversiondefault;
 var dashmaxprotocol = 0;
 
@@ -233,23 +233,23 @@ $(document).ready(function() {
         $('#testnettitle').show();
         $('a[name=menuitemexplorer]').attr("href", "https://" + dashninjatestnetexplorer);
         if (typeof dashninjatestnettor !== 'undefined') {
-            $('a[name=dashninjatorurl]').attr("href", "http://"+dashninjatestnettor+"/masternodes.html");
+            $('a[name=dashninjatorurl]').attr("href", "http://"+dashninjatestnettor+"/deterministic-masternodes.html");
             $('span[name=dashninjatordisplay]').show();
         }
 
         if (typeof dashninjatestneti2p !== 'undefined') {
-            $('a[name=dashninjai2purl]').attr("href", "http://" + dashninjatestneti2p + "/masternodes.html");
+            $('a[name=dashninjai2purl]').attr("href", "http://" + dashninjatestneti2p + "/deterministic-masternodes.html");
             $('span[name=dashninjai2pdisplay]').show();
         }
     }
     else {
         if (typeof dashninjator !== 'undefined') {
-            $('a[name=dashninjatorurl]').attr("href", "http://"+dashninjator+"/masternodes.html");
+            $('a[name=dashninjatorurl]').attr("href", "http://"+dashninjator+"/deterministic-masternodes.html");
             $('span[name=dashninjatordisplay]').show();
         }
 
         if (typeof dashninjai2p !== 'undefined') {
-            $('a[name=dashninjai2purl]').attr("href", "http://" + dashninjai2p + "/masternodes.html");
+            $('a[name=dashninjai2purl]').attr("href", "http://" + dashninjai2p + "/deterministic-masternodes.html");
             $('span[name=dashninjai2pdisplay]').show();
         }
     }
@@ -669,7 +669,7 @@ $(document).ready(function() {
                     }
                     if (data.Portcheck.NextCheck < currenttimestamp()) {
                         if (txt != "Pending") {
-                            txt = txt + ' (Re-check pending)';
+                            txt = txt + ' (Re-check pending ' + deltaTimeStampHRshort(currenttimestamp(),data.Portcheck.NextCheck)+')';
                         }
                     }
                     else {
