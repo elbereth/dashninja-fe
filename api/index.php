@@ -35,14 +35,14 @@ function getipport($addr) {
 // Create and bind the DI to the application
 $app = new \Phalcon\Mvc\Micro();
 $router = $app->getRouter();
-$router->setUriSource(\Phalcon\Mvc\Router::URI_SOURCE_SERVER_REQUEST_URI);
+//$router->setUriSource(\Phalcon\Mvc\Router::URI_SOURCE_SERVER_REQUEST_URI);
 
 // *******************************************************
 // Non-Auth required
 // *******************************************************
 
 // Get API version
-$app->get('/api/version', function() {
+$app->get('/api/version', function() use (&$mysqli) {
 
   //Create a response
   $response = new Phalcon\Http\Response();
@@ -54,7 +54,8 @@ $app->get('/api/version', function() {
   $response->setJsonContent(array('status' => 'OK', 'data' => array("version" => array(
       "api" => DASHNINJA_BEV,
       "phalcon" => Phalcon\Version::get(),
-      "php" => phpversion()
+      "php" => phpversion(),
+      "sql" => $mysqli->server_info
   ))));
 
   return $response;
@@ -3262,6 +3263,7 @@ $app->notFound(function () use ($app) {
     $response->send();
 });
 
-$app->handle();
+$request = new Phalcon\Http\Request();
+$app->handle($request->getURI());
 
 ?>
