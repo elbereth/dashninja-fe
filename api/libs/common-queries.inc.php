@@ -343,20 +343,33 @@ EOT;
 }
 
  // Function to retrieve the deterministic masternode list
-function dmn_protx_get($mysqli, $testnet = 0, $protxhashes= array(), $protxips= array(), $collaterals= array(), &$cachevalid = false, $withstatepernode = false, $bypasscache = false) {
+function dmn_protx_get($mysqli, $testnet = 0, $protxhashes= array(), $protxips= array(), $collaterals= array(), &$cachevalid = false, $withstatepernode = false, $bypasscache = false, &$errmsg = array()) {
 
     $sqltestnet = sprintf("%d",$testnet);
-
+    $bypasscache = true;
     $cacheserial = sha1(serialize($protxhashes).serialize($protxips).serialize($collaterals));
     $cachefnam = CACHEFOLDER.sprintf("dashninja_protx_get_%d_%d_%d_%d_%s",$testnet,count($protxhashes),count($protxips),count($collaterals),$cacheserial);
     $cachefnamupdate = $cachefnam.".update";
-    $cachevalid = !$bypasscache && (is_readable($cachefnam) && (((filemtime($cachefnam)+300)>=time()) || file_exists($cachefnamupdate)));
+    $cachevalid = false && (!$bypasscache) && (is_readable($cachefnam) && (((filemtime($cachefnam)+300)>=time()) || file_exists($cachefnamupdate)));
     if (DMN_USE_CACHE && $cachevalid) {
         $nodes = unserialize(file_get_contents($cachefnam));
     }
     else {
         // Semaphore that we are currently updating
         touch($cachefnamupdate);
+
+        // Add selection by Protx Hash
+        $sqlprotx = "";
+        if (count($protxhashes) > 0) {
+          $sqls = '';
+          foreach($protxhashes as $protxhash) {
+            if (strlen($sqls)>0) {
+              $sqls .= ' OR ';
+            }
+            $sqls .= sprintf("(cp.proTxHash = '%s')",$mysqli->real_escape_string($protxhash));
+          }
+          $sqlprotx = " AND (".$sqls.")";
+        }
 
         // Add selection by Output-Index
         $sqlvins = "";
@@ -400,7 +413,7 @@ FROM
 LEFT JOIN cmd_protx_state cps USING (proTxTestNet, proTxHash)
 LEFT JOIN cmd_nodes cn USING (NodeID)
 WHERE
-    cp.proTxTestNet = $sqltestnet AND (UNIX_TIMESTAMP()-UNIX_TIMESTAMP(cp.LastSeen) <= 3600)$sqlvins
+    cp.proTxTestNet = $sqltestnet AND (UNIX_TIMESTAMP()-UNIX_TIMESTAMP(cp.LastSeen) <= 3600)$sqlvins$sqlprotx
 ORDER BY proTxHash;
 EOT;
 

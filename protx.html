@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<!--
+This file is part of Dash Ninja.
+https://github.com/elbereth/dashninja-fe
+
+Dash Ninja is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+Dash Ninja is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with Dash Ninja.  If not, see <http://www.gnu.org/licenses/>.
+-->
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>DASH Ninja - Deterministic Masternode Details Monitoring</title>
+
+    <link rel="icon" href="/static/dashninja-favicon.ico" />
+    <link rel="icon" type="image/png" href="/static/dashninja-favicon.png" />
+    <link href="/static/bootstrap/dist/css/bootstrap.min.css" rel="stylesheet">
+<!--    <link href="/static/dashninja-template-2.0.css" rel="stylesheet"> -->
+    <link href="/static/datatables.net-bs4/css/dataTables.bootstrap4.min.css" rel="stylesheet">
+    <link href="/static/fontawesome-free/css/all.min.css" rel="stylesheet">
+<!--    <link href="/static/fontawesome-free/css/v4-shims.min.css" rel="stylesheet"> -->
+
+    <!-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries -->
+    <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
+    <!--[if lt IE 9]>
+      <script src="/static/html5shiv.min.js"></script>
+      <script src="/static/respond.min.js"></script>
+    <![endif]-->
+
+  </head>
+  <body>
+
+
+
+  <nav class="navbar navbar-expand-lg navbar-dark bg-dark" aria-label="Navbar">
+      <div class="container-fluid">
+          <a class="navbar-brand" href="/"><img src="/static/dashninja-logo48x48.png" width="48" height="48" class="d-inline-block align-top" alt=""> DASH Ninja <span id="testnetalert" class="badge bg-danger" style="display: none;">TESTNET</span><span id="mainnetalert" class="badge bg-success">MAINNET</span></a>
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
+          <span class="navbar-toggler-icon"></span>
+      </button>
+
+      <div class="collapse navbar-collapse justify-content-md-end" id="navbar">
+          <ul class="navbar-nav">
+              <li class="nav-item"><a class="nav-link" href="/blocks.html"><i class="fa fa-link fa-fw" aria-hidden="true"></i> Blockchain</a></li>
+              <li class="nav-item"><a class="nav-link active" href="/deterministic-masternodes.html"><i class="fa fa-server fa-fw" aria-hidden="true"></i> Masternodes</a></li>
+              <li class="nav-item"><a class="nav-link" href="/governance.html"><i class="fa fa-balance-scale fa-fw" aria-hidden="true"></i> Governance</a></li>
+              <li class="nav-item"><a class="nav-link" name="menuitemexplorer" href="https://explorer.dashninja.pl"><i class="fa fa-search fa-fw" aria-hidden="true"></i> Explorer</a></li>
+              <li class="nav-item dropdown">
+                  <a class="nav-link dropdown-toggle" href="#" id="dropdown" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><i class="fa fa-wrench fa-fw" aria-hidden="true"></i> Other Tools <span class="caret"></span></a>
+                  <div class="dropdown-menu" aria-labelledby="dropdown">
+                      <h6 class="dropdown-header">Official Pages</h6>
+                      <a class="dropdown-item" href="https://www.dash.org/">Dash Homepage</a>
+                      <a class="dropdown-item" href="https://github.com/dashpay/dash">Dash Github Sources</a>
+                      <a class="dropdown-item" href="https://www.dash.org/downloads/">Dash Binaries</a>
+                      <div class="dropdown-divider"></div>
+                      <h6 class="dropdown-header">Forums / Wiki</h6>
+                      <a class="dropdown-item" href="https://dashpay.atlassian.net/wiki/">Official Dash Wiki</a>
+                      <a class="dropdown-item" href="https://dash.org/forum">Official Dash Forum</a>
+                      <a class="dropdown-item" href="https://bitcointalk.org/index.php?topic=421615">BitcoinTalk (BTC) - Dash ANN</a>
+                  </div>
+              </li>
+          </ul>
+      </div>
+      </div>
+  </nav>
+
+  <div class="container-fluid justify-content-center">
+      <div class="card m-2">
+          <div class="card-header">
+              <h1><i class="fa fa-server" aria-hidden="true"></i> Deterministic Masternode (ProTx) Detail Monitoring</h1>
+          </div>
+          <div class="card-body">
+              <p>By <a class="badge bg-primary" href="https://keybase.io/elbereth/">elberethzone</a> / Time <span class="badge bg-info">GMT/UTC</span> / HTML <span class="badge bg-info">0.1.0</span> / JavaScript <span class="badge bg-danger" id="dashninjajsversion">required</span></p>
+              <p>Donations: <a href="http://chainz.cryptoid.info/dash/address.dws?XkfkHqMnhvQovo7kXQjvnNiFnQhRNZYCsz.htm">XkfkHqMnhvQovo7kXQjvnNiFnQhRNZYCsz</a></p>
+          </div>
+          <div class="card-footer text-muted">
+              <div id="currentloading" class="spinner-border spinner-border-sm visually-hidden" role="status">
+                  <span class="visually-hidden">Loading...</span>
+              </div>
+              <span id="currentmessage">&nbsp;</span>
+          </div>
+      </div>
+  </div>
+
+  <div class="container-fluid">
+          <div class="row">
+              <div class="col">
+                  <div class="card m-2">
+                      <div class="card-header bg-secondary text-light">
+                          <h2><i class="fa fa-id-card"></i> Masternode identification<h2>
+                      </div>
+                      <div class="table-responsive">
+                      <table width="100%" id="mnid" class="table table-striped table-bordered table-condensed table-responsive table-hover">
+                          <tbody>
+                          <tr>
+                              <td><i class="fa fa-stamp"></i></td>
+                              <th>ProTx</th>
+                              <td id="mnprotx">???</td>
+                          </tr>
+                          <tr>
+                              <td><i class="fa fa-sign-out-alt"></i></td>
+                              <th>Collateral</th>
+                              <td id="mnoutput">???</td>
+                          </tr>
+                          <tr>
+                              <td><i class="fa fa-desktop"></i></td>
+                              <th>IP:Port</th>
+                              <td id="mnipport">???</td>
+                          </tr>
+                          <tr>
+                              <td><i class="fa fa-globe"></i></td>
+                              <th>Country (from IP)</th>
+                              <td id="mncountry">???</td>
+                          </tr>
+                          <tr>
+                              <td><i class="fa fa-key"></i></td>
+                              <th>Payout Address</th>
+                              <td id="mnpubkey">???</td>
+                          </tr>
+                          <tr>
+                              <td><i class="fa fa-user-cog"></i></td>
+                              <th>Operator Address</th>
+                              <td id="mnopkey">???</td>
+                          </tr>
+                          <tr>
+                              <td><i class="fa fa-power-off"></i></td>
+                              <th>Owner Address</th>
+                              <td id="mnownerkey">???</td>
+                          </tr>
+                          <tr>
+                              <td><i class="fa fa-poll"></i></td>
+                              <th>Voting Address</th>
+                              <td id="mnvotingkey">???</td>
+                          </tr>
+                          </tbody>
+                      </table>
+                      </div>
+                  </div>
+              </div>
+              <div class="col">
+                  <div class="card m-2">
+                      <div id="mnstatuscardtitle" class="card-header bg-secondary text-light">
+                              <h3><i class="fa fa-heartbeat"></i> Masternode is <span id="mnstatus">???</span></h3>
+                          </div>
+                              <table width="100%" id="mnstatus" class="table table-striped table-bordered table-condensed table-responsive table-hover">
+                                  <tbody>
+                                  <tr>
+                                      <td><i class="fa fa-stamp"></i></td>
+                                      <th>Registered height</th>
+                                      <td id="mnstatusregisteredheight">???</td>
+                                  </tr>
+                                  <tr>
+                                      <td><i class="fa fa-sign-out-alt"></i></td>
+                                      <th>Last Paid height</th>
+                                      <td id="mnstatuslastpaidheight">???</td>
+                                  </tr>
+                                  <tr>
+                                      <td><i class="fa fa-desktop"></i></td>
+                                      <th>PoSe Penalty</th>
+                                      <td id="mnstatusposepenalty">???</td>
+                                  </tr>
+                                  <tr>
+                                      <td><i class="fa fa-globe"></i></td>
+                                      <th>PoSe Ban height</th>
+                                      <td id="mnstatusposebanheight">???</td>
+                                  </tr>
+                                  <tr>
+                                      <td><i class="fa fa-key"></i></td>
+                                      <th>PoSe Revived height</th>
+                                      <td id="mnstatusposerevivedheight">???</td>
+                                  </tr>
+                                  <tr>
+                                      <td><i class="fa fa-key"></i></td>
+                                      <th>Dash Ninja Active Count</th>
+                                      <td id="mnstatusactivecount">???</td>
+                                  </tr>
+                                  </tbody>
+                              </table>
+                      <div class="card-footer">
+                          <i class="fa fa-history"></i> Last Seen: <span id="mnlastseen">???</span>
+                      </div>
+                  </div>
+              </div>
+          </div>
+          <div class="row">
+              <div class="col">
+                  <div id="mnportcheckpanel" class="card m-2">
+                      <div class="card-header text-light bg-secondary" id="mnportchecktitle">
+                          <h3><i class="fa fa-tty"></i> Port Check Status is <span id="mnportcheck">???</span></h3>
+                      </div>
+                      <div class="card-body">
+                          The Port Checker tries every hour to read the version number by contacting dashd directly. If it fails, it will continue displaying the last version number it was able to fetch (if there is an error message, the version might be wrong). Protocol is from the masternode start command, so the latest version is good.
+                      </div>
+                      <div class="table-responsive">
+                          <table id="mnlist" class="table table-striped table-bordered table-condensed table-hover">
+                              <tbody>
+                              <tr>
+                                  <td><i class="fa fa-clock"></i></td>
+                                  <th>Port Check Next Try</th>
+                                  <td id="mnportchecknext">???</td>
+                              </tr>
+                              <tr>
+                                  <td><i class="fa fa-tag"></i></td>
+                                  <th>Daemon Version</th>
+                                  <td id="mnversion">???</td>
+                              </tr>
+                              <tr>
+                                  <td><i class="fa fa-tag"></i></td>
+                                  <th>Daemon Version (Raw)</th>
+                                  <td id="mnversionraw">???</td>
+                              </tr>
+                              <tr>
+                                  <td><i class="fa fa-exclamation-triangle"></i></td>
+                                  <th>Port Check Error Message</th>
+                                  <td id="mnportcheckerror">???</td>
+                              </tr>
+                              </tbody>
+                          </table>
+                      </div>
+                      <div class="card-footer">
+                          <i class="fa fa-clock-o"></i> Scheduled next try: <span id="mnportchecknextdate">???</span>
+                      </div>
+                  </div>
+              </div>
+              <div class="col">
+                  <div id="mnpayments" class="card m-2">
+                      <div class="card-header bg-secondary text-light">
+                          <h3>Masternode payments</h3>
+                          IMPORTANT: <i class="fas fa-shield-alt" style="color: red"></i> <a href="https://shop.trezor.io/product/trezor-model-t?offer_id=14&aff_id=2360&source=mndet" style="color: white">Secure your DASH in hardware wallet</a></h3>
+                      </div>
+                      <ul class="list-group list-group-flush">
+                          <li class="list-group-item"><i class="fa fa-money-bill-wave"></i> Balance: <span id="mnbalance" style="font-weight: bold">???</span></li>
+                          <li class="list-group-item"><i class="fa fa-coins"></i> Total Paid (Last Month): <span id="mntotalpaid" style="font-weight: bold">???</span></li>
+                      </ul>
+                      <div class="table-responsive">
+                          <table id="paymentstable" class="table table-striped table-condensed table-responsive text-nowrap" width="100%">
+                              <thead>
+                              <tr>
+                                  <th>Date</th>
+                                  <th>Height</th>
+                                  <th>Found&nbsp;by</th>
+                                  <th>MN&nbsp;Payment</th>
+                                  <th>MNP&nbsp;Ratio<br>Expected/Actual</th>
+                                  <th>Masternode&nbsp;Expected</th>
+                                  <th>Masternode&nbsp;Paid</th>
+                              </tr>
+                              </thead>
+                              <tbody>
+                              <tr>
+                                  <td colspan="7">Please wait while loading... (JavaScript neeeded)</td>
+                              </tr>
+                              </tbody>
+                          </table>
+                      </div>
+<div class="card-footer">
+    <i class="fa fa-history"></i> Last refresh: <span id="mninfosLR">Never</span>
+</div>
+                  </div>
+              </div>
+          </div>
+<hr/>
+<div id="footer">
+  <div class="container">
+<p style="font-size:small;" align=right>Brought to you by <a href="https://www.dash.org/forum/members/elbereth.175/">elberethzone</a>. If this page is useful to you, spare some coin: <a href="http://chainz.cryptoid.info/dash/address.dws?XkfkHqMnhvQovo7kXQjvnNiFnQhRNZYCsz.htm">XkfkHqMnhvQovo7kXQjvnNiFnQhRNZYCsz</a><br>Contact me securely via <a href="https://keybase.io/elbereth">Keybase</a>. Check source (<a href="/LICENSE">GPLv3</a>) on: <a href="https://github.com/elbereth/dashninja-fe">GitHub</a>.</p>
+  </div>
+</div>
+      </div>
+    <script src="/static/jquery/dist/jquery.min.js"></script>
+    <script src="/static/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="/static/highcharts/highcharts.js"></script>
+    <script src="/static/highcharts/highcharts-more.js"></script>
+    <script src="/static/datatables.net/js/jquery.dataTables.min.js"></script>
+    <script src="/static/datatables.net-bs4/js/dataTables.bootstrap4.min.js"></script>
+    <script src="dashninja-config.js"></script>
+    <script src="dashninja-common.js"></script>
+    <script src="dashninja-protx.js"></script>
+  </body>
+</html>
+

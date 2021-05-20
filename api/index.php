@@ -2980,7 +2980,6 @@ $app->get('/api/masternodes/stats', function() use ($app,&$mysqli) {
 //   operator=JSON encoded list of operator pubkeys
 // Each following enabled parameter will slow down the query, only activate if you really need the data :
 //   balance=0|1 (optional, add balance info)
-//   exstatus=0|1 (optional, add extended masternode status)
 //   portcheck=0|1 (optional, add portcheck info)
 $app->get('/api/protx', function() use ($app,&$mysqli) {
 
@@ -3080,16 +3079,14 @@ $app->get('/api/protx', function() use ($app,&$mysqli) {
     // Retrieve the optional info parameters (status, balance and portcheck)
     $withbalance = ($request->hasQuery('balance') && ($request->getQuery('balance') == 1));
     $withportcheck = ($request->hasQuery('portcheck') && ($request->getQuery('portcheck') == 1));
-    $withexstatus = ($request->hasQuery('exstatus') && ($request->getQuery('exstatus') == 1));
 
     $finalcount = count($protxhashes)+count($collaterals)+count($protxips);
-/*    if ($finalcount == 0) {
+    if ($finalcount == 0) {
         $errmsg[] = "To use this API you must select at least 1 masternode by IP, collateral or ProTx Hashes. If you need a full list, try: /data/protxfull-".$testnet.".json";
     }
     elseif ($finalcount > 50) {
         $errmsg[] = "To use this API you must select at most 50 masternodes by IP, collateral or ProTx Hashes. If you need a full list, try: /data/protxfull-".$testnet.".json";
     }
-*/
 
     if (count($errmsg) > 0) {
         //Change the HTTP status
@@ -3100,7 +3097,7 @@ $app->get('/api/protx', function() use ($app,&$mysqli) {
     }
     else {
         // Retrieve deterministic masternodes list
-        $nodes = dmn_protx_get($mysqli, $testnet, $protxhashes, $protxips, $collaterals);
+        $nodes = dmn_protx_get($mysqli, $testnet, $protxhashes, $protxips, $collaterals,$cachevalid,false,true, $errmsgex);
         if (is_array($nodes)) {
 
             // Generate the final list of IP:port (resulting from the query)
@@ -3163,7 +3160,7 @@ $app->get('/api/protx', function() use ($app,&$mysqli) {
             $response->setStatusCode(200, "OK");
             $response->setJsonContent(array('status' => 'OK', 'data' => array('protx' => $nodes,
                 'cache' => array('time' => time(),
-                    'fromcache' => true),
+                    'fromcache' => $cachevalid),
                 'api' => array('version' => 1,
                     'compat' => 1,
                     'bev' => 'protx='.DASHNINJA_BEV.'.0')
